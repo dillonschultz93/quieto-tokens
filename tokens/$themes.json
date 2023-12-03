@@ -119,7 +119,6 @@
     "name": "Light",
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
-      "Light": "enabled",
       "Core": "source"
     },
     "$figmaVariableReferences": {
@@ -154,7 +153,6 @@
     "name": "Dark",
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
-      "Dark": "enabled",
       "Core": "source"
     },
     "$figmaVariableReferences": {
