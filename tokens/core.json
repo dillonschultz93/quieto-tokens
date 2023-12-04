@@ -462,40 +462,6 @@
         "type": "lineHeights"
       }
     },
-    "size": {
-      "heading": {
-        "1": {
-          "value": 56,
-          "type": "fontSizes"
-        },
-        "2": {
-          "value": 36,
-          "type": "fontSizes"
-        },
-        "3": {
-          "value": 24,
-          "type": "fontSizes"
-        },
-        "4": {
-          "value": 16,
-          "type": "fontSizes"
-        },
-        "5": {
-          "value": 16,
-          "type": "fontSizes"
-        }
-      },
-      "body": {
-        "base": {
-          "value": 16,
-          "type": "fontSizes"
-        },
-        "sm": {
-          "value": 12,
-          "type": "fontSizes"
-        }
-      }
-    },
     "weight": {
       "regular": {
         "value": "400",
@@ -504,16 +470,6 @@
       "bold": {
         "value": "700",
         "type": "fontWeights"
-      }
-    },
-    "control": {
-      "base": {
-        "value": "{font.size.body.base}",
-        "type": "fontSizes"
-      },
-      "sm": {
-        "value": "{font.size.body.sm}",
-        "type": "fontSizes"
       }
     }
   }
