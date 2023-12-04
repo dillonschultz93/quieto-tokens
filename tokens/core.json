@@ -450,7 +450,7 @@
     },
     "lineHeight": {
       "heading": {
-        "value": 1,
+        "value": 1.15,
         "type": "lineHeights"
       },
       "body": {
