@@ -259,7 +259,7 @@
       "type": "color"
     }
   },
-  "secondary": {
+  "neutral": {
     "50": {
       "value": "{gray.50}",
       "type": "color"
