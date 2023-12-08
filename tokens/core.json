@@ -450,14 +450,169 @@
         "type": "fontWeights"
       }
     },
-    "display-large": {
-      "value": {
-        "fontFamily": "{typography.family.sans}",
-        "fontWeight": "{typography.weight.regular}",
-        "fontSize": "57",
-        "lineHeight": "64"
+    "display": {
+      "lg": {
+        "size": {
+          "value": "57",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "64",
+          "type": "lineHeights"
+        }
       },
-      "type": "typography"
+      "md": {
+        "size": {
+          "value": "45",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "52",
+          "type": "lineHeights"
+        }
+      },
+      "sm": {
+        "size": {
+          "value": "36",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "44",
+          "type": "lineHeights"
+        }
+      }
+    },
+    "headline": {
+      "lg": {
+        "size": {
+          "value": "32",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "40",
+          "type": "lineHeights"
+        }
+      },
+      "md": {
+        "size": {
+          "value": "28",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "36",
+          "type": "lineHeights"
+        }
+      },
+      "sm": {
+        "size": {
+          "value": "24",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "32",
+          "type": "lineHeights"
+        }
+      }
+    },
+    "title": {
+      "large": {
+        "size": {
+          "value": "22",
+          "type": "fontSizes"
+        }
+      },
+      "md": {
+        "size": {
+          "value": "16",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "24",
+          "type": "lineHeights"
+        }
+      },
+      "sm": {
+        "size": {
+          "value": "14",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "20",
+          "type": "lineHeights"
+        }
+      },
+      "lg": {
+        "lineHeight": {
+          "value": "28",
+          "type": "lineHeights"
+        }
+      }
+    },
+    "body": {
+      "large": {
+        "size": {
+          "value": "16",
+          "type": "fontSizes"
+        }
+      },
+      "md": {
+        "size": {
+          "value": "14",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "20",
+          "type": "lineHeights"
+        }
+      },
+      "sm": {
+        "size": {
+          "value": "12",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "16",
+          "type": "lineHeights"
+        }
+      },
+      "lg": {
+        "lineHeight": {
+          "value": "24",
+          "type": "lineHeights"
+        }
+      }
+    },
+    "label": {
+      "lg": {
+        "size": {
+          "value": "14",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "20",
+          "type": "lineHeights"
+        }
+      },
+      "md": {
+        "size": {
+          "value": "12",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "16",
+          "type": "lineHeights"
+        }
+      },
+      "sm": {
+        "size": {
+          "value": "11",
+          "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "16",
+          "type": "lineHeights"
+        }
+      }
     }
   }
 }
