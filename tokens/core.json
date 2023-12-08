@@ -515,10 +515,14 @@
       }
     },
     "title": {
-      "large": {
+      "lg": {
         "size": {
           "value": "22",
           "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "28",
+          "type": "lineHeights"
         }
       },
       "md": {
@@ -540,19 +544,17 @@
           "value": "20",
           "type": "lineHeights"
         }
-      },
-      "lg": {
-        "lineHeight": {
-          "value": "28",
-          "type": "lineHeights"
-        }
       }
     },
     "body": {
-      "large": {
+      "lg": {
         "size": {
           "value": "16",
           "type": "fontSizes"
+        },
+        "lineHeight": {
+          "value": "24",
+          "type": "lineHeights"
         }
       },
       "md": {
@@ -572,12 +574,6 @@
         },
         "lineHeight": {
           "value": "16",
-          "type": "lineHeights"
-        }
-      },
-      "lg": {
-        "lineHeight": {
-          "value": "24",
           "type": "lineHeights"
         }
       }
