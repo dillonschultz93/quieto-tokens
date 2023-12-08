@@ -459,6 +459,10 @@
         "lineHeight": {
           "value": "64",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "-0.25",
+          "type": "letterSpacing"
         }
       },
       "md": {
@@ -469,6 +473,10 @@
         "lineHeight": {
           "value": "52",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0",
+          "type": "letterSpacing"
         }
       },
       "sm": {
@@ -479,6 +487,10 @@
         "lineHeight": {
           "value": "44",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0",
+          "type": "letterSpacing"
         }
       }
     },
@@ -491,6 +503,10 @@
         "lineHeight": {
           "value": "40",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0",
+          "type": "letterSpacing"
         }
       },
       "md": {
@@ -501,6 +517,10 @@
         "lineHeight": {
           "value": "36",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0",
+          "type": "letterSpacing"
         }
       },
       "sm": {
@@ -511,6 +531,10 @@
         "lineHeight": {
           "value": "32",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0",
+          "type": "letterSpacing"
         }
       }
     },
@@ -523,6 +547,10 @@
         "lineHeight": {
           "value": "28",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0",
+          "type": "letterSpacing"
         }
       },
       "md": {
@@ -533,6 +561,10 @@
         "lineHeight": {
           "value": "24",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.15",
+          "type": "letterSpacing"
         }
       },
       "sm": {
@@ -543,6 +575,10 @@
         "lineHeight": {
           "value": "20",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.1",
+          "type": "letterSpacing"
         }
       }
     },
@@ -555,6 +591,10 @@
         "lineHeight": {
           "value": "24",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.5",
+          "type": "letterSpacing"
         }
       },
       "md": {
@@ -565,6 +605,10 @@
         "lineHeight": {
           "value": "20",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.25",
+          "type": "letterSpacing"
         }
       },
       "sm": {
@@ -575,6 +619,10 @@
         "lineHeight": {
           "value": "16",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.4",
+          "type": "letterSpacing"
         }
       }
     },
@@ -587,6 +635,10 @@
         "lineHeight": {
           "value": "20",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.1",
+          "type": "letterSpacing"
         }
       },
       "md": {
@@ -597,6 +649,10 @@
         "lineHeight": {
           "value": "16",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.5",
+          "type": "letterSpacing"
         }
       },
       "sm": {
@@ -607,6 +663,10 @@
         "lineHeight": {
           "value": "16",
           "type": "lineHeights"
+        },
+        "tracking": {
+          "value": "0.5",
+          "type": "letterSpacing"
         }
       }
     }
