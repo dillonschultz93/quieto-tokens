@@ -425,7 +425,7 @@
       }
     }
   },
-  "typo": {
+  "typography": {
     "family": {
       "sans": {
         "value": "-apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif",
@@ -438,20 +438,6 @@
       "mono": {
         "value": "Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace",
         "type": "fontFamilies"
-      }
-    },
-    "lineHeight": {
-      "heading": {
-        "value": "1.15",
-        "type": "lineHeights"
-      },
-      "body": {
-        "value": "1.5",
-        "type": "lineHeights"
-      },
-      "control": {
-        "value": "1",
-        "type": "lineHeights"
       }
     },
     "weight": {
