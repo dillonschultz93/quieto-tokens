@@ -22,6 +22,6 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
-    allowForLoopAfterthoughts: true,
+    allowForLoopAfterthoughts: 0,
   },
 };
