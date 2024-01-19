@@ -428,25 +428,17 @@
   "typography": {
     "family": {
       "sans": {
-        "value": "-apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif",
-        "type": "fontFamilies"
-      },
-      "serif": {
-        "value": "Iowan Old Style, Apple Garamond, Baskerville, Times New Roman, Droid Serif, Times, Source Serif Pro, serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol",
-        "type": "fontFamilies"
-      },
-      "mono": {
-        "value": "Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace",
+        "value": "SF Pro Display",
         "type": "fontFamilies"
       }
     },
     "weight": {
       "regular": {
-        "value": "400",
+        "value": "Regular",
         "type": "fontWeights"
       },
       "bold": {
-        "value": "700",
+        "value": "Bold",
         "type": "fontWeights"
       }
     },
