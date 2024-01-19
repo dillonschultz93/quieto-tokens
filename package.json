@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "gen:typescale": "node ./src/utils/generateSizes.js"
+    "build": "node src/build.js"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
     "eslint-plugin-import": "^2.29.0"
   },
   "dependencies": {
+    "@tokens-studio/sd-transforms": "^0.12.2",
     "style-dictionary": "^3.9.1"
   }
 }
