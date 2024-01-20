@@ -1,0 +1,22 @@
+{
+  "color": {
+    "text": {
+      "primary": {
+        "value": "{color.black}",
+        "type": "color"
+      },
+      "secondary": {
+        "value": "{color.neutral.800}",
+        "type": "color"
+      },
+      "tertiary": {
+        "value": "{color.neutral.600}",
+        "type": "color"
+      },
+      "reverse": {
+        "value": "{color.white}",
+        "type": "color"
+      }
+    }
+  }
+}
