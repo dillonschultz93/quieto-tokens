@@ -455,6 +455,16 @@
         "tracking": {
           "value": "-0.25",
           "type": "letterSpacing"
+        },
+        "composed": {
+          "value": {
+            "fontFamily": "{typography.family.sans}",
+            "fontWeight": "{typography.weight.regular}",
+            "fontSize": "{typography.display.lg.size}",
+            "lineHeight": "{typography.display.lg.lineHeight}",
+            "letterSpacing": "{typography.display.lg.tracking}"
+          },
+          "type": "typography"
         }
       },
       "md": {
