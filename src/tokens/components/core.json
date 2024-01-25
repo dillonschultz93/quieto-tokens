@@ -1,1 +1,68 @@
-{}
+{
+  "button": {
+    "gap": {
+      "value": "{dimension.space.xs}",
+      "type": "sizing"
+    },
+    "shape": {
+      "value": "{dimension.corner.s}",
+      "type": "sizing"
+    },
+    "padding": {
+      "large": {
+        "top": {
+          "value": "{dimension.space.s}",
+          "type": "sizing"
+        },
+        "right": {
+          "value": "{dimension.space.s}",
+          "type": "sizing"
+        },
+        "bottom": {
+          "value": "{dimension.space.s}",
+          "type": "sizing"
+        },
+        "left": {
+          "value": "{dimension.space.s}",
+          "type": "sizing"
+        }
+      },
+      "medium": {
+        "top": {
+          "value": "{dimension.space.xs}",
+          "type": "sizing"
+        },
+        "right": {
+          "value": "{dimension.space.s}",
+          "type": "sizing"
+        },
+        "bottom": {
+          "value": "{dimension.space.xs}",
+          "type": "sizing"
+        },
+        "left": {
+          "value": "{dimension.space.s}",
+          "type": "sizing"
+        }
+      },
+      "small": {
+        "top": {
+          "value": "{dimension.space.xxs}",
+          "type": "sizing"
+        },
+        "right": {
+          "value": "{dimension.space.xs}",
+          "type": "sizing"
+        },
+        "bottom": {
+          "value": "{dimension.space.xxs}",
+          "type": "sizing"
+        },
+        "left": {
+          "value": "{dimension.space.xs}",
+          "type": "sizing"
+        }
+      }
+    }
+  }
+}

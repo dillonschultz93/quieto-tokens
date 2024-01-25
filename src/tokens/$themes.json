@@ -5,8 +5,7 @@
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
       "core": "enabled",
-      "light": "enabled",
-      "components/core": "disabled"
+      "light": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:503:385",
     "$figmaModeId": "503:2",
@@ -140,8 +139,7 @@
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
       "core": "enabled",
-      "dark": "enabled",
-      "components/core": "disabled"
+      "dark": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:503:385",
     "$figmaModeId": "503:3",
