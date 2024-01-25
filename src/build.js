@@ -59,7 +59,7 @@ const StyleDictionaryExtended = StyleDictionary.extend({
   },
 });
 
-// Build light token set
+// Build core light token set
 const StyleDictionaryLightSet = StyleDictionary.extend({
   source: ['src/tokens/core.json', 'src/tokens/light.json'],
   platforms: {
@@ -75,7 +75,7 @@ const StyleDictionaryLightSet = StyleDictionary.extend({
   },
 });
 
-// Build light token set
+// Build core dark token set
 const StyleDictionaryDarkSet = StyleDictionary.extend({
   source: ['src/tokens/core.json', 'src/tokens/dark.json'],
   platforms: {
