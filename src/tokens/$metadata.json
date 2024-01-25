@@ -2,6 +2,8 @@
   "tokenSetOrder": [
     "core",
     "light",
-    "dark"
+    "dark",
+    "components/light",
+    "components/dark"
   ]
 }

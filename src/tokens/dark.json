@@ -78,7 +78,7 @@
     },
     "border": {
       "default": {
-        "value": "{color.neutral.900}",
+        "value": "{color.neutral.800}",
         "type": "color"
       },
       "moderate": {
