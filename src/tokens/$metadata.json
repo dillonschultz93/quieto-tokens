@@ -3,6 +3,7 @@
     "core",
     "light",
     "dark",
+    "components/core",
     "components/light",
     "components/dark"
   ]
