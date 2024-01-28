@@ -390,6 +390,10 @@
       "xxxl": {
         "value": "64",
         "type": "spacing"
+      },
+      "none": {
+        "value": "0",
+        "type": "spacing"
       }
     },
     "corner": {
