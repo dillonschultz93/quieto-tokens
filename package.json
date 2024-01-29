@@ -11,11 +11,13 @@
   ],
   "scripts": {
     "build": "node src/build.js",
-    "publish": "npm run build && npm publish"
-
+    "publish": "npm run build && npm publish --access public"
   },
   "author": "Dillon Schultz <dillonschultz93@gmail.com>",
-  "repository": "dillonschultz93/quieto-tokens",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dillonschultz93/quieto-tokens.git"
+  },
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.55.0",
