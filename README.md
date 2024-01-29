@@ -8,3 +8,6 @@ A light-weight design system that contains the design tokens for Quieto
 npm install @quieto/tokens
 ```
 
+```js
+import '@quieto/tokens/dist/_core.css';
+```
