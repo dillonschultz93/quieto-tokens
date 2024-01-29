@@ -1,13 +1,21 @@
 {
-  "name": "quieto",
+  "name": "@quieto/tokens",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A light-weight design system that contains the design tokens for Quieto",
+  "main": "dist/css/_core.css",
+  "style": "dist/css/_core.css",
+  "files": [
+    "dist/css/_core.css",
+    "dist/css/_light.css",
+    "dist/css/_dark.css"
+  ],
   "scripts": {
-    "build": "node src/build.js"
+    "build": "node src/build.js",
+    "publish": "npm run build && npm publish"
+
   },
-  "keywords": [],
-  "author": "",
+  "author": "Dillon Schultz <dillonschultz93@gmail.com>",
+  "repository": "dillonschultz93/quieto-tokens",
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.55.0",
