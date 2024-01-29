@@ -30,7 +30,7 @@ const StyleDictionaryExtended = StyleDictionary.extend({
       transforms: ['ts/size/px', 'typography/css/px', 'typography/css/fontStack', 'ts/typography/fontWeight', 'name/cti/kebab'],
       buildPath: 'dist/css/',
       files: [{
-        destination: '_core-variables.css',
+        destination: '_core.css',
         options: {
           outputReferences: true,
         },
@@ -49,7 +49,7 @@ const StyleDictionaryLightSet = StyleDictionary.extend({
       buildPath: 'dist/css/',
       files: [{
         filter: (token) => token.filePath.includes('light.json'),
-        destination: '_light-variables.css',
+        destination: '_light.css',
         options: {
           outputReferences: true,
         },
@@ -68,7 +68,7 @@ const StyleDictionaryDarkSet = StyleDictionary.extend({
       buildPath: 'dist/css/',
       files: [{
         filter: (token) => token.filePath.includes('dark.json'),
-        destination: '_dark-variables.css',
+        destination: '_dark.css',
         options: {
           outputReferences: true,
         },
