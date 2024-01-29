@@ -2,15 +2,14 @@
 const { registerTransforms } = require('@tokens-studio/sd-transforms');
 const StyleDictionary = require('style-dictionary');
 
-// Register Tokens Studio transforms
 registerTransforms(StyleDictionary);
 
 // Register custom transforms
-// Append 'px' to fontSizes, lineHeights, letterSpacing, spacing, borderRadius, and borderWidth
+// // Append 'px' to fontSizes, lineHeights, letterSpacing, spacing, borderRadius, and borderWidth
 StyleDictionary.registerTransform({
   type: 'value',
   name: 'typography/css/px',
-  matcher: (prop) => prop.type === 'fontSizes' || prop.type === 'lineHeights' || prop.type === 'letterSpacing' || prop.type === 'spacing' || prop.type === 'borderRadius' || prop.type === 'borderWidth',
+  matcher: (prop) => prop.type === 'lineHeights' || prop.type === 'letterSpacing',
   transformer: (prop) => `${prop.value}px`,
 });
 
@@ -22,75 +21,64 @@ StyleDictionary.registerTransform({
   transformer: () => '-apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif',
 });
 
-// Convert font weight to a proper CSS font weight
-StyleDictionary.registerTransform({
-  type: 'value',
-  name: 'typography/css/fontWeight',
-  matcher: (prop) => prop.type === 'fontWeights',
-  transformer: (prop) => {
-    switch (prop.value) {
-      case 'Light':
-        return '300';
-      case 'Regular':
-        return '400';
-      case 'Medium':
-        return '500';
-      case 'Bold':
-        return '700';
-      default:
-        return prop.value;
-    }
-  },
-});
-
 // Build core tokens
 const StyleDictionaryExtended = StyleDictionary.extend({
-  source: ['src/tokens/core.json'],
+  source: ['src/tokens/core.json', 'src/tokens/components/core.json'],
   platforms: {
-    css: {
+    'core-css': {
       transformGroup: 'tokens-studio',
-      transforms: ['typography/css/px', 'typography/css/fontStack', 'typography/css/fontWeight', 'name/cti/kebab'],
+      transforms: ['ts/size/px', 'typography/css/px', 'typography/css/fontStack', 'ts/typography/fontWeight', 'name/cti/kebab'],
       buildPath: 'dist/css/',
       files: [{
         destination: '_core-variables.css',
+        options: {
+          outputReferences: true,
+        },
         format: 'css/variables',
       }],
     },
   },
 });
 
-// Build core light token set
+// Build light token set
 const StyleDictionaryLightSet = StyleDictionary.extend({
-  source: ['src/tokens/core.json', 'src/tokens/light.json'],
+  source: ['src/tokens/core.json', 'src/tokens/light.json', 'src/tokens/components/light.json'],
   platforms: {
-    css: {
+    'light-css': {
       transforms: ['name/cti/kebab'],
       buildPath: 'dist/css/',
       files: [{
         filter: (token) => token.filePath.includes('light.json'),
         destination: '_light-variables.css',
+        options: {
+          outputReferences: true,
+        },
         format: 'css/variables',
       }],
     },
   },
 });
 
-// Build core dark token set
+// Build dark token set
 const StyleDictionaryDarkSet = StyleDictionary.extend({
-  source: ['src/tokens/core.json', 'src/tokens/dark.json'],
+  source: ['src/tokens/core.json', 'src/tokens/dark.json', 'src/tokens/components/dark.json'],
   platforms: {
-    css: {
+    'dark-css': {
       transforms: ['name/cti/kebab'],
       buildPath: 'dist/css/',
       files: [{
         filter: (token) => token.filePath.includes('dark.json'),
         destination: '_dark-variables.css',
+        options: {
+          outputReferences: true,
+        },
         format: 'css/variables',
       }],
     },
   },
 });
 
+// Core Tokens
 StyleDictionaryExtended.cleanAllPlatforms();
 StyleDictionaryExtended.buildAllPlatforms();
 StyleDictionaryLightSet.cleanAllPlatforms();
