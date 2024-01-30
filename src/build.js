@@ -23,7 +23,7 @@ StyleDictionary.registerTransform({
 
 // Build core tokens
 const StyleDictionaryExtended = StyleDictionary.extend({
-  source: ['src/tokens/core.json', 'src/tokens/components/**/core.json'],
+  source: ['src/tokens/core.json', 'src/tokens/components/**/!(*.light|*.dark).json'],
   platforms: {
     'core-css': {
       transformGroup: 'tokens-studio',
@@ -32,7 +32,7 @@ const StyleDictionaryExtended = StyleDictionary.extend({
       files: [{
         destination: '_core.css',
         options: {
-          outputReferences: true,
+          // outputReferences: true,
         },
         format: 'css/variables',
       }],
@@ -42,7 +42,7 @@ const StyleDictionaryExtended = StyleDictionary.extend({
 
 // Build light token set
 const StyleDictionaryLightSet = StyleDictionary.extend({
-  source: ['src/tokens/core.json', 'src/tokens/light.json', 'src/tokens/components/**/light.json'],
+  source: ['src/tokens/core.json', 'src/tokens/light.json', 'src/tokens/components/**/*.light.json'],
   platforms: {
     'light-css': {
       transforms: ['name/cti/kebab'],
@@ -51,7 +51,7 @@ const StyleDictionaryLightSet = StyleDictionary.extend({
         filter: (token) => token.filePath.includes('light.json'),
         destination: '_light.css',
         options: {
-          outputReferences: true,
+          // outputReferences: true,
         },
         format: 'css/variables',
       }],
@@ -61,7 +61,7 @@ const StyleDictionaryLightSet = StyleDictionary.extend({
 
 // Build dark token set
 const StyleDictionaryDarkSet = StyleDictionary.extend({
-  source: ['src/tokens/core.json', 'src/tokens/dark.json', 'src/tokens/components/**/dark.json'],
+  source: ['src/tokens/core.json', 'src/tokens/dark.json', 'src/tokens/components/**/*.dark.json'],
   platforms: {
     'dark-css': {
       transforms: ['name/cti/kebab'],
@@ -70,7 +70,7 @@ const StyleDictionaryDarkSet = StyleDictionary.extend({
         filter: (token) => token.filePath.includes('dark.json'),
         destination: '_dark.css',
         options: {
-          outputReferences: true,
+          // outputReferences: true,
         },
         format: 'css/variables',
       }],
