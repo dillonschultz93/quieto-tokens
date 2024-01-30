@@ -273,9 +273,7 @@
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
       "core": "source",
-      "light": "source",
-      "components/light": "enabled",
-      "components/core": "enabled"
+      "light": "source"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:6",
@@ -326,9 +324,7 @@
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
       "core": "source",
-      "dark": "source",
-      "components/dark": "enabled",
-      "components/core": "enabled"
+      "dark": "source"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:7",

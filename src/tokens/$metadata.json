@@ -3,8 +3,11 @@
     "core",
     "light",
     "dark",
-    "components/core",
-    "components/light",
-    "components/dark"
+    "components/button/button",
+    "components/button/dark",
+    "components/button/light",
+    "components/tabs/dark",
+    "components/tabs/light",
+    "components/tabs/tabs"
   ]
 }
