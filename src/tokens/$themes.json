@@ -273,7 +273,11 @@
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
       "core": "source",
-      "light": "source"
+      "light": "source",
+      "components/button/button": "enabled",
+      "components/button/button.light": "enabled",
+      "components/tabs/tabs": "enabled",
+      "components/tabs/tabs.light": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:6",
@@ -324,7 +328,11 @@
     "$figmaStyleReferences": {},
     "selectedTokenSets": {
       "core": "source",
-      "dark": "source"
+      "dark": "source",
+      "components/button/button": "enabled",
+      "components/button/button.dark": "enabled",
+      "components/tabs/tabs": "enabled",
+      "components/tabs/tabs.dark": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:7",

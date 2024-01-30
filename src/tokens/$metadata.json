@@ -4,10 +4,10 @@
     "light",
     "dark",
     "components/button/button",
-    "components/button/dark",
-    "components/button/light",
-    "components/tabs/dark",
-    "components/tabs/light",
-    "components/tabs/tabs"
+    "components/button/button.dark",
+    "components/button/button.light",
+    "components/tabs/tabs",
+    "components/tabs/tabs.dark",
+    "components/tabs/tabs.light"
   ]
 }
