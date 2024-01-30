@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "node src/build.js",
-    "publish": "npm run build && npm publish --access public"
+    "publish-tokens": "npm run build && npm publish --access public"
   },
   "author": "Dillon Schultz <dillonschultz93@gmail.com>",
   "repository": {
