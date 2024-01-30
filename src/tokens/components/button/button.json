@@ -63,6 +63,20 @@
           "type": "spacing"
         }
       }
+    },
+    "size": {
+      "lg": {
+        "value": "40",
+        "type": "sizing"
+      },
+      "m": {
+        "value": "32",
+        "type": "sizing"
+      },
+      "s": {
+        "value": "24",
+        "type": "sizing"
+      }
     }
   }
 }
