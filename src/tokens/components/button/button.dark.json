@@ -53,6 +53,22 @@
         "value": "{color.text.primary}",
         "type": "color"
       }
+    },
+    "ghost": {
+      "text": {
+        "value": "{color.text.primary}",
+        "type": "color"
+      },
+      "bg": {
+        "hover": {
+          "value": "{color.bg.secondary.hover}",
+          "type": "color"
+        },
+        "active": {
+          "value": "{color.bg.secondary.active}",
+          "type": "color"
+        }
+      }
     }
   }
 }
