@@ -53,26 +53,6 @@
         "value": "{color.text.primary}",
         "type": "color"
       }
-    },
-    "tonal": {
-      "bg": {
-        "idle": {
-          "value": "{color.primary.500}",
-          "type": "color"
-        },
-        "hover": {
-          "value": "{color.primary.700}",
-          "type": "color"
-        },
-        "active": {
-          "value": "{color.primary.900}",
-          "type": "color"
-        }
-      },
-      "text": {
-        "value": "{color.text.primary}",
-        "type": "color"
-      }
     }
   }
 }
