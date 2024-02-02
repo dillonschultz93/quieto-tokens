@@ -2,11 +2,11 @@
   "checkbox": {
     "size": {
       "width": {
-        "value": "18",
+        "value": "16",
         "type": "sizing"
       },
       "height": {
-        "value": "18",
+        "value": "16",
         "type": "sizing"
       }
     },
