@@ -6,8 +6,8 @@
     "components/button/button",
     "components/button/button.dark",
     "components/button/button.light",
-    "components/tabs/tabs",
-    "components/tabs/tabs.dark",
-    "components/tabs/tabs.light"
+    "components/checkbox/checkbox",
+    "components/checkbox/checkbox.dark",
+    "components/checkbox/checkbox.light"
   ]
 }

@@ -1,5 +1,5 @@
 {
-	"checkbox": {
+  "checkbox": {
     "text": {
       "value": "{color.text.primary}",
       "type": "color"
@@ -8,21 +8,21 @@
       "value": "{color.white}",
       "type": "color"
     },
-		"bg": {
-			"unchecked": {
-				"idle": {
+    "bg": {
+      "unchecked": {
+        "idle": {
           "value": "{color.bg.primary.idle}",
           "type": "color"
         },
-				"hover": {
+        "hover": {
           "value": "{color.bg.primary.hover}",
           "type": "color"
         },
-				"active": {
+        "active": {
           "value": "{color.bg.primary.active}",
           "type": "color"
         }
-			},
+      },
       "checked": {
         "idle": {
           "value": "{color.primary.400}",
@@ -37,22 +37,22 @@
           "type": "color"
         }
       }
-		},
+    },
     "border": {
-			"unchecked": {
-				"idle": {
+      "unchecked": {
+        "idle": {
           "value": "{color.border.default}",
           "type": "color"
         },
-				"hover": {
+        "hover": {
           "value": "{color.border.moderate}",
           "type": "color"
         },
-				"active": {
+        "active": {
           "value": "{color.border.bold}",
           "type": "color"
         }
-			},
+      },
       "checked": {
         "idle": {
           "value": "{color.primary.400}",
@@ -67,6 +67,6 @@
           "type": "color"
         }
       }
-		}
-	}
+    }
+  }
 }

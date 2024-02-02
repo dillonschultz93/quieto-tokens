@@ -278,8 +278,8 @@
       "light": "source",
       "components/button/button": "enabled",
       "components/button/button.light": "enabled",
-      "components/tabs/tabs": "enabled",
-      "components/tabs/tabs.light": "enabled"
+      "components/checkbox/checkbox": "enabled",
+      "components/checkbox/checkbox.light": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:6",
@@ -333,8 +333,8 @@
       "dark": "source",
       "components/button/button": "enabled",
       "components/button/button.dark": "enabled",
-      "components/tabs/tabs": "enabled",
-      "components/tabs/tabs.dark": "enabled"
+      "components/checkbox/checkbox": "enabled",
+      "components/checkbox/checkbox.dark": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:7",
