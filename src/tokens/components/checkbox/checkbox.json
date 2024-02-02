@@ -1,3 +1,26 @@
 {
-  "checkbox": {}
+  "checkbox": {
+    "size": {
+      "width": {
+        "value": "18",
+        "type": "sizing"
+      },
+      "height": {
+        "value": "18",
+        "type": "sizing"
+      }
+    },
+    "shape": {
+      "value": "{dimension.corner.s}",
+      "type": "borderRadius"
+    },
+    "borderWidth": {
+      "value": "{dimension.borderWidth.s}",
+      "type": "borderWidth"
+    },
+    "gap": {
+      "value": "{dimension.space.xxs}",
+      "type": "spacing"
+    }
+  }
 }
