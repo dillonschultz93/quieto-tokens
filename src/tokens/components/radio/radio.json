@@ -1,0 +1,26 @@
+{
+  "radio": {
+    "size": {
+      "width": {
+        "value": "16",
+        "type": "sizing"
+      },
+      "height": {
+        "value": "16",
+        "type": "sizing"
+      }
+    },
+    "shape": {
+      "value": "{dimension.corner.round}",
+      "type": "borderRadius"
+    },
+    "borderWidth": {
+      "value": "{dimension.borderWidth.s}",
+      "type": "borderWidth"
+    },
+    "gap": {
+      "value": "{dimension.space.xxs}",
+      "type": "spacing"
+    }
+  }
+}
