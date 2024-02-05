@@ -8,6 +8,9 @@
     "components/button/button.light",
     "components/checkbox/checkbox",
     "components/checkbox/checkbox.dark",
-    "components/checkbox/checkbox.light"
+    "components/checkbox/checkbox.light",
+    "components/radio/radio",
+    "components/radio/radio.dark",
+    "components/radio/radio.light"
   ]
 }
