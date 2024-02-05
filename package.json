@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "node src/build.js",
+    "generate-tokens": "node util/generateComponentTokens.js",
     "publish-tokens": "npm run build && npm publish --access public"
   },
   "author": "Dillon Schultz <dillonschultz93@gmail.com>",
