@@ -1,0 +1,94 @@
+{
+	"chip": {
+		"static": {
+			"text": {
+				"value": "{color.text.primary}",
+				"type": "color"
+			},
+			"icon": {
+				"idle": {
+					"value": "{color.text.secondary}",
+					"type": "color"
+				},
+				"hover": {
+					"value": "{color.text.primary}",
+					"type": "color"
+				},
+				"active": {
+					"value": "{color.text.primary}",
+					"type": "color"
+				}
+			},
+			"bg": {
+				"value": "{color.bg.secondary.idle}",
+				"type": "color"
+			}
+		},
+		"toggle": {
+			"text": {
+				"value": "{color.text.primary}",
+				"type": "color"
+			},
+			"bg": {
+				"unchecked": {
+					"idle": {
+						"value": "{color.bg.secondary.idle}",
+						"type": "color"
+					},
+          "hover": {
+            "value": "{color.bg.secondary.hover}",
+            "type": "color"
+          },
+          "active": {
+            "value": "{color.bg.secondary.active}",
+            "type": "color"
+          }
+				},
+        "checked": {
+          "idle": {
+            "value": "{color.bg.primary.900}",
+            "type": "color"
+          },
+          "hover": {
+            "value": "{color.blue.800}",
+            "type": "color"
+          },
+          "active": {
+            "value": "{color.bg.primary.700}",
+            "type": "color"
+          }
+        }
+			},
+      "border": {
+        "unchecked": {
+          "idle": {
+            "value": "{color.border.default}",
+            "type": "color"
+          },
+          "hover": {
+            "value": "{color.border.moderate}",
+            "type": "color"
+          },
+          "active": {
+            "value": "{color.border.bold}",
+            "type": "color"
+          }
+        },
+        "checked": {
+          "idle": {
+            "value": "{color.border.focus}",
+            "type": "color"
+          },
+          "hover": {
+            "value": "{color.border.focus}",
+            "type": "color"
+          },
+          "active": {
+            "value": "{color.border.focus}",
+            "type": "color"
+          }
+        }
+      }
+		}
+	}
+}
