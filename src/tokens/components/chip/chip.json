@@ -7,7 +7,7 @@
       }
     },
     "shape": {
-      "value": "{dimension.corner.round}",
+      "value": "{dimension.corner.s}",
       "type": "borderRadius"
     },
     "borderWidth": {
