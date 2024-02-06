@@ -1,11 +1,11 @@
 {
-	"chip": {
-		"size": {
-			"height": {
-				"value": "24",
-				"type": "sizing"
-			}
-		},
+  "chip": {
+    "size": {
+      "height": {
+        "value": "24",
+        "type": "sizing"
+      }
+    },
     "shape": {
       "value": "{dimension.corner.round}",
       "type": "borderRadius"
@@ -15,7 +15,8 @@
       "type": "borderWidth"
     },
     "gap": {
-      "value": "{dimension.space.xs}"
+      "value": "{dimension.space.xs}",
+      "type": "other"
     },
     "padding": {
       "left": {
@@ -27,5 +28,5 @@
         "type": "spacing"
       }
     }
-	}
+  }
 }

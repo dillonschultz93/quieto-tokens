@@ -11,6 +11,9 @@
     "components/checkbox/checkbox.light",
     "components/radio/radio",
     "components/radio/radio.dark",
-    "components/radio/radio.light"
+    "components/radio/radio.light",
+    "components/chip/chip",
+    "components/chip/chip.dark",
+    "components/chip/chip.light"
   ]
 }
