@@ -50,7 +50,7 @@
         },
         "checked": {
           "idle": {
-            "value": "{color.bg.primary.100}",
+            "value": "{color.primary.100}",
             "type": "color"
           },
           "hover": {
@@ -58,7 +58,7 @@
             "type": "color"
           },
           "active": {
-            "value": "{color.bg.primary.300}",
+            "value": "{color.primary.300}",
             "type": "color"
           }
         }
