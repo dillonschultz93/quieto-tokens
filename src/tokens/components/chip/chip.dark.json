@@ -22,6 +22,10 @@
       "bg": {
         "value": "{color.bg.secondary.idle}",
         "type": "color"
+      },
+      "border": {
+        "value": "{color.border.default}",
+        "type": "color"
       }
     },
     "toggle": {
