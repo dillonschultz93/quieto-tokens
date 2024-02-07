@@ -14,6 +14,9 @@
     "components/radio/radio.light",
     "components/chip/chip",
     "components/chip/chip.dark",
-    "components/chip/chip.light"
+    "components/chip/chip.light",
+    "components/tabs/tabs",
+    "components/tabs/tabs.dark",
+    "components/tabs/tabs.light"
   ]
 }

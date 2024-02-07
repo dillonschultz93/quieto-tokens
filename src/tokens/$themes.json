@@ -283,7 +283,9 @@
       "components/radio/radio": "enabled",
       "components/radio/radio.light": "enabled",
       "components/chip/chip": "enabled",
-      "components/chip/chip.light": "enabled"
+      "components/chip/chip.light": "enabled",
+      "components/tabs/tabs": "enabled",
+      "components/tabs/tabs.light": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:6",
@@ -342,7 +344,9 @@
       "components/radio/radio": "enabled",
       "components/radio/radio.dark": "enabled",
       "components/chip/chip": "enabled",
-      "components/chip/chip.dark": "enabled"
+      "components/chip/chip.dark": "enabled",
+      "components/tabs/tabs": "enabled",
+      "components/tabs/tabs.dark": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:7",
