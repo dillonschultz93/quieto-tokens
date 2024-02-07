@@ -1,6 +1,6 @@
 module.exports = (componentName) => ({
   content: `{
-"${componentName}": {}
+  "${componentName}": {}
 }`,
   extension: 'light.json',
 });
