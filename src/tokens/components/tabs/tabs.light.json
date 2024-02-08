@@ -1,64 +1,64 @@
 {
-	"tabs": {
-		"bg": {
-			"unchecked": {
-				"idle": {
-					"value": "{color.bg.secondary.idle}",
-					"type": "color"
-				},
-				"hover": {
-					"value": "{color.bg.secondary.hover}",
-					"type": "color"
-				},
-				"active": {
-					"value": "{color.bg.secondary.active}",
-					"type": "color"
-				}
-			},
-			"checked": {
-				"idle": {
-					"value": "{color.primary.100}",
-					"type": "color"
-				},
-				"hover": {
-					"value": "{color.blue.200}",
-					"type": "color"
-				},
-				"active": {
-					"value": "{color.primary.300}",
-					"type": "color"
-				}
-			}
-		},
-		"border": {
-			"unchecked": {
-				"idle": {
-					"value": "{color.border.default}",
-					"type": "color"
-				},
-				"hover": {
-					"value": "{color.border.default}",
-					"type": "color"
-				},
-				"active": {
-					"value": "{color.border.default}",
-					"type": "color"
-				}
-			},
-			"checked": {
-				"idle": {
-					"value": "{color.border.focus}",
-					"type": "color"
-				},
-				"hover": {
-					"value": "{color.border.focus}",
-					"type": "color"
-				},
-				"active": {
-					"value": "{color.border.focus}",
-					"type": "color"
-				}
-			}
-		}
-	}
+  "tabs": {
+    "bg": {
+      "unchecked": {
+        "idle": {
+          "value": "{color.bg.secondary.idle}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.bg.secondary.hover}",
+          "type": "color"
+        },
+        "active": {
+          "value": "{color.bg.secondary.active}",
+          "type": "color"
+        }
+      },
+      "checked": {
+        "idle": {
+          "value": "{color.primary.100}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.blue.200}",
+          "type": "color"
+        },
+        "active": {
+          "value": "{color.primary.300}",
+          "type": "color"
+        }
+      }
+    },
+    "border": {
+      "unchecked": {
+        "idle": {
+          "value": "{color.border.default}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.border.default}",
+          "type": "color"
+        },
+        "active": {
+          "value": "{color.border.default}",
+          "type": "color"
+        }
+      },
+      "checked": {
+        "idle": {
+          "value": "{color.border.focus}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.border.focus}",
+          "type": "color"
+        },
+        "active": {
+          "value": "{color.border.focus}",
+          "type": "color"
+        }
+      }
+    }
+  }
 }
