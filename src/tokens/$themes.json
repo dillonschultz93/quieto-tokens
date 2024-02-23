@@ -285,7 +285,9 @@
       "components/chip/chip": "enabled",
       "components/chip/chip.light": "enabled",
       "components/tabs/tabs": "enabled",
-      "components/tabs/tabs.light": "enabled"
+      "components/tabs/tabs.light": "enabled",
+      "components/switch/switch": "enabled",
+      "components/switch/switch.light": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:6",
@@ -346,7 +348,9 @@
       "components/chip/chip": "enabled",
       "components/chip/chip.dark": "enabled",
       "components/tabs/tabs": "enabled",
-      "components/tabs/tabs.dark": "enabled"
+      "components/tabs/tabs.dark": "enabled",
+      "components/switch/switch": "enabled",
+      "components/switch/switch.dark": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:7",

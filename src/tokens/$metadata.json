@@ -17,6 +17,9 @@
     "components/radio/radio.light",
     "components/tabs/tabs",
     "components/tabs/tabs.dark",
-    "components/tabs/tabs.light"
+    "components/tabs/tabs.light",
+    "components/switch/switch",
+    "components/switch/switch.dark",
+    "components/switch/switch.light"
   ]
 }
