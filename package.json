@@ -1,6 +1,6 @@
 {
   "name": "@quieto/tokens",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "A light-weight design system that contains the design tokens for Quieto",
   "main": "dist/css/_core.css",
   "style": "dist/css/_core.css",
