@@ -1,0 +1,44 @@
+{
+  "switch": {
+    "track": {
+      "height": {
+        "value": "40",
+        "type": "sizing"
+      },
+      "width": {
+        "value": "80",
+        "type": "sizing"
+      },
+      "padding": {
+        "value": "{dimension.space.xxs}",
+        "type": "spacing"
+      },
+      "shape": {
+        "value": "{dimension.corner.round}",
+        "type": "borderRadius"
+      },
+      "borderWidth": {
+        "value": "{dimension.borderWidth.s}",
+        "type": "borderWidth"
+      }
+    },
+    "knob": {
+      "height": {
+        "value": "32",
+        "type": "sizing"
+      },
+      "width": {
+        "value": "32",
+        "type": "sizing"
+      },
+      "shape": {
+        "value": "{dimension.corner.round}",
+        "type": "borderRadius"
+      },
+      "borderWidth": {
+        "value": "{dimension.borderWidth.s}",
+        "type": "borderWidth"
+      }
+    }
+  }
+}
