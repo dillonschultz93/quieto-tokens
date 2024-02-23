@@ -45,6 +45,20 @@
             "value": "{color.border.bold}",
             "type": "color"
           }
+        },
+        "checked": {
+          "idle": {
+            "value": "{color.border.focus}",
+            "type": "color"
+          },
+          "hover": {
+            "value": "{color.border.focus}",
+            "type": "color"
+          },
+          "active": {
+            "value": "{color.border.focus}",
+            "type": "color"
+          }
         }
       }
     },
