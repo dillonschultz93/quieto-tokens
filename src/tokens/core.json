@@ -434,6 +434,10 @@
       "sans": {
         "value": "SF Pro Display",
         "type": "fontFamilies"
+      },
+      "mono": {
+        "value": "SF Mono",
+        "type": "fontFamilies"
       }
     },
     "weight": {
