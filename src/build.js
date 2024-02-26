@@ -18,7 +18,17 @@ StyleDictionary.registerTransform({
   type: 'value',
   name: 'typography/css/fontStack',
   matcher: (prop) => prop.type === 'fontFamilies',
-  transformer: () => '-apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif',
+  transformer: (prop) => {
+    switch (prop.value) {
+      case 'SF Pro Display':
+        return '-apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif';
+      case 'SF Mono':
+        return 'ui-monospace, Menlo, Monaco, Cascadia Mono, Segoe UI Mono, Roboto Mono, Oxygen Mono, Ubuntu Monospace, Source Code Pro, Fira Mono, Droid Sans Mono, Courier New, monospace';
+      default:
+        break;
+    }
+    return ''; // Add a default return statement
+  },
 });
 
 // Build core tokens
