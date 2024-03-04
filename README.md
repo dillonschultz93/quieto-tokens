@@ -24,13 +24,13 @@ import '@quieto/tokens/dist/_core.css';
 There are also light and dark themes available. To use them, import the theme you want to use:
 
 ```html
-<link rel="stylesheet" href="node_modules/@quieto/tokens/dist/_core.css">
-<link rel="stylesheet" href="node_modules/@quieto/tokens/dist/_light.css">
-<link rel="stylesheet" href="node_modules/@quieto/tokens/dist/_dark.css">
+<link rel="stylesheet" href="node_modules/@quieto/tokens/dist/css/_core.css">
+<link rel="stylesheet" href="node_modules/@quieto/tokens/dist/css/_light.css">
+<link rel="stylesheet" href="node_modules/@quieto/tokens/dist/css/_dark.css">
 ```
 
 ```js
-import '@quieto/tokens/dist/_core.css';
-import '@quieto/tokens/dist/_light.css';
-import '@quieto/tokens/dist/_dark.css';
+import '@quieto/tokens/dist/css/_core.css';
+import '@quieto/tokens/dist/css/_light.css';
+import '@quieto/tokens/dist/css/_dark.css';
 ```
