@@ -1,4 +1,4 @@
-# quieto-tokens
+# Quieto Design Tokens
 
 A light-weight design system that contains the design tokens for Quieto
 
