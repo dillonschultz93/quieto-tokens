@@ -36,11 +36,11 @@
         },
         "valid": {
           "value": "{color.success.500}",
-          "type": "other"
+          "type": "color"
         },
         "invalid": {
           "value": "{color.error.500}",
-          "type": "other"
+          "type": "color"
         }
       },
       "placeholder": {
