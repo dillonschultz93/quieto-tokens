@@ -20,6 +20,9 @@
     "components/tabs/tabs.light",
     "components/switch/switch",
     "components/switch/switch.dark",
-    "components/switch/switch.light"
+    "components/switch/switch.light",
+    "components/text-input/text-input",
+    "components/text-input/text-input.dark",
+    "components/text-input/text-input.light"
   ]
 }

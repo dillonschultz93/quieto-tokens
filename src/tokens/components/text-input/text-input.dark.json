@@ -1,59 +1,61 @@
 {
-	"text-input": {
-		"label": {
-			"color": {
-				"value": "{color.text.primary}",
-				"type": "color"
-			}
-		},
-		"input": {
-			"bg": {
-				"idle": {
-					"value": "{color.bg.primary.idle}",
-					"type": "color"
-				},
-				"hover": {
-					"value": "{color.bg.primary.hover}",
-					"type": "color"
-				},
+  "text-input": {
+    "label": {
+      "color": {
+        "value": "{color.text.primary}",
+        "type": "color"
+      }
+    },
+    "input": {
+      "bg": {
+        "idle": {
+          "value": "{color.bg.primary.idle}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.bg.primary.hover}",
+          "type": "color"
+        },
         "focus": {
           "value": "{color.bg.primary.idle}",
           "type": "color"
         }
-			},
-			"borderColor": {
-				"idle": {
-					"value": "{color.border.default}",
-					"type": "color"
-				},
-				"hover": {
-					"value": "{color.border.moderate}",
-					"type": "color"
-				},
-				"focus": {
-					"value": "{color.border.focus}",
-					"type": "color"
-				},
+      },
+      "borderColor": {
+        "idle": {
+          "value": "{color.border.default}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.border.moderate}",
+          "type": "color"
+        },
+        "focus": {
+          "value": "{color.border.focus}",
+          "type": "color"
+        },
         "valid": {
-          "value": "{color.success.300}"
+          "value": "{color.success.300}",
+          "type": "other"
         },
         "invalid": {
-          "value": "{color.error.300}"
+          "value": "{color.error.300}",
+          "type": "other"
         }
-			},
-			"placeholder": {
-				"color": {
-					"value": "{color.text.tertiary}",
-					"type": "color"
-				}
-			},
+      },
+      "placeholder": {
+        "color": {
+          "value": "{color.text.tertiary}",
+          "type": "color"
+        }
+      },
       "text": {
         "color": {
           "value": "{color.text.primary}",
           "type": "color"
         }
       }
-		},
+    },
     "description": {
       "color": {
         "value": "{color.text.tertiary}",
@@ -90,5 +92,5 @@
         }
       }
     }
-	}
+  }
 }

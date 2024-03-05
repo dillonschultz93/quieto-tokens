@@ -287,7 +287,9 @@
       "components/tabs/tabs": "enabled",
       "components/tabs/tabs.light": "enabled",
       "components/switch/switch": "enabled",
-      "components/switch/switch.light": "enabled"
+      "components/switch/switch.light": "enabled",
+      "components/text-input/text-input": "enabled",
+      "components/text-input/text-input.light": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:6",
@@ -350,7 +352,9 @@
       "components/tabs/tabs": "enabled",
       "components/tabs/tabs.dark": "enabled",
       "components/switch/switch": "enabled",
-      "components/switch/switch.dark": "enabled"
+      "components/switch/switch.dark": "enabled",
+      "components/text-input/text-input": "enabled",
+      "components/text-input/text-input.dark": "enabled"
     },
     "$figmaCollectionId": "VariableCollectionId:4:5313",
     "$figmaModeId": "4:7",
