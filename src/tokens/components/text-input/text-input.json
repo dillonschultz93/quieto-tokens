@@ -1,0 +1,68 @@
+{
+  "text-input": {
+    "gap": {
+      "value": "{dimension.space.xxs}",
+      "type": "spacing"
+    },
+    "input": {
+      "padding": {
+        "left-right": {
+          "value": "{dimension.space.xs}",
+          "type": "spacing"
+        },
+        "top-bottom": {
+          "value": "0",
+          "type": "spacing"
+        }
+      },
+      "shape": {
+        "value": "{dimension.corner.s}",
+        "type": "borderRadius"
+      },
+      "borderWidth": {
+        "value": "{dimension.borderWidth.s}",
+        "type": "borderWidth"
+      },
+      "gap": {
+        "value": "{dimension.space.xs}",
+        "type": "spacing"
+      },
+      "leading-icon": {
+        "width": {
+          "value": "20",
+          "type": "sizing"
+        },
+        "height": {
+          "value": "20",
+          "type": "sizing"
+        }
+      },
+      "trailing-action": {
+        "width": {
+          "value": "20",
+          "type": "sizing"
+        },
+        "height": {
+          "value": "20",
+          "type": "sizing"
+        }
+      }
+    },
+    "validation": {
+      "gap": {
+        "value": "{dimension.space.xs}",
+        "type": "spacing"
+      },
+      "icon": {
+        "width": {
+          "value": "14",
+          "type": "sizing"
+        },
+        "height": {
+          "value": "14",
+          "type": "sizing"
+        }
+      }
+    }
+  }
+}
