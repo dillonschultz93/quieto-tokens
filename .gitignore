@@ -1,0 +1,8 @@
+docs/
+.cursor/
+.vscode/
+.env
+_bmad/
+_bmad-output/
+.claude/
+node_modules/
