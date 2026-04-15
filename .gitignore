@@ -1,5 +1,6 @@
 docs/Quieto Design System/.obsidian/
 .cursor/
+.cursorignore
 .vscode/
 .env
 _bmad/
