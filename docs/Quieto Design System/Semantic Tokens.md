@@ -1,3 +1,4 @@
+# Semantic Tokens
 Tier 2, or Semantic tokens, are [[Design Tokens]] that take the Primitive tokens and applies them to high-level applications within the UI. Essentially, [[Primitive Tokens]] are assigned as the value of Semantic tokens.
 
 **Examples:**

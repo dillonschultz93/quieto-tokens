@@ -1,3 +1,4 @@
+# Component Tokens
 Tier 3, or Component tokens are [[Design Tokens]] that target specific UI components or special use cases. Component tokens assign [[Semantic Tokens]] or [[Primitive Tokens]] as their value.
 
 **Examples:**

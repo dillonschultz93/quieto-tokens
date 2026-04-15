@@ -1,3 +1,4 @@
+# Design Tokens
 Design tokens are the platform-agnostic, named storage for visual design decisions (colors, spacing, typography) that represent data as key-value pairs (e.g., `color.primary = #007bff`). They act as a central, single source of truth, replacing hardcoded values to ensure consistency across multiple platforms, brands, or themes.
 
 This document details the naming structure and algorithm for the design token system. The architecture follows a three-tiered token system.

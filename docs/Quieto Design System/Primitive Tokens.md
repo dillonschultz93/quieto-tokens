@@ -1,3 +1,4 @@
+# Primitive Tokens
 Tier 1, or Primitive tokens, are [[Design Tokens]] that define the design system’s core attributes serving as an obfuscation to raw values.
 
 **Examples:**
