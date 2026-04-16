@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import { configExists } from "../utils/config.js";
+import { quickStartFlow } from "./quick-start.js";
 
 export async function initCommand(): Promise<void> {
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
@@ -35,19 +36,27 @@ export async function initCommand(): Promise<void> {
         p.outro("Nothing changed. Run again when ready.");
         return;
       }
-
-      if (action === "fresh") {
-        p.log.info("Starting fresh token generation...");
-      }
     }
 
-    p.log.step("Ready to begin the quick-start flow.");
-    p.log.info(
-      "The quick-start prompt flow is coming in the next release. Stay tuned.",
+    const options = await quickStartFlow();
+
+    const themeLabel = options.generateThemes ? "light + dark" : "single theme";
+    p.log.step(
+      [
+        "Your preferences:",
+        `  Brand color:   ${options.brandColor}`,
+        `  Spacing base:  ${options.spacingBase}px`,
+        `  Type scale:    ${options.typeScale}`,
+        `  Themes:        ${themeLabel}`,
+      ].join("\n"),
     );
 
+    p.log.info("Token generation coming in the next release.");
     p.outro("Done — thanks for using quieto-tokens.");
   } catch (error) {
+    if (error instanceof Error && error.message === "cancelled") {
+      return;
+    }
     p.cancel("Something went wrong.");
     throw error;
   }
