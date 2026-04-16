@@ -1,0 +1,31 @@
+{
+  "name": "quieto-tokens",
+  "version": "1.0.0",
+  "description": "Design tokens for the Quieto design system.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "notion:init": "node scripts/sync-to-notion.mjs --init",
+    "notion:sync": "node scripts/sync-to-notion.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dillonschultz93/quieto-tokens.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/dillonschultz93/quieto-tokens/issues"
+  },
+  "homepage": "https://github.com/dillonschultz93/quieto-tokens#readme",
+  "dependencies": {
+    "@notionhq/client": "^5.18.0",
+    "dotenv": "^17.4.2",
+    "yaml": "^2.8.3"
+  }
+}
