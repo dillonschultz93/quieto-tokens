@@ -1,6 +1,6 @@
 # Story 1.7: Preview, Override, and Confirmation
 
-Status: review
+Status: done
 
 ## Story
 
