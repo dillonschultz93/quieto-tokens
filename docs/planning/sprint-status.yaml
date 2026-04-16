@@ -50,7 +50,7 @@ development_status:
   1-4-spacing-and-typography-primitive-token-generation: done
   1-5-primitive-to-semantic-auto-mapping: done
   1-6-theme-variant-generation: done
-  1-7-preview-override-and-confirmation: ready-for-dev
+  1-7-preview-override-and-confirmation: done
   1-8-dtcg-json-and-css-output-via-style-dictionary: ready-for-dev
   1-9-config-file-generation: ready-for-dev
   epic-1-retrospective: optional
