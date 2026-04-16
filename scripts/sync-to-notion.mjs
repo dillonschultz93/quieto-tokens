@@ -206,6 +206,11 @@ async function createDatabase(entries) {
   console.log("Open your Notion database and switch to Board view grouped by Status.");
 }
 
+async function getDataSourceId(databaseId) {
+  const db = await notion.databases.retrieve({ database_id: databaseId });
+  return db.data_sources[0].id;
+}
+
 async function syncStatuses(entries) {
   if (!NOTION_DATABASE_ID) {
     console.error("No NOTION_DATABASE_ID found. Run with --init first.");
@@ -214,11 +219,13 @@ async function syncStatuses(entries) {
 
   console.log("Syncing statuses to Notion...");
 
+  const dataSourceId = await getDataSourceId(NOTION_DATABASE_ID);
+
   const existingPages = [];
   let cursor;
   do {
-    const response = await notion.databases.query({
-      database_id: NOTION_DATABASE_ID,
+    const response = await notion.dataSources.query({
+      data_source_id: dataSourceId,
       start_cursor: cursor,
     });
     existingPages.push(...response.results);
