@@ -23,6 +23,16 @@ export interface SemanticMapping {
   primitiveRef: string;
 }
 
+export interface Theme {
+  name: string;
+  semanticTokens: SemanticToken[];
+}
+
+export interface ThemeCollection {
+  primitives: PrimitiveToken[];
+  themes: Theme[];
+}
+
 export function colorRampToTokens(ramp: ColorRamp): PrimitiveToken[] {
   return ramp.steps.map((step) => ({
     tier: "primitive" as const,
