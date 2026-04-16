@@ -1,6 +1,6 @@
 # Story 1.5: Primitive-to-Semantic Auto-Mapping
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -18,41 +18,41 @@ So that I get usable tokens like `color.background.primary` without manually wir
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `src/mappers/semantic.ts` — the auto-mapping engine (AC: #1, #2, #3, #4)
-  - [ ] 1.1: Define `SemanticToken` type in `src/types/tokens.ts`: extends token base with `$value` as a DTCG reference string (e.g., `"{color.blue.500}"`) and `tier: 'semantic'`
-  - [ ] 1.2: Define mapping configuration type: `SemanticMapping = { semanticPath: string[]; primitiveRef: string }`
-- [ ] Task 2: Implement color semantic mapping (AC: #1, #4)
-  - [ ] 2.1: Define the default mapping table — which primitive step maps to which semantic role for each property:
+- [x] Task 1: Create `src/mappers/semantic.ts` — the auto-mapping engine (AC: #1, #2, #3, #4)
+  - [x] 1.1: Define `SemanticToken` type in `src/types/tokens.ts`: extends token base with `$value` as a DTCG reference string (e.g., `"{color.blue.500}"`) and `tier: 'semantic'`
+  - [x] 1.2: Define mapping configuration type: `SemanticMapping = { semanticPath: string[]; primitiveRef: string }`
+- [x] Task 2: Implement color semantic mapping (AC: #1, #4)
+  - [x] 2.1: Define the default mapping table — which primitive step maps to which semantic role for each property:
     - `color.background.default` → neutral light step (e.g., `color.neutral.50`)
     - `color.background.primary` → primary mid-light step (e.g., `color.blue.500`)
     - `color.content.default` → neutral dark step (e.g., `color.neutral.900`)
     - `color.content.primary` → primary step for text-on-light (e.g., `color.blue.700`)
     - `color.border.default` → neutral mid step (e.g., `color.neutral.200`)
     - Map across all roles: default, primary, secondary, danger, warning, success, info
-  - [ ] 2.2: Implement `mapColorSemantics(colorPrimitives: PrimitiveToken[]): SemanticToken[]`
-  - [ ] 2.3: Each semantic token's `$value` must use DTCG reference syntax: `"{color.<hue>.<step>}"`
-- [ ] Task 3: Implement spacing semantic mapping (AC: #2, #4)
-  - [ ] 3.1: Define spacing semantic mapping:
+  - [x] 2.2: Implement `mapColorSemantics(colorPrimitives: PrimitiveToken[]): SemanticToken[]`
+  - [x] 2.3: Each semantic token's `$value` must use DTCG reference syntax: `"{color.<hue>.<step>}"`
+- [x] Task 3: Implement spacing semantic mapping (AC: #2, #4)
+  - [x] 3.1: Define spacing semantic mapping:
     - `spacing.xs` → smallest spacing step
     - `spacing.sm` → second step
     - `spacing.md` → middle step (often 16px)
     - `spacing.lg` → larger step
     - `spacing.xl` → large step
     - `spacing.2xl` → largest common step
-  - [ ] 3.2: Implement `mapSpacingSemantics(spacingPrimitives: PrimitiveToken[]): SemanticToken[]`
-  - [ ] 3.3: References use DTCG syntax: `"{spacing.16}"`
-- [ ] Task 4: Implement typography semantic mapping (AC: #3, #4)
-  - [ ] 4.1: Define typography semantic mapping:
+  - [x] 3.2: Implement `mapSpacingSemantics(spacingPrimitives: PrimitiveToken[]): SemanticToken[]`
+  - [x] 3.3: References use DTCG syntax: `"{spacing.16}"`
+- [x] Task 4: Implement typography semantic mapping (AC: #3, #4)
+  - [x] 4.1: Define typography semantic mapping:
     - `typography.headline` → large font-size + bold weight
     - `typography.body` → base font-size + regular weight
     - `typography.label` → small font-size + medium/semibold weight
     - `typography.meta` → smallest font-size + regular weight
-  - [ ] 4.2: Implement `mapTypographySemantics(typoPrimitives: PrimitiveToken[]): SemanticToken[]`
-  - [ ] 4.3: Typography semantics may need composite references (font-size + font-weight pairing) — decide on flat vs composite structure
-- [ ] Task 5: Orchestrate full semantic mapping (AC: #1–#5)
-  - [ ] 5.1: Implement `generateSemanticTokens(primitives: PrimitiveToken[]): SemanticToken[]` — runs all three mappers
-  - [ ] 5.2: Wire into init pipeline after primitive generation (Stories 1.3 + 1.4)
-  - [ ] 5.3: Implement progress narrative: per-category counts and total semantic token count
+  - [x] 4.2: Implement `mapTypographySemantics(typoPrimitives: PrimitiveToken[]): SemanticToken[]`
+  - [x] 4.3: Typography semantics may need composite references (font-size + font-weight pairing) — decide on flat vs composite structure
+- [x] Task 5: Orchestrate full semantic mapping (AC: #1–#5)
+  - [x] 5.1: Implement `generateSemanticTokens(primitives: PrimitiveToken[]): SemanticToken[]` — runs all three mappers
+  - [x] 5.2: Wire into init pipeline after primitive generation (Stories 1.3 + 1.4)
+  - [x] 5.3: Implement progress narrative: per-category counts and total semantic token count
 
 ## Dev Notes
 
@@ -155,10 +155,31 @@ src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+No issues encountered.
+
 ### Completion Notes List
 
+- Added `SemanticToken` and `SemanticMapping` types to `src/types/tokens.ts` — semantic tokens have `tier: 'semantic'` and `$value` as DTCG reference strings.
+- Implemented `mapColorSemantics()` — maps 3 properties (background, content, border) × 7 roles (default, primary, secondary, danger, warning, success, info) = 21 semantic color tokens. Default/secondary/warning use neutral ramp; primary/danger/success/info use the primary hue ramp. Mapping table stored as `DEFAULT_COLOR_RULES` data structure for Story 1.7 overrides.
+- Implemented `mapSpacingSemantics()` — maps 6 t-shirt sizes (xs–2xl) to ramp positions via `DEFAULT_SPACING_INDEX_MAP`. Sorts primitives by value and picks indices.
+- Implemented `mapTypographySemantics()` — maps 4 roles (headline/body/label/meta) × 2 properties (font-size/font-weight) = 8 semantic tokens using flat structure (not composite). Role→label mappings stored in `DEFAULT_TYPOGRAPHY_ROLES`.
+- Implemented `generateSemanticTokens()` orchestrator — filters primitives by category, runs all 3 mappers, reports per-category counts and total via Clack narrative.
+- Wired into `src/commands/init.ts` after primitive generation — semantic tokens generated from `allPrimitives`, total count reported.
+- Updated `src/index.ts` with all new public API exports.
+- All 111 tests pass (7 test files), zero type errors, zero lint issues.
+
+### Change Log
+
+- 2026-04-16: Implemented Story 1.5 — primitive-to-semantic auto-mapping (all 5 tasks)
+
 ### File List
+
+- src/mappers/semantic.ts (new)
+- src/mappers/__tests__/semantic.test.ts (new)
+- src/types/tokens.ts (modified — added SemanticToken, SemanticMapping)
+- src/commands/init.ts (modified — wired semantic generation)
+- src/index.ts (modified — added semantic exports)

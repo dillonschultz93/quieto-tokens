@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-16
-last_updated: 2026-04-16T15:02:00
+last_updated: 2026-04-16T15:21:00
 project: Quieto Tokens CLI
 project_key: QUIETO
 tracking_system: file-system
@@ -48,7 +48,7 @@ development_status:
   1-2-quick-start-prompt-flow: done
   1-3-color-primitive-token-generation: done
   1-4-spacing-and-typography-primitive-token-generation: done
-  1-5-primitive-to-semantic-auto-mapping: ready-for-dev
+  1-5-primitive-to-semantic-auto-mapping: review
   1-6-theme-variant-generation: ready-for-dev
   1-7-preview-override-and-confirmation: ready-for-dev
   1-8-dtcg-json-and-css-output-via-style-dictionary: ready-for-dev
