@@ -4,6 +4,8 @@ export type {
   PrimitiveToken,
   SemanticToken,
   SemanticMapping,
+  Theme,
+  ThemeCollection,
 } from "./types/tokens.js";
 export type { ColorPrimitive, ColorRamp } from "./generators/color.js";
 export {
@@ -42,3 +44,10 @@ export type {
   ColorMappingRule,
   TypographyRoleRule,
 } from "./mappers/semantic.js";
+export {
+  generateLightTheme,
+  generateDarkTheme,
+  generateThemes,
+  NEUTRAL_STEP_INVERSION,
+  PRIMARY_STEP_INVERSION,
+} from "./generators/themes.js";

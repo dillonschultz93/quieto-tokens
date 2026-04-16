@@ -1,6 +1,6 @@
 # Story 1.6: Theme Variant Generation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,34 +18,34 @@ So that I support both appearances without designing two separate color systems.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Design the theme data model (AC: #1, #2, #3, #5)
-  - [ ] 1.1: Define `Theme` type in `src/types/tokens.ts`: `{ name: string; semanticTokens: SemanticToken[] }` — each theme is a named set of semantic-to-primitive mappings
-  - [ ] 1.2: Define `ThemeCollection` type: `{ primitives: PrimitiveToken[]; themes: Theme[] }`
-  - [ ] 1.3: The primitives are shared across all themes; themes only vary in semantic mappings
-- [ ] Task 2: Create `src/generators/themes.ts` — theme variant generator (AC: #1, #2, #3)
-  - [ ] 2.1: Implement `generateLightTheme(semanticTokens: SemanticToken[]): Theme` — wraps the existing semantic mapping (from Story 1.5) as the "light" named theme
-  - [ ] 2.2: Implement `generateDarkTheme(semanticTokens: SemanticToken[], primitives: PrimitiveToken[]): Theme` — creates an inverted mapping:
+- [x] Task 1: Design the theme data model (AC: #1, #2, #3, #5)
+  - [x] 1.1: Define `Theme` type in `src/types/tokens.ts`: `{ name: string; semanticTokens: SemanticToken[] }` — each theme is a named set of semantic-to-primitive mappings
+  - [x] 1.2: Define `ThemeCollection` type: `{ primitives: PrimitiveToken[]; themes: Theme[] }`
+  - [x] 1.3: The primitives are shared across all themes; themes only vary in semantic mappings
+- [x] Task 2: Create `src/generators/themes.ts` — theme variant generator (AC: #1, #2, #3)
+  - [x] 2.1: Implement `generateLightTheme(semanticTokens: SemanticToken[]): Theme` — wraps the existing semantic mapping (from Story 1.5) as the "light" named theme
+  - [x] 2.2: Implement `generateDarkTheme(semanticTokens: SemanticToken[], primitives: PrimitiveToken[]): Theme` — creates an inverted mapping:
     - Background tokens: swap to dark primitive steps (e.g., `color.neutral.50` → `color.neutral.900`)
     - Content tokens: swap to light primitive steps (e.g., `color.neutral.900` → `color.neutral.50`)
     - Border tokens: adjust to appropriate dark-mode contrast steps
     - Primary/accent backgrounds: may use lighter/more vibrant steps for dark mode
     - Spacing and typography semantics: remain unchanged across themes
-  - [ ] 2.3: Implement `generateThemes(semanticTokens, primitives, enableDarkMode: boolean): ThemeCollection`
-- [ ] Task 3: Define the dark-mode inversion strategy (AC: #2, #3)
-  - [ ] 3.1: Create an inversion mapping that knows how to flip primitive references:
+  - [x] 2.3: Implement `generateThemes(semanticTokens, primitives, enableDarkMode: boolean): ThemeCollection`
+- [x] Task 3: Define the dark-mode inversion strategy (AC: #2, #3)
+  - [x] 3.1: Create an inversion mapping that knows how to flip primitive references:
     - For neutral ramps: reverse the step order (50↔950, 100↔900, 200↔800, etc.)
     - For primary/accent ramps: shift steps to maintain contrast on dark backgrounds
     - For non-color tokens (spacing, typography): no change between themes
-  - [ ] 3.2: The inversion must preserve DTCG reference syntax — dark theme tokens still reference the same primitives, just different steps
-- [ ] Task 4: Structure themes for Style Dictionary compatibility (AC: #5)
-  - [ ] 4.1: Research Style Dictionary v5 theme/platform conventions for multi-theme output
-  - [ ] 4.2: Structure the `ThemeCollection` data so it maps cleanly to separate JSON source files per theme or a theme-scoped directory structure (e.g., `tokens/semantic/light/`, `tokens/semantic/dark/`)
-  - [ ] 4.3: Ensure theme names are valid identifiers for CSS class selectors (e.g., `.theme-light`, `.theme-dark` or `[data-theme="light"]`)
-- [ ] Task 5: Implement progress narrative and integrate into pipeline (AC: #1, #2, #4)
-  - [ ] 5.1: If user opted for themes: narrate "Generating light theme..." and "Generating dark theme..." with token counts
-  - [ ] 5.2: If user opted out of themes: narrate "Using default theme (light)" with a brief note that themes can be enabled later
-  - [ ] 5.3: Wire into init pipeline after Story 1.5's semantic mapping
-  - [ ] 5.4: Pass `ThemeCollection` forward for preview (Story 1.7) and output (Story 1.8)
+  - [x] 3.2: The inversion must preserve DTCG reference syntax — dark theme tokens still reference the same primitives, just different steps
+- [x] Task 4: Structure themes for Style Dictionary compatibility (AC: #5)
+  - [x] 4.1: Research Style Dictionary v5 theme/platform conventions for multi-theme output
+  - [x] 4.2: Structure the `ThemeCollection` data so it maps cleanly to separate JSON source files per theme or a theme-scoped directory structure (e.g., `tokens/semantic/light/`, `tokens/semantic/dark/`)
+  - [x] 4.3: Ensure theme names are valid identifiers for CSS class selectors (e.g., `.theme-light`, `.theme-dark` or `[data-theme="light"]`)
+- [x] Task 5: Implement progress narrative and integrate into pipeline (AC: #1, #2, #4)
+  - [x] 5.1: If user opted for themes: narrate "Generating light theme..." and "Generating dark theme..." with token counts
+  - [x] 5.2: If user opted out of themes: narrate "Using default theme (light)" with a brief note that themes can be enabled later
+  - [x] 5.3: Wire into init pipeline after Story 1.5's semantic mapping
+  - [x] 5.4: Pass `ThemeCollection` forward for preview (Story 1.7) and output (Story 1.8)
 
 ## Dev Notes
 
@@ -169,10 +169,42 @@ src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6 (cursor)
 
 ### Debug Log References
 
+No issues encountered; all tests passed on first implementation.
+
 ### Completion Notes List
 
+- Added `Theme` and `ThemeCollection` interfaces to `src/types/tokens.ts`; exported from barrel `src/index.ts`
+- Created `src/generators/themes.ts` with `generateLightTheme`, `generateDarkTheme`, `generateThemes` and two inversion maps (`NEUTRAL_STEP_INVERSION`, `PRIMARY_STEP_INVERSION`)
+- Neutral inversion: symmetric 11-step ramp reversal (50↔950, 100↔900, …, 500 stays)
+- Primary inversion: shifted for dark-mode contrast (500→400, 700→300 per story spec)
+- Non-color semantics (spacing, typography) pass through unchanged between themes
+- `enableDarkMode=false` produces a single "default" theme with the original semantic mappings
+- Wired `generateThemes` into `initCommand` after semantic mapping; `ThemeCollection` available for downstream stories (1.7 preview, 1.8 output)
+- Clack narrative: "Generating light/dark theme…" with token counts, or "Using default theme" with re-enable hint
+- 36 new tests in `src/generators/__tests__/themes.test.ts` covering types, inversion maps, light/dark/default generation, DTCG reference preservation, spacing/typography passthrough, SD compatibility, and Clack narrative
+- Full suite: 147 tests, 0 failures, 0 regressions
+- Code review (2026-04-16): applied patches — simplified `invertColorRef`; clarified init token summary for multi-theme runs
+
+### Change Log
+
+- 2026-04-16: Implemented Story 1.6 — Theme variant generation (light/dark from single palette with ramp-step inversion)
+
 ### File List
+
+- src/types/tokens.ts (modified — added Theme, ThemeCollection interfaces)
+- src/generators/themes.ts (new — theme variant generator with inversion maps)
+- src/generators/__tests__/themes.test.ts (new — 36 tests)
+- src/commands/init.ts (modified — wired generateThemes into pipeline)
+- src/index.ts (modified — exported Theme, ThemeCollection types and theme generator functions)
+
+### Review Findings
+
+- [x] [Review][Patch] Remove unused `primitives` parameter from `invertColorRef` (or use it for validation) — currently dead API noise and may confuse readers [`src/generators/themes.ts:39-42`] — fixed: `invertColorRef(ref)` only; `generateDarkTheme` keeps `primitives` in its public signature with `void primitives` until validation is needed
+
+- [x] [Review][Patch] Clarify the final `init` summary when multiple themes exist — summing semantic tokens across themes can read like duplicated “unique” semantics; prefer wording that reflects per-theme mappings (e.g. counts per theme or “× N themes”) [`src/commands/init.ts:84-89`] — fixed: per-theme × theme count + mapping rows vs single-theme wording
+
+- [x] [Review][Defer] `PRIMARY_STEP_INVERSION` maps both 600 and 700 to 300 — confirm intentional for contrast; adjust mapping if distinct dark-mode steps are needed [`src/generators/themes.ts:30-31`] — deferred, follow-up visual QA

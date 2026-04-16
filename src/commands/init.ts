@@ -7,6 +7,7 @@ import {
   runTypographyGeneration,
 } from "../pipeline/spacing-typography.js";
 import { generateSemanticTokens } from "../mappers/semantic.js";
+import { generateThemes } from "../generators/themes.js";
 
 export async function initCommand(): Promise<void> {
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
@@ -74,9 +75,29 @@ export async function initCommand(): Promise<void> {
 
     const semanticTokens = generateSemanticTokens(allPrimitives);
 
-    p.log.info(
-      `${allPrimitives.length} primitives + ${semanticTokens.length} semantics = ${allPrimitives.length + semanticTokens.length} total tokens`,
+    const themeCollection = generateThemes(
+      semanticTokens,
+      allPrimitives,
+      options.generateThemes,
     );
+
+    const themeCount = themeCollection.themes.length;
+    const mappingRows = themeCollection.themes.reduce(
+      (sum, t) => sum + t.semanticTokens.length,
+      0,
+    );
+    const perThemeSemantics =
+      themeCollection.themes[0]?.semanticTokens.length ?? 0;
+
+    if (themeCount > 1) {
+      p.log.info(
+        `${allPrimitives.length} primitives; ${perThemeSemantics} semantic mappings per theme × ${themeCount} themes (${mappingRows} mapping rows) — ${allPrimitives.length + mappingRows} token records total`,
+      );
+    } else {
+      p.log.info(
+        `${allPrimitives.length} primitives + ${mappingRows} semantic mappings = ${allPrimitives.length + mappingRows} token records`,
+      );
+    }
     p.outro("Done — thanks for using quieto-tokens.");
   } catch (error) {
     if (error instanceof Error && error.message === "cancelled") {
