@@ -6,6 +6,7 @@ import {
   runSpacingGeneration,
   runTypographyGeneration,
 } from "../pipeline/spacing-typography.js";
+import { generateSemanticTokens } from "../mappers/semantic.js";
 
 export async function initCommand(): Promise<void> {
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
@@ -69,6 +70,12 @@ export async function initCommand(): Promise<void> {
 
     p.log.info(
       `${allPrimitives.length} total primitives generated (${colorTokens.length} color, ${spacingTokens.length} spacing, ${typographyTokens.length} typography)`,
+    );
+
+    const semanticTokens = generateSemanticTokens(allPrimitives);
+
+    p.log.info(
+      `${allPrimitives.length} primitives + ${semanticTokens.length} semantics = ${allPrimitives.length + semanticTokens.length} total tokens`,
     );
     p.outro("Done — thanks for using quieto-tokens.");
   } catch (error) {

@@ -9,6 +9,20 @@ export interface PrimitiveToken {
   path: string[];
 }
 
+export interface SemanticToken {
+  tier: "semantic";
+  category: string;
+  name: string;
+  $type: string;
+  $value: string;
+  path: string[];
+}
+
+export interface SemanticMapping {
+  semanticPath: string[];
+  primitiveRef: string;
+}
+
 export function colorRampToTokens(ramp: ColorRamp): PrimitiveToken[] {
   return ramp.steps.map((step) => ({
     tier: "primitive" as const,

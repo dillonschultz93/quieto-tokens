@@ -1,6 +1,10 @@
 export { initCommand } from "./commands/init.js";
 export type { QuickStartOptions } from "./types.js";
-export type { PrimitiveToken } from "./types/tokens.js";
+export type {
+  PrimitiveToken,
+  SemanticToken,
+  SemanticMapping,
+} from "./types/tokens.js";
 export type { ColorPrimitive, ColorRamp } from "./generators/color.js";
 export {
   generatePrimaryRamp,
@@ -25,3 +29,16 @@ export {
   runSpacingGeneration,
   runTypographyGeneration,
 } from "./pipeline/spacing-typography.js";
+export {
+  mapColorSemantics,
+  mapSpacingSemantics,
+  mapTypographySemantics,
+  generateSemanticTokens,
+  DEFAULT_COLOR_RULES,
+  DEFAULT_SPACING_INDEX_MAP,
+  DEFAULT_TYPOGRAPHY_ROLES,
+} from "./mappers/semantic.js";
+export type {
+  ColorMappingRule,
+  TypographyRoleRule,
+} from "./mappers/semantic.js";
