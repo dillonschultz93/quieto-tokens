@@ -1,13 +1,27 @@
 {
-  "name": "quieto-tokens",
-  "version": "1.0.0",
-  "description": "Design tokens for the Quieto design system.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
+  "name": "@quieto/tokens",
+  "version": "0.1.0",
+  "description": "CLI tool for generating complete, accessible design token systems.",
+  "type": "module",
+  "bin": {
+    "quieto-tokens": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
     "notion:init": "node scripts/sync-to-notion.mjs --init",
     "notion:sync": "node scripts/sync-to-notion.mjs"
   },
@@ -15,17 +29,28 @@
     "type": "git",
     "url": "git+https://github.com/dillonschultz93/quieto-tokens.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "css-variables",
+    "design-system",
+    "cli"
+  ],
+  "author": "Dillon Schultz",
   "license": "ISC",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/dillonschultz93/quieto-tokens/issues"
   },
   "homepage": "https://github.com/dillonschultz93/quieto-tokens#readme",
   "dependencies": {
+    "@clack/prompts": "^1.2.0",
     "@notionhq/client": "^5.18.0",
     "dotenv": "^17.4.2",
     "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0"
   }
 }
