@@ -1,6 +1,6 @@
 # Story 1.1: CLI Scaffolding and Init Entry Point
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,32 +18,44 @@ So that I know I'm using a professional tool that will guide me through token cr
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Initialize TypeScript project structure (AC: #1)
-  - [ ] 1.1: Configure `package.json` with correct name (`@quieto/tokens`), `type: "module"`, `bin` entry, and `exports` map
-  - [ ] 1.2: Add TypeScript config (`tsconfig.json`) targeting ES2022+ with strict mode, ESM module resolution (`"module": "NodeNext"`)
-  - [ ] 1.3: Add `tsup` as build tool with ESM output, `src/index.ts` entry, and `.d.ts` generation
-  - [ ] 1.4: Create `src/` directory structure (see File Structure below)
-  - [ ] 1.5: Add dev dependencies: `typescript`, `tsup`, `@types/node`
-  - [ ] 1.6: Add runtime dependencies: `@clack/prompts` (^1.2.0)
-  - [ ] 1.7: Add npm scripts: `build`, `dev` (tsup --watch), `type-check` (tsc --noEmit)
-  - [ ] 1.8: Add `dist/` to `.gitignore`
-- [ ] Task 2: Implement CLI entry point and command routing (AC: #1)
-  - [ ] 2.1: Create `src/cli.ts` as the bin entry point with shebang (`#!/usr/bin/env node`)
-  - [ ] 2.2: Parse `process.argv` for the subcommand (initially only `init`); display help/usage if no subcommand or `--help`
-  - [ ] 2.3: Route `init` subcommand to `src/commands/init.ts`
-- [ ] Task 3: Implement the `init` command with Clack welcome flow (AC: #1, #2, #3, #4)
-  - [ ] 3.1: Display Clack `intro()` with Quieto branding message
-  - [ ] 3.2: Check `process.cwd()` for existing `quieto.config.json`
-  - [ ] 3.3: If config exists → Clack `select()` prompt: "Modify existing system" or "Start fresh"
-  - [ ] 3.4: If no config → log intent to start quick-start flow (stub for Story 1.2)
-  - [ ] 3.5: Display Clack `outro()` on completion
-- [ ] Task 4: Implement error handling (AC: #5)
-  - [ ] 4.1: Wrap command execution in try/catch; use Clack `cancel()` for user-facing errors
-  - [ ] 4.2: Handle `Ctrl+C` / SIGINT gracefully (Clack's `isCancel()` check on every prompt response)
-- [ ] Task 5: Verify the full flow (AC: #1-#5)
-  - [ ] 5.1: `npm run build` succeeds; `node dist/cli.js init` displays the welcome flow
-  - [ ] 5.2: Running in a directory without `quieto.config.json` proceeds to quick-start stub
-  - [ ] 5.3: Running in a directory with `quieto.config.json` shows modify/fresh prompt
+- [x] Task 1: Initialize TypeScript project structure (AC: #1)
+  - [x] 1.1: Configure `package.json` with correct name (`@quieto/tokens`), `type: "module"`, `bin` entry, and `exports` map
+  - [x] 1.2: Add TypeScript config (`tsconfig.json`) targeting ES2022+ with strict mode, ESM module resolution (`"module": "NodeNext"`)
+  - [x] 1.3: Add `tsup` as build tool with ESM output, `src/index.ts` entry, and `.d.ts` generation
+  - [x] 1.4: Create `src/` directory structure (see File Structure below)
+  - [x] 1.5: Add dev dependencies: `typescript`, `tsup`, `@types/node`
+  - [x] 1.6: Add runtime dependencies: `@clack/prompts` (^1.2.0)
+  - [x] 1.7: Add npm scripts: `build`, `dev` (tsup --watch), `type-check` (tsc --noEmit)
+  - [x] 1.8: Add `dist/` to `.gitignore`
+- [x] Task 2: Implement CLI entry point and command routing (AC: #1)
+  - [x] 2.1: Create `src/cli.ts` as the bin entry point with shebang (`#!/usr/bin/env node`)
+  - [x] 2.2: Parse `process.argv` for the subcommand (initially only `init`); display help/usage if no subcommand or `--help`
+  - [x] 2.3: Route `init` subcommand to `src/commands/init.ts`
+- [x] Task 3: Implement the `init` command with Clack welcome flow (AC: #1, #2, #3, #4)
+  - [x] 3.1: Display Clack `intro()` with Quieto branding message
+  - [x] 3.2: Check `process.cwd()` for existing `quieto.config.json`
+  - [x] 3.3: If config exists → Clack `select()` prompt: "Modify existing system" or "Start fresh"
+  - [x] 3.4: If no config → log intent to start quick-start flow (stub for Story 1.2)
+  - [x] 3.5: Display Clack `outro()` on completion
+- [x] Task 4: Implement error handling (AC: #5)
+  - [x] 4.1: Wrap command execution in try/catch; use Clack `cancel()` for user-facing errors
+  - [x] 4.2: Handle `Ctrl+C` / SIGINT gracefully (Clack's `isCancel()` check on every prompt response)
+- [x] Task 5: Verify the full flow (AC: #1-#5)
+  - [x] 5.1: `npm run build` succeeds; `node dist/cli.js init` displays the welcome flow
+  - [x] 5.2: Running in a directory without `quieto.config.json` proceeds to quick-start stub
+  - [x] 5.3: Running in a directory with `quieto.config.json` shows modify/fresh prompt
+
+### Review Findings
+
+- [x] [Review][Patch] AC5: Global error handler in cli.ts uses console.error instead of Clack cancel() [src/cli.ts:49-52]
+- [x] [Review][Patch] AC5: initCommand has no try/catch — runtime errors bypass Clack cancel() [src/commands/init.ts]
+- [x] [Review][Patch] process.exit() called inside exported initCommand — breaks testability and composability [src/commands/init.ts:29-31]
+- [x] [Review][Patch] No-args invocation exits code 0 — should exit 1 for missing command [src/cli.ts:21-24]
+- [x] [Review][Patch] "Fresh" path falls through implicitly without explicit guard [src/commands/init.ts:36]
+- [x] [Review][Patch] .gitignore missing trailing newline [.gitignore]
+- [x] [Review][Defer] --version uses fragile path-relative package.json lookup [src/cli.ts:30-34] — deferred, acceptable for scaffolding
+- [x] [Review][Defer] Extra arguments and unknown flags silently swallowed [src/cli.ts] — deferred, no subcommand flags specified yet
+- [x] [Review][Defer] clean:true order-dependent in tsup array config [tsup.config.ts] — deferred, tsup processes sequentially
 
 ## Dev Notes
 
@@ -208,8 +220,36 @@ After building, ensure `dist/cli.js` is executable: `chmod +x dist/cli.js` (add 
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+- Type check: `npm run type-check` — passed, zero errors
+- Build: `npm run build` — tsup produced `dist/cli.js` (2.80 KB), `dist/index.js` (1.58 KB), `dist/index.d.ts`
+- Init (no config): displays Clack intro, quick-start stub message, and outro
+- Init (with config): displays Clack intro, select prompt with "Modify" / "Start fresh" options
+- Help/version flags: both work correctly
+- Unknown command: prints error + help text, exits with code 1
 
 ### Completion Notes List
 
+- Configured `package.json` as `@quieto/tokens` v0.1.0 with ESM, bin entry, exports map, and engine constraint (Node >=18)
+- Added `tsconfig.json` targeting ES2022/NodeNext with strict mode
+- Used tsup with a two-entry config array: `cli.ts` gets the shebang banner, `index.ts` gets `.d.ts` generation — avoids the shebang-on-library-entry issue
+- CLI entry (`src/cli.ts`) parses argv and routes to commands; supports `--help`, `--version`, and unknown command error
+- Init command (`src/commands/init.ts`) uses Clack `intro()`, `select()`, `isCancel()`, `log.step()`, `log.info()`, and `outro()`
+- Config detection (`src/utils/config.ts`) uses `existsSync` to check for `quieto.config.json` in cwd
+- Error handling: top-level `catch` in cli.ts for fatal errors; `isCancel()` check on the select prompt in init.ts
+- Existing project tooling deps (`@notionhq/client`, `dotenv`, `yaml`) and scripts (`notion:*`) preserved in package.json
+- Story explicitly defers testing framework setup to Story 1.2+ when meaningful logic exists to test
+
 ### File List
+
+- package.json (modified)
+- tsconfig.json (new)
+- tsup.config.ts (new)
+- .gitignore (modified — added `dist/`)
+- src/cli.ts (new)
+- src/index.ts (new)
+- src/commands/init.ts (new)
+- src/utils/config.ts (new)
