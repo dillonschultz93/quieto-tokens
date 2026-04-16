@@ -2,6 +2,10 @@ import * as p from "@clack/prompts";
 import { configExists } from "../utils/config.js";
 import { quickStartFlow } from "./quick-start.js";
 import { runColorGeneration } from "../pipeline/color.js";
+import {
+  runSpacingGeneration,
+  runTypographyGeneration,
+} from "../pipeline/spacing-typography.js";
 
 export async function initCommand(): Promise<void> {
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
@@ -54,8 +58,17 @@ export async function initCommand(): Promise<void> {
 
     const colorTokens = await runColorGeneration(options.brandColor);
 
+    const spacingTokens = runSpacingGeneration(options.spacingBase);
+    const typographyTokens = runTypographyGeneration(options.typeScale);
+
+    const allPrimitives = [
+      ...colorTokens,
+      ...spacingTokens,
+      ...typographyTokens,
+    ];
+
     p.log.info(
-      `Next steps: spacing, typography, semantic mapping (coming soon). ${colorTokens.length} tokens ready.`,
+      `${allPrimitives.length} total primitives generated (${colorTokens.length} color, ${spacingTokens.length} spacing, ${typographyTokens.length} typography)`,
     );
     p.outro("Done — thanks for using quieto-tokens.");
   } catch (error) {

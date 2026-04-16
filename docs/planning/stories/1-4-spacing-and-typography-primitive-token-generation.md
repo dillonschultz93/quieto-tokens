@@ -1,6 +1,6 @@
 # Story 1.4: Spacing and Typography Primitive Token Generation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -19,33 +19,40 @@ So that I have consistent, harmonious values for layout and text without manual 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define spacing preset ramps (AC: #1, #2)
-  - [ ] 1.1: Create `src/generators/spacing.ts`
-  - [ ] 1.2: Define the 4px base ramp: `[4, 8, 12, 16, 24, 32, 48, 64, 96]`
-  - [ ] 1.3: Define the 8px base ramp: `[8, 16, 24, 32, 48, 64, 96, 128, 192]`
-  - [ ] 1.4: Implement `generateSpacingPrimitives(base: 4 | 8): PrimitiveToken[]` — returns spacing tokens from the selected preset
-- [ ] Task 2: Define typography preset scales (AC: #3, #4)
-  - [ ] 2.1: Create `src/generators/typography.ts`
-  - [ ] 2.2: Define "compact" type scale: tighter ratios, smaller sizes (e.g., 12, 14, 16, 18, 20, 24)
-  - [ ] 2.3: Define "balanced" type scale: standard ratios (e.g., 12, 14, 16, 20, 24, 30, 36)
-  - [ ] 2.4: Define "spacious" type scale: larger ratios (e.g., 14, 16, 20, 24, 32, 40, 48)
-  - [ ] 2.5: Define font weight primitives: `{ regular: 400, medium: 500, semibold: 600, bold: 700 }`
-  - [ ] 2.6: Implement `generateTypographyPrimitives(scale: 'compact' | 'balanced' | 'spacious'): PrimitiveToken[]` — returns font-size + font-weight tokens
-- [ ] Task 3: Convert presets to token representation (AC: #2, #6)
-  - [ ] 3.1: Reuse `PrimitiveToken` type from `src/types/tokens.ts` (created in Story 1.3)
-  - [ ] 3.2: Spacing tokens: path = `['spacing', value]`, `$type = 'dimension'`, `$value = '{n}px'`
-  - [ ] 3.3: Font-size tokens: path = `['typography', 'font-size', step]`, `$type = 'dimension'`
-  - [ ] 3.4: Font-weight tokens: path = `['typography', 'font-weight', name]`, `$type = 'fontWeight'`
-- [ ] Task 4: Implement progress narrative (AC: #5)
-  - [ ] 4.1: Use Clack `log.step()` and `log.info()` for narration
-  - [ ] 4.2: Report spacing ramp creation with base and step count
-  - [ ] 4.3: Report type scale creation with preference name and step count
-  - [ ] 4.4: Report font weight count
-  - [ ] 4.5: Display total non-color primitive count at completion
-- [ ] Task 5: Integrate into init pipeline after color generation (AC: #1–#6)
-  - [ ] 5.1: Wire `generateSpacingPrimitives()` and `generateTypographyPrimitives()` into the init flow after Story 1.3's color generation
-  - [ ] 5.2: Merge returned `PrimitiveToken[]` arrays with color primitives into a unified primitive token collection
-  - [ ] 5.3: Pass the combined collection forward for semantic mapping (Story 1.5)
+- [x] Task 1: Define spacing preset ramps (AC: #1, #2)
+  - [x] 1.1: Create `src/generators/spacing.ts`
+  - [x] 1.2: Define the 4px base ramp: `[4, 8, 12, 16, 24, 32, 48, 64, 96]`
+  - [x] 1.3: Define the 8px base ramp: `[8, 16, 24, 32, 48, 64, 96, 128, 192]`
+  - [x] 1.4: Implement `generateSpacingPrimitives(base: 4 | 8): PrimitiveToken[]` — returns spacing tokens from the selected preset
+- [x] Task 2: Define typography preset scales (AC: #3, #4)
+  - [x] 2.1: Create `src/generators/typography.ts`
+  - [x] 2.2: Define "compact" type scale: tighter ratios, smaller sizes (e.g., 12, 14, 16, 18, 20, 24)
+  - [x] 2.3: Define "balanced" type scale: standard ratios (e.g., 12, 14, 16, 20, 24, 30, 36)
+  - [x] 2.4: Define "spacious" type scale: larger ratios (e.g., 14, 16, 20, 24, 32, 40, 48)
+  - [x] 2.5: Define font weight primitives: `{ regular: 400, medium: 500, semibold: 600, bold: 700 }`
+  - [x] 2.6: Implement `generateTypographyPrimitives(scale: 'compact' | 'balanced' | 'spacious'): PrimitiveToken[]` — returns font-size + font-weight tokens
+- [x] Task 3: Convert presets to token representation (AC: #2, #6)
+  - [x] 3.1: Reuse `PrimitiveToken` type from `src/types/tokens.ts` (created in Story 1.3)
+  - [x] 3.2: Spacing tokens: path = `['spacing', value]`, `$type = 'dimension'`, `$value = '{n}px'`
+  - [x] 3.3: Font-size tokens: path = `['typography', 'font-size', step]`, `$type = 'dimension'`
+  - [x] 3.4: Font-weight tokens: path = `['typography', 'font-weight', name]`, `$type = 'fontWeight'`
+- [x] Task 4: Implement progress narrative (AC: #5)
+  - [x] 4.1: Use Clack `log.step()` and `log.info()` for narration
+  - [x] 4.2: Report spacing ramp creation with base and step count
+  - [x] 4.3: Report type scale creation with preference name and step count
+  - [x] 4.4: Report font weight count
+  - [x] 4.5: Display total non-color primitive count at completion
+- [x] Task 5: Integrate into init pipeline after color generation (AC: #1–#6)
+  - [x] 5.1: Wire `generateSpacingPrimitives()` and `generateTypographyPrimitives()` into the init flow after Story 1.3's color generation
+  - [x] 5.2: Merge returned `PrimitiveToken[]` arrays with color primitives into a unified primitive token collection
+  - [x] 5.3: Pass the combined collection forward for semantic mapping (Story 1.5)
+
+### Review Findings
+
+- [x] [Review][Patch] Typography `log.step()` fires after generation — reorder before `generateTypographyPrimitives()` call to match spacing pattern [src/pipeline/spacing-typography.ts:16-20]
+- [x] [Review][Patch] Spacing `log.step()` should include step count inline per AC #5 example ("Building spacing ramp from 4px base: 9 steps") [src/pipeline/spacing-typography.ts:7]
+- [x] [Review][Patch] Add runtime guard clauses in `generateSpacingPrimitives` and `generateTypographyPrimitives` for invalid input values [src/generators/spacing.ts:12, src/generators/typography.ts:54]
+- [x] [Review][Defer] `TypeScaleStep` interface properties not `readonly` — exported constants can be mutated via property access — deferred, pre-existing type design
 
 ## Dev Notes
 
@@ -144,10 +151,34 @@ src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+No issues encountered.
+
 ### Completion Notes List
 
+- Implemented spacing generator with curated 4px and 8px preset ramps (9 steps each), returning `PrimitiveToken[]` with `$type: 'dimension'` and `spacing.<value>` naming convention.
+- Implemented typography generator with compact (6 sizes), balanced (7 sizes), and spacious (7 sizes) type scales plus 4 font weight primitives (regular/medium/semibold/bold).
+- Created `src/pipeline/spacing-typography.ts` pipeline module with Clack-based progress narrative reporting ramp base, step counts, font weight counts, and totals.
+- Integrated spacing and typography generation into `src/commands/init.ts` after color generation, merging all primitive tokens into a unified `allPrimitives` collection.
+- Updated `src/index.ts` public API exports for all new generators, presets, and pipeline functions.
+- All 75 tests pass (6 test files), zero type errors, zero lint issues.
+
+### Change Log
+
+- 2026-04-16: Implemented Story 1.4 — spacing and typography primitive token generation (all 5 tasks)
+
 ### File List
+
+- src/generators/spacing.ts (new)
+- src/generators/typography.ts (new)
+- src/generators/__tests__/spacing.test.ts (new)
+- src/generators/__tests__/typography.test.ts (new)
+- src/pipeline/spacing-typography.ts (new)
+- src/pipeline/__tests__/spacing-typography.test.ts (new)
+- src/commands/init.ts (modified)
+- src/index.ts (modified)
+- docs/planning/sprint-status.yaml (modified)
+- docs/planning/stories/1-4-spacing-and-typography-primitive-token-generation.md (modified)
