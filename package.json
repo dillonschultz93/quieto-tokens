@@ -22,6 +22,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "notion:init": "node scripts/sync-to-notion.mjs --init",
     "notion:sync": "node scripts/sync-to-notion.mjs"
   },
@@ -45,12 +47,14 @@
   "dependencies": {
     "@clack/prompts": "^1.2.0",
     "@notionhq/client": "^5.18.0",
+    "@quieto/engine": "^0.1.1",
     "dotenv": "^17.4.2",
     "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4"
   }
 }

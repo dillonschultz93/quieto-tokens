@@ -1,6 +1,6 @@
 # Story 1.3: Color Primitive Token Generation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,28 +18,34 @@ So that I have a full set of color primitives without needing to understand colo
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Install `@quieto/palettes` as a runtime dependency (AC: #1)
-  - [ ] 1.1: Add `@quieto/palettes` to `package.json` dependencies (local link or npm install depending on publish status)
-  - [ ] 1.2: Verify the package exposes a function that takes a hex color and returns an accessible color ramp with step values
-  - [ ] 1.3: If `@quieto/palettes` is not yet published, document the expected API contract and use a local file path link or create a minimal stub interface
-- [ ] Task 2: Create `src/generators/color.ts` — color primitive generator (AC: #1, #2, #5)
-  - [ ] 2.1: Define `ColorPrimitive` type: `{ name: string; step: number; hex: string; }` (or match `@quieto/palettes` output shape)
-  - [ ] 2.2: Define `ColorRamp` type: `{ hue: string; steps: ColorPrimitive[] }`
-  - [ ] 2.3: Implement `generatePrimaryRamp(brandHex: string): ColorRamp` — calls `@quieto/palettes` to generate the full primary ramp
-  - [ ] 2.4: Implement `generateNeutralRamp(): ColorRamp` — generates a neutral/gray ramp (may derive from brand color or use a standard neutral)
-  - [ ] 2.5: Implement `generateColorPrimitives(brandHex: string): ColorRamp[]` — orchestrates primary + neutral ramp generation and returns all color primitives
-- [ ] Task 3: Define in-memory token representation for primitives (AC: #5)
-  - [ ] 3.1: Create `src/types/tokens.ts` with `PrimitiveToken` interface: `{ tier: 'primitive'; category: string; name: string; $type: string; $value: string; path: string[] }`
-  - [ ] 3.2: Implement `colorRampToTokens(ramp: ColorRamp): PrimitiveToken[]` — converts ramp data to primitive tokens following `color.<hue>.<step>` naming
-  - [ ] 3.3: Each token's `path` array should be `['color', hue, step]` for later DTCG JSON serialization (Story 1.8)
-- [ ] Task 4: Integrate color generation into the init pipeline (AC: #1, #2, #4)
-  - [ ] 4.1: Create `src/pipeline/` directory structure for the sequential generation pipeline
-  - [ ] 4.2: Export a `runColorGeneration(brandHex: string): Promise<PrimitiveToken[]>` function that orchestrates generation + progress narrative
-  - [ ] 4.3: Wire into the init command flow after Story 1.2's prompt collection completes
-- [ ] Task 5: Implement progress narrative for color generation (AC: #4)
-  - [ ] 5.1: Use Clack `log.step()` and `log.info()` to narrate each ramp generation (e.g., "Generating primary color ramp from #3B82F6...")
-  - [ ] 5.2: Display step count after each ramp (e.g., "✓ Primary ramp: 11 steps")
-  - [ ] 5.3: Display total color primitive count at completion (e.g., "22 color primitives generated")
+- [x] Task 1: Install `@quieto/palettes` as a runtime dependency (AC: #1)
+  - [x] 1.1: Add `@quieto/palettes` to `package.json` dependencies (local link or npm install depending on publish status)
+  - [x] 1.2: Verify the package exposes a function that takes a hex color and returns an accessible color ramp with step values
+  - [x] 1.3: If `@quieto/palettes` is not yet published, document the expected API contract and use a local file path link or create a minimal stub interface
+- [x] Task 2: Create `src/generators/color.ts` — color primitive generator (AC: #1, #2, #5)
+  - [x] 2.1: Define `ColorPrimitive` type: `{ name: string; step: number; hex: string; }` (or match `@quieto/palettes` output shape)
+  - [x] 2.2: Define `ColorRamp` type: `{ hue: string; steps: ColorPrimitive[] }`
+  - [x] 2.3: Implement `generatePrimaryRamp(brandHex: string): ColorRamp` — calls `@quieto/palettes` to generate the full primary ramp
+  - [x] 2.4: Implement `generateNeutralRamp(): ColorRamp` — generates a neutral/gray ramp (may derive from brand color or use a standard neutral)
+  - [x] 2.5: Implement `generateColorPrimitives(brandHex: string): ColorRamp[]` — orchestrates primary + neutral ramp generation and returns all color primitives
+- [x] Task 3: Define in-memory token representation for primitives (AC: #5)
+  - [x] 3.1: Create `src/types/tokens.ts` with `PrimitiveToken` interface: `{ tier: 'primitive'; category: string; name: string; $type: string; $value: string; path: string[] }`
+  - [x] 3.2: Implement `colorRampToTokens(ramp: ColorRamp): PrimitiveToken[]` — converts ramp data to primitive tokens following `color.<hue>.<step>` naming
+  - [x] 3.3: Each token's `path` array should be `['color', hue, step]` for later DTCG JSON serialization (Story 1.8)
+- [x] Task 4: Integrate color generation into the init pipeline (AC: #1, #2, #4)
+  - [x] 4.1: Create `src/pipeline/` directory structure for the sequential generation pipeline
+  - [x] 4.2: Export a `runColorGeneration(brandHex: string): Promise<PrimitiveToken[]>` function that orchestrates generation + progress narrative
+  - [x] 4.3: Wire into the init command flow after Story 1.2's prompt collection completes
+- [x] Task 5: Implement progress narrative for color generation (AC: #4)
+  - [x] 5.1: Use Clack `log.step()` and `log.info()` to narrate each ramp generation (e.g., "Generating primary color ramp from #3B82F6...")
+  - [x] 5.2: Display step count after each ramp (e.g., "✓ Primary ramp: 11 steps")
+  - [x] 5.3: Display total color primitive count at completion (e.g., "22 color primitives generated")
+
+### Review Findings
+
+- [x] [Review][Decision] Direct `@quieto/engine` usage bypasses `@quieto/palettes` ecosystem chain — Accepted. `@quieto/palettes` is a CLI wrapper; `@quieto/engine` is the correct programmatic API. Hue mapping, neutral chroma, and ramp config are reasonable defaults.
+- [x] [Review][Patch] Missing length guard in `engineRampToColorRamp` — Fixed. Added guard to verify `ramp.steps.length === STEP_LABELS.length` before mapping.
+- [x] [Review][Patch] Missing per-ramp progress narrative before neutral ramp generation — Fixed. Restructured pipeline to call each generator individually with `p.log.step()` before each ramp.
 
 ## Dev Notes
 
@@ -136,10 +142,34 @@ src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+- Initial test run: 7 failures due to OKLCH hue angle mapping (HSL ≠ OKLCH hue ranges). Fixed by calibrating hue boundaries against actual `@quieto/engine` `parseColor()` output.
+
 ### Completion Notes List
 
+- **Task 1:** Installed `@quieto/engine` (v0.1.1) — the programmatic library behind `@quieto/palettes` (which is a CLI wrapper). `@quieto/engine` provides `parseColor()`, `generateRamp()`, and all OKLCH color math. No custom color math implemented.
+- **Task 2:** Created `src/generators/color.ts` with `generatePrimaryRamp()`, `generateNeutralRamp()`, and `generateColorPrimitives()`. Hue name derived from OKLCH hue angle via `hueNameFromAngle()`. Neutral ramp uses chroma=0.01 with the brand hue for cohesive tinting.
+- **Task 3:** Created `src/types/tokens.ts` with `PrimitiveToken` interface and `colorRampToTokens()` converter. Token paths are `['color', hue, step]` for DTCG serialization readiness.
+- **Task 4:** Created `src/pipeline/color.ts` with `runColorGeneration()` that orchestrates generation and progress narrative via Clack.
+- **Task 5:** Progress narrative uses `p.log.step()` for the generation start message and `p.log.info()` for each ramp's step count and the total count.
+- **Testing:** Added vitest as dev dependency. 35 tests across 3 test files covering generators, token conversion, and pipeline orchestration (with Clack mocking).
+
+### Change Log
+
+- 2026-04-16: Story 1.3 implementation — color primitive token generation via @quieto/engine
+
 ### File List
+
+- `package.json` — modified (added @quieto/engine dependency, vitest devDependency, test scripts)
+- `vitest.config.ts` — new (vitest configuration)
+- `src/generators/color.ts` — new (color primitive generation via @quieto/engine)
+- `src/types/tokens.ts` — new (PrimitiveToken interface + colorRampToTokens)
+- `src/pipeline/color.ts` — new (runColorGeneration orchestration + progress narrative)
+- `src/commands/init.ts` — modified (wired color generation after prompt flow)
+- `src/index.ts` — modified (exports new types and functions)
+- `src/generators/__tests__/color.test.ts` — new (22 tests for color generation)
+- `src/types/__tests__/tokens.test.ts` — new (7 tests for token conversion)
+- `src/pipeline/__tests__/color.test.ts` — new (6 tests for pipeline orchestration)
