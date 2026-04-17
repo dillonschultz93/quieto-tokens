@@ -68,6 +68,22 @@ Each category (color → spacing → typography) is an independently skippable s
 
 > **Don't hand-edit `tokens/*.json` or `build/*.css`.** They're tool-generated (note the `$metadata.doNotEdit` banner at the top of every file). Edit `quieto.config.json` and re-run `quieto-tokens init` instead.
 
+### Adding categories over time
+
+`quieto-tokens init` only generates the three core categories (color, spacing, typography). When you're ready for more, use `add`:
+
+```bash
+quieto-tokens add shadow        # elevation ramp with soft/hard profiles
+quieto-tokens add border        # widths + radii (largest radius becomes pill)
+quieto-tokens add animation     # duration ramp + easing preset
+```
+
+Run `quieto-tokens add` with no argument to pick from a menu. Each invocation targets a single category — your existing `color / spacing / typography` files are not re-read or touched, and the corresponding JSON files for other previously-added categories only get refreshed timestamps when the pipeline rebuilds them for CSS emission.
+
+Categories are written to disk in a canonical order (`color → spacing → typography → shadow → border → animation`) so diffs stay stable between runs. Re-running `add shadow` prompts for confirmation before overwriting the existing files. Manually removing a category name from `quieto.config.json → categories[]` is the documented way to prune: the next `add` invocation deletes the orphaned `tokens/primitive/<category>.json` and `tokens/semantic/<theme>/<category>.json` files automatically.
+
+Like `init`, every `add`-generated file carries the `$metadata.doNotEdit` banner — edit `quieto.config.json` and re-run instead of hand-modifying the tokens.
+
 ### Token Tiers
 
 - **Primitive** — Core values: color ramps, spacing scales, type scales. Obfuscation layer over raw values. _(shipped)_

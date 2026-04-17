@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PrimitiveToken } from "../../types/tokens.js";
 import type { SemanticToken, SemanticMapping } from "../../types/tokens.js";
 import {
+  mapAnimationSemantics,
+  mapBorderSemantics,
   mapColorSemantics,
+  mapShadowSemantics,
   mapSpacingSemantics,
   mapTypographySemantics,
   generateSemanticTokens,
@@ -373,5 +376,172 @@ describe("DEFAULT_TYPOGRAPHY_ROLES", () => {
   it("is a non-empty array of role definitions", () => {
     expect(Array.isArray(DEFAULT_TYPOGRAPHY_ROLES)).toBe(true);
     expect(DEFAULT_TYPOGRAPHY_ROLES.length).toBe(4);
+  });
+});
+
+function makeShadowPrimitive(step: number): PrimitiveToken {
+  return {
+    tier: "primitive",
+    category: "shadow",
+    name: `shadow.elevation.${step}`,
+    $type: "shadow",
+    $value: JSON.stringify({
+      color: "{color.neutral.900}",
+      offsetX: "0px",
+      offsetY: `${step}px`,
+      blur: `${step * 2}px`,
+      spread: "0px",
+    }),
+    path: ["shadow", "elevation", String(step)],
+  };
+}
+
+describe("mapShadowSemantics", () => {
+  it("maps to low/medium/high using first/middle/last primitives", () => {
+    const prims = [1, 2, 3, 4].map(makeShadowPrimitive);
+    const result = mapShadowSemantics(prims);
+    expect(result).toHaveLength(3);
+    const byRole = Object.fromEntries(result.map((t) => [t.path[2], t]));
+    expect(byRole.low!.$value).toBe("{shadow.elevation.1}");
+    expect(byRole.medium!.$value).toBe("{shadow.elevation.2}");
+    expect(byRole.high!.$value).toBe("{shadow.elevation.4}");
+    for (const t of result) {
+      expect(t.category).toBe("shadow");
+      expect(t.tier).toBe("semantic");
+      expect(t.$type).toBe("shadow");
+    }
+  });
+
+  it("returns an empty list when no primitives are provided", () => {
+    expect(mapShadowSemantics([])).toEqual([]);
+  });
+
+  it("collapses gracefully when fewer steps are available than roles", () => {
+    const prims = [makeShadowPrimitive(1)];
+    const result = mapShadowSemantics(prims);
+    expect(result).toHaveLength(3);
+    for (const t of result) {
+      expect(t.$value).toBe("{shadow.elevation.1}");
+    }
+  });
+});
+
+function makeBorderPrimitive(
+  sub: "width" | "radius",
+  value: number,
+  raw?: string,
+): PrimitiveToken {
+  return {
+    tier: "primitive",
+    category: "border",
+    name: `border.${sub}.${value}`,
+    $type: "dimension",
+    $value: raw ?? `${value}px`,
+    path: ["border", sub, String(value)],
+  };
+}
+
+describe("mapBorderSemantics", () => {
+  it("maps widths to default + emphasis (thinnest + next)", () => {
+    const prims = [1, 2, 4, 8].map((v) => makeBorderPrimitive("width", v));
+    const result = mapBorderSemantics(prims);
+    const byName = Object.fromEntries(result.map((t) => [t.name, t]));
+    expect(byName["border.width.default"]!.$value).toBe("{border.width.1}");
+    expect(byName["border.width.emphasis"]!.$value).toBe("{border.width.2}");
+  });
+
+  it("maps radii to sm / md / lg / pill with pill = largest", () => {
+    const prims = [2, 4, 8, 16, 999].map((v) =>
+      makeBorderPrimitive("radius", v, v === 999 ? "9999px" : `${v}px`),
+    );
+    const result = mapBorderSemantics(prims);
+    const byName = Object.fromEntries(result.map((t) => [t.name, t]));
+    expect(byName["border.radius.sm"]!.$value).toBe("{border.radius.2}");
+    expect(byName["border.radius.md"]!.$value).toBe("{border.radius.8}");
+    expect(byName["border.radius.lg"]!.$value).toBe("{border.radius.16}");
+    expect(byName["border.radius.pill"]!.$value).toBe("{border.radius.999}");
+  });
+
+  it("collapses roles when the ramp is too short to distinguish them", () => {
+    const prims = [makeBorderPrimitive("width", 1)];
+    const result = mapBorderSemantics(prims);
+    const byName = Object.fromEntries(result.map((t) => [t.name, t]));
+    expect(byName["border.width.emphasis"]!.$value).toBe(
+      byName["border.width.default"]!.$value,
+    );
+  });
+
+  it("emits nothing when no border primitives are provided", () => {
+    expect(mapBorderSemantics([])).toEqual([]);
+  });
+});
+
+function makeDuration(ms: number): PrimitiveToken {
+  return {
+    tier: "primitive",
+    category: "animation",
+    name: `animation.duration.${ms}`,
+    $type: "duration",
+    $value: `${ms}ms`,
+    path: ["animation", "duration", String(ms)],
+  };
+}
+
+function makeEase(name: string): PrimitiveToken {
+  return {
+    tier: "primitive",
+    category: "animation",
+    name: `animation.ease.${name}`,
+    $type: "cubicBezier",
+    $value: JSON.stringify([0, 0, 0, 0]),
+    path: ["animation", "ease", name],
+  };
+}
+
+describe("mapAnimationSemantics", () => {
+  it("maps fast / medium / slow from first / middle / last duration", () => {
+    const prims = [
+      makeDuration(100),
+      makeDuration(150),
+      makeDuration(250),
+      makeDuration(400),
+      ...["default", "enter", "exit"].map(makeEase),
+    ];
+    const result = mapAnimationSemantics(prims);
+    const byName = Object.fromEntries(result.map((t) => [t.name, t]));
+    expect(byName["animation.duration.fast"]!.$value).toBe(
+      "{animation.duration.100}",
+    );
+    // Lower-middle for even-length ramps (decision D4): index 1 of a
+    // 4-entry ramp [100, 150, 250, 400] → 150. Unified with shadow +
+    // border mappers.
+    expect(byName["animation.duration.medium"]!.$value).toBe(
+      "{animation.duration.150}",
+    );
+    expect(byName["animation.duration.slow"]!.$value).toBe(
+      "{animation.duration.400}",
+    );
+  });
+
+  it("maps default / enter / exit to the like-named ease primitives", () => {
+    const prims = [
+      makeDuration(100),
+      ...["default", "enter", "exit"].map(makeEase),
+    ];
+    const result = mapAnimationSemantics(prims);
+    const byName = Object.fromEntries(result.map((t) => [t.name, t]));
+    expect(byName["animation.ease.default"]!.$value).toBe(
+      "{animation.ease.default}",
+    );
+    expect(byName["animation.ease.enter"]!.$value).toBe(
+      "{animation.ease.enter}",
+    );
+    expect(byName["animation.ease.exit"]!.$value).toBe(
+      "{animation.ease.exit}",
+    );
+  });
+
+  it("returns an empty list when no primitives are supplied", () => {
+    expect(mapAnimationSemantics([])).toEqual([]);
   });
 });

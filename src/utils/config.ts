@@ -3,6 +3,11 @@ import { resolve } from "node:path";
 import * as p from "@clack/prompts";
 import type { QuietoConfig } from "../types/config.js";
 import { DEFAULT_CATEGORIES } from "../types/config.js";
+import {
+  SHADOW_MAX_LEVELS,
+  SHADOW_MIN_LEVELS,
+} from "../generators/shadow.js";
+import { DTCG_COLOR_REF_RE, INPUT_LIMITS } from "./defaults.js";
 
 export const CONFIG_FILENAME = "quieto.config.json";
 
@@ -230,7 +235,179 @@ export function validateConfigShape(parsed: unknown): string[] {
     }
   }
 
+  if (root.categoryConfigs !== undefined) {
+    validateCategoryConfigs(root.categoryConfigs, errors);
+  }
+
   return errors;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" && value !== null && !Array.isArray(value)
+  );
+}
+
+/**
+ * Validate a positive-integer array with a shared ceiling and entry-count
+ * cap. The cap matches the interactive prompts in `src/commands/add-*.ts`
+ * so a hand-edited config can't smuggle values the prompts would reject.
+ * Empty arrays are an error: a `widths: []` or `durations: []` that passed
+ * validation silently produced a category registered with zero tokens.
+ */
+function validateIntArray(
+  values: unknown,
+  path: string,
+  errors: string[],
+  maxValue: number,
+): void {
+  if (!Array.isArray(values)) {
+    errors.push(path);
+    return;
+  }
+  if (values.length === 0) {
+    errors.push(`${path}: must not be empty`);
+    return;
+  }
+  if (values.length > INPUT_LIMITS.maxEntries) {
+    errors.push(
+      `${path}: too many entries (max ${INPUT_LIMITS.maxEntries})`,
+    );
+  }
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (
+      typeof v !== "number" ||
+      !Number.isFinite(v) ||
+      !Number.isInteger(v) ||
+      v <= 0 ||
+      v > maxValue
+    ) {
+      errors.push(`${path}[${i}]`);
+    }
+  }
+}
+
+/**
+ * Known keys under `categoryConfigs`. Any other key (typo, a future
+ * category this tool version doesn't understand, or a malicious
+ * `__proto__`) is rejected so round-tripping a loaded config can't
+ * preserve unknown data silently.
+ */
+const KNOWN_CATEGORY_CONFIG_KEYS: ReadonlySet<string> = new Set([
+  "shadow",
+  "border",
+  "animation",
+]);
+
+function validateCategoryConfigs(
+  value: unknown,
+  errors: string[],
+): void {
+  if (!isPlainObject(value)) {
+    errors.push("categoryConfigs");
+    return;
+  }
+
+  for (const key of Object.keys(value)) {
+    if (!KNOWN_CATEGORY_CONFIG_KEYS.has(key)) {
+      errors.push(`categoryConfigs.${key}: unknown key`);
+    }
+  }
+
+  if (value.shadow !== undefined) {
+    validateShadowCategoryConfig(value.shadow, errors);
+  }
+  if (value.border !== undefined) {
+    validateBorderCategoryConfig(value.border, errors);
+  }
+  if (value.animation !== undefined) {
+    validateAnimationCategoryConfig(value.animation, errors);
+  }
+}
+
+function validateShadowCategoryConfig(
+  value: unknown,
+  errors: string[],
+): void {
+  if (!isPlainObject(value)) {
+    errors.push("categoryConfigs.shadow");
+    return;
+  }
+  const levels = value.levels;
+  if (
+    typeof levels !== "number" ||
+    !Number.isFinite(levels) ||
+    !Number.isInteger(levels) ||
+    levels < SHADOW_MIN_LEVELS ||
+    levels > SHADOW_MAX_LEVELS
+  ) {
+    errors.push("categoryConfigs.shadow.levels");
+  }
+  if (typeof value.colorRef !== "string" || value.colorRef.length === 0) {
+    errors.push("categoryConfigs.shadow.colorRef");
+  } else if (!DTCG_COLOR_REF_RE.test(value.colorRef)) {
+    // Reject refs whose shape the generator can't honour. The schema
+    // can't check whether the referenced hue/step actually exists —
+    // that's the interactive prompt's job, backed by the generated
+    // color primitives — but it can at least keep `{foo.bar}` or
+    // whitespace from reaching `generateShadowPrimitives`.
+    errors.push("categoryConfigs.shadow.colorRef");
+  }
+  if (value.profile !== "soft" && value.profile !== "hard") {
+    errors.push("categoryConfigs.shadow.profile");
+  }
+}
+
+function validateBorderCategoryConfig(
+  value: unknown,
+  errors: string[],
+): void {
+  if (!isPlainObject(value)) {
+    errors.push("categoryConfigs.border");
+    return;
+  }
+  validateIntArray(
+    value.widths,
+    "categoryConfigs.border.widths",
+    errors,
+    INPUT_LIMITS.maxPixelSize,
+  );
+  validateIntArray(
+    value.radii,
+    "categoryConfigs.border.radii",
+    errors,
+    INPUT_LIMITS.maxPixelSize,
+  );
+  // `pill` is new in D1 and optional on disk for Story 2.1 configs that
+  // never saw a border block (they simply won't have one). When
+  // present it must be a boolean — a string "true" wouldn't fly.
+  if (value.pill !== undefined && typeof value.pill !== "boolean") {
+    errors.push("categoryConfigs.border.pill");
+  }
+}
+
+function validateAnimationCategoryConfig(
+  value: unknown,
+  errors: string[],
+): void {
+  if (!isPlainObject(value)) {
+    errors.push("categoryConfigs.animation");
+    return;
+  }
+  validateIntArray(
+    value.durations,
+    "categoryConfigs.animation.durations",
+    errors,
+    INPUT_LIMITS.maxDurationMs,
+  );
+  if (
+    value.easing !== "standard" &&
+    value.easing !== "emphasized" &&
+    value.easing !== "decelerated"
+  ) {
+    errors.push("categoryConfigs.animation.easing");
+  }
 }
 
 /**
@@ -319,6 +496,14 @@ export function loadConfig(
     config.advanced = JSON.parse(
       JSON.stringify(root.advanced),
     ) as QuietoConfig["advanced"];
+  }
+  if (root.categoryConfigs !== undefined) {
+    // Same prototype-pollution guard as `advanced` — never spread the
+    // parsed tree directly. Round-trip the already-validated sub-block
+    // into a fresh prototype-free shape.
+    config.categoryConfigs = JSON.parse(
+      JSON.stringify(root.categoryConfigs),
+    ) as QuietoConfig["categoryConfigs"];
   }
 
   const logger = options.logger ?? DEFAULT_LOGGER;

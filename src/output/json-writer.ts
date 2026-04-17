@@ -5,6 +5,7 @@ import type {
   SemanticToken,
   ThemeCollection,
 } from "../types/tokens.js";
+import { sortCategoriesCanonical } from "../utils/categories.js";
 
 type DtcgLeaf = {
   $type: string;
@@ -126,14 +127,21 @@ async function writeJsonFile(
   await writeFile(filePath, JSON.stringify(ordered, null, 2) + "\n", "utf-8");
 }
 
-const CATEGORIES = ["color", "spacing", "typography"] as const;
-type Category = (typeof CATEGORIES)[number];
-
 function byCategory<T extends { category: string }>(
   tokens: T[],
-  category: Category,
+  category: string,
 ): T[] {
   return tokens.filter((t) => t.category === category);
+}
+
+function collectCategories(tokens: ReadonlyArray<{ category: string }>): string[] {
+  const set = new Set<string>();
+  for (const t of tokens) set.add(t.category);
+  // Route every iteration through the canonical order helper so file-write
+  // order + log output stay deterministic regardless of the caller's input
+  // sequence. New categories tacked onto the end of an existing list
+  // (story 2.2's add flow) still land in the stable spot.
+  return sortCategoriesCanonical([...set]);
 }
 
 export interface WriteTokensOptions {
@@ -163,7 +171,8 @@ export async function writeTokensToJson(
 
   const written: string[] = [];
 
-  for (const category of CATEGORIES) {
+  const primitiveCategories = collectCategories(collection.primitives);
+  for (const category of primitiveCategories) {
     const primitivesInCategory = byCategory(collection.primitives, category);
     if (primitivesInCategory.length === 0) continue;
 
@@ -174,7 +183,8 @@ export async function writeTokensToJson(
   }
 
   for (const theme of collection.themes) {
-    for (const category of CATEGORIES) {
+    const semanticCategories = collectCategories(theme.semanticTokens);
+    for (const category of semanticCategories) {
       const semanticsInCategory = byCategory(theme.semanticTokens, category);
       if (semanticsInCategory.length === 0) continue;
 

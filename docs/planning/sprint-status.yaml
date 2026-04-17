@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-16 (stories 2-2 and 2-3 drafted and flipped to ready-for-dev)
+# last_updated: 2026-04-17 (story 2-2 implementation complete, moved to review)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-16
-last_updated: 2026-04-16
+last_updated: 2026-04-17
 project: Quieto Tokens CLI
 # NOTE: Story 1.10 is a post-retrospective defect fix. Epic 1 temporarily reopened to accommodate.
 project_key: QUIETO
@@ -62,7 +62,7 @@ development_status:
   # Epic 2: Advanced Token Authoring
   epic-2: in-progress
   2-1-advanced-mode-for-core-categories: done
-  2-2-add-subcommand-for-new-token-categories: ready-for-dev
+  2-2-add-subcommand-for-new-token-categories: review
   2-3-guided-component-token-generation: ready-for-dev
   epic-2-retrospective: optional
 

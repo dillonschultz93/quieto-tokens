@@ -64,6 +64,63 @@ export interface QuietoConfig {
    * while still supplying advanced input for another.
    */
   advanced?: AdvancedConfig;
+  /**
+   * Per-category authoring inputs for non-core categories added via
+   * `quieto-tokens add`. Keyed by category name; missing entries mean
+   * "defaults" for that category (safe to regenerate deterministically
+   * from the default generator params).
+   *
+   * Legacy (Epic 1 / Story 2.1) configs have no `categoryConfigs` block.
+   * `loadConfig` returns `undefined` here — NOT `{}` — so the absence is
+   * distinguishable from an empty map. Quick-start configs NEVER populate
+   * this block; color/spacing/typography stay in `inputs` + `advanced`.
+   */
+  categoryConfigs?: CategoryConfigs;
+}
+
+/**
+ * Per-category parameters collected by `quieto-tokens add`. Each entry is
+ * optional — missing entries either mean the category hasn't been added yet
+ * or the user accepted all defaults for it (in which case the category still
+ * appears in `categories[]` but the config block is absent).
+ */
+export interface CategoryConfigs {
+  shadow?: ShadowCategoryConfig;
+  border?: BorderCategoryConfig;
+  animation?: AnimationCategoryConfig;
+}
+
+export interface ShadowCategoryConfig {
+  /** Number of elevation levels; enforced 2..6 at prompt + validator. */
+  levels: number;
+  /** DTCG color reference, e.g. `{color.neutral.900}`. */
+  colorRef: string;
+  /** Blur/spread profile — soft = airy, hard = crisp. */
+  profile: "soft" | "hard";
+}
+
+export interface BorderCategoryConfig {
+  /** Integer pixel widths (all > 0). */
+  widths: number[];
+  /**
+   * Integer pixel radii (all > 0). When {@link pill} is `true`, the
+   * largest entry is emitted as `9999px` rather than its literal value;
+   * when `false` every entry is emitted literally.
+   */
+  radii: number[];
+  /**
+   * Whether to treat the largest radius as the pill marker. Defaulting
+   * this to `false` keeps the generator's behavior predictable — the
+   * `add` prompt asks explicitly before overwriting the user's literal.
+   */
+  pill: boolean;
+}
+
+export interface AnimationCategoryConfig {
+  /** Integer millisecond durations (all > 0). */
+  durations: number[];
+  /** Easing preset — hides the four-number cubic-bezier. */
+  easing: "standard" | "emphasized" | "decelerated";
 }
 
 /**
