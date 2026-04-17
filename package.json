@@ -25,7 +25,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "notion:init": "node scripts/sync-to-notion.mjs --init",
-    "notion:sync": "node scripts/sync-to-notion.mjs"
+    "notion:sync": "node scripts/sync-to-notion.mjs",
+    "validate:sprint": "node scripts/validate-sprint-status.mjs"
   },
   "repository": {
     "type": "git",
