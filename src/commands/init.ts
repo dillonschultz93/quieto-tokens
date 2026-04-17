@@ -9,6 +9,7 @@ import {
 import { generateSemanticTokens } from "../mappers/semantic.js";
 import { generateThemes } from "../generators/themes.js";
 import { previewAndConfirm } from "../ui/preview.js";
+import { runOutputGeneration } from "../pipeline/output.js";
 
 export async function initCommand(): Promise<void> {
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
@@ -85,6 +86,13 @@ export async function initCommand(): Promise<void> {
     const previewResult = await previewAndConfirm(themeCollection);
 
     if (!previewResult) {
+      return;
+    }
+
+    const outputResult = await runOutputGeneration(previewResult.collection);
+
+    if (!outputResult) {
+      process.exitCode = 1;
       return;
     }
 
