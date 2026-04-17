@@ -1,6 +1,6 @@
 # Story 1.9: Config File Generation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -19,8 +19,8 @@ So that I can re-run the tool later to modify my token system without starting o
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define the config file schema (AC: #1, #2, #3, #4)
-  - [ ] 1.1: Define `QuietoConfig` type in `src/types/config.ts`:
+- [x] Task 1: Define the config file schema (AC: #1, #2, #3, #4)
+  - [x] 1.1: Define `QuietoConfig` type in `src/types/config.ts`:
     ```typescript
     interface QuietoConfig {
       $schema?: string;
@@ -40,23 +40,23 @@ So that I can re-run the tool later to modify my token system without starting o
       };
     }
     ```
-  - [ ] 1.2: Ensure the schema is forward-compatible — Epic 2 and 3 will add fields (advanced mode settings, additional categories, update history)
-- [ ] Task 2: Create `src/output/config-writer.ts` — config serializer (AC: #1, #2, #3, #4)
-  - [ ] 2.1: Implement `writeConfig(config: QuietoConfig, cwd: string): Promise<string>` — writes `quieto.config.json` to project root, returns file path
-  - [ ] 2.2: Populate `version` from `package.json` (reuse the version reading pattern from `cli.ts`)
-  - [ ] 2.3: Populate `generated` as `new Date().toISOString()`
-  - [ ] 2.4: Populate `inputs` from the quick-start prompt answers (passed through the pipeline)
-  - [ ] 2.5: Populate `overrides` from the override map (from Story 1.7, empty object if no overrides)
-  - [ ] 2.6: Populate `output` with default paths used in Story 1.8
-  - [ ] 2.7: Write as formatted JSON (`JSON.stringify(config, null, 2)`)
-- [ ] Task 3: Update `src/utils/config.ts` — config reading (AC: #1)
-  - [ ] 3.1: Add `loadConfig(cwd: string): QuietoConfig | null` — reads and parses existing `quieto.config.json`
-  - [ ] 3.2: Add `CONFIG_FILENAME = 'quieto.config.json'` constant (already exists from Story 1.1)
-  - [ ] 3.3: Add basic validation: check `version` field exists, warn if config version is newer than tool version
-  - [ ] 3.4: This read function enables Story 1.1's existing config detection to load full config data for future re-entrant editing (Epic 3)
-- [ ] Task 4: Implement final success message and "what's next" guide (AC: #5, #6)
-  - [ ] 4.1: Use Clack `log.success()` for the completion announcement
-  - [ ] 4.2: Display summary:
+  - [x] 1.2: Ensure the schema is forward-compatible — Epic 2 and 3 will add fields (advanced mode settings, additional categories, update history)
+- [x] Task 2: Create `src/output/config-writer.ts` — config serializer (AC: #1, #2, #3, #4)
+  - [x] 2.1: Implement `writeConfig(config: QuietoConfig, cwd: string): Promise<string>` — writes `quieto.config.json` to project root, returns file path
+  - [x] 2.2: Populate `version` from `package.json` (reuse the version reading pattern from `cli.ts`)
+  - [x] 2.3: Populate `generated` as `new Date().toISOString()`
+  - [x] 2.4: Populate `inputs` from the quick-start prompt answers (passed through the pipeline)
+  - [x] 2.5: Populate `overrides` from the override map (from Story 1.7, empty object if no overrides)
+  - [x] 2.6: Populate `output` with default paths used in Story 1.8
+  - [x] 2.7: Write as formatted JSON (`JSON.stringify(config, null, 2)`)
+- [x] Task 3: Update `src/utils/config.ts` — config reading (AC: #1)
+  - [x] 3.1: Add `loadConfig(cwd: string): QuietoConfig | null` — reads and parses existing `quieto.config.json`
+  - [x] 3.2: Add `CONFIG_FILENAME = 'quieto.config.json'` constant (already exists from Story 1.1)
+  - [x] 3.3: Add basic validation: check `version` field exists, warn if config version is newer than tool version
+  - [x] 3.4: This read function enables Story 1.1's existing config detection to load full config data for future re-entrant editing (Epic 3)
+- [x] Task 4: Implement final success message and "what's next" guide (AC: #5, #6)
+  - [x] 4.1: Use Clack `log.success()` for the completion announcement
+  - [x] 4.2: Display summary:
     ```
     ✓ Token system generated successfully!
     
@@ -71,7 +71,7 @@ So that I can re-run the tool later to modify my token system without starting o
       build/dark.css
       quieto.config.json
     ```
-  - [ ] 4.3: Display "What's next" guide via Clack `log.info()`:
+  - [x] 4.3: Display "What's next" guide via Clack `log.info()`:
     ```
     What's next:
       • Import build/light.css into your project for CSS variables
@@ -79,14 +79,31 @@ So that I can re-run the tool later to modify my token system without starting o
       • Re-run "quieto-tokens init" to modify your system
       • Run "quieto-tokens add shadow" to add new categories (coming soon)
     ```
-  - [ ] 4.4: Confirm config persistence: "Config saved — you can re-run to modify your system anytime."
-  - [ ] 4.5: Use Clack `outro()` as the final closing message
-- [ ] Task 5: Integrate into init pipeline as the final step (AC: #1–#6)
-  - [ ] 5.1: Wire config write after Story 1.8's file output
-  - [ ] 5.2: Collect all pipeline data: prompt inputs (from 1.2), overrides (from 1.7), output paths (from 1.8)
-  - [ ] 5.3: Build `QuietoConfig` object from collected data
-  - [ ] 5.4: Write config, then display success message and outro
-  - [ ] 5.5: Handle write errors gracefully
+  - [x] 4.4: Confirm config persistence: "Config saved — you can re-run to modify your system anytime."
+  - [x] 4.5: Use Clack `outro()` as the final closing message
+- [x] Task 5: Integrate into init pipeline as the final step (AC: #1–#6)
+  - [x] 5.1: Wire config write after Story 1.8's file output
+  - [x] 5.2: Collect all pipeline data: prompt inputs (from 1.2), overrides (from 1.7), output paths (from 1.8)
+  - [x] 5.3: Build `QuietoConfig` object from collected data
+  - [x] 5.4: Write config, then display success message and outro
+  - [x] 5.5: Handle write errors gracefully
+
+### Review Findings
+
+- [x] [Review][Patch] `writeConfig` is not atomic — crash / SIGINT mid-write can truncate an existing config [src/output/config-writer.ts:71-79] — fixed via write-to-`.tmp`-then-rename
+- [x] [Review][Patch] `loadConfig` uses `existsSync`+`readFileSync` (TOCTOU) and mixes sync with the module's async peers [src/utils/config.ts:78-84] — dropped `existsSync`, rely on `readFileSync` + catch
+- [x] [Review][Patch] `loadConfig` does not strip UTF-8 BOM before `JSON.parse` — BOM-prefixed files silently return `null` [src/utils/config.ts:87-93] — strip leading `\uFEFF` before parse
+- [x] [Review][Patch] `readToolVersion` loses the last candidate's error detail in its thrown message [src/output/config-writer.ts:14-35] — track last error and append its message
+- [x] [Review][Patch] `DEFAULT_OUTPUT_CONFIG` exported as a mutable object — importers can poison subsequent `buildConfig` calls [src/types/config.ts:54-58] — `Object.freeze` + `Readonly<...>`
+- [x] [Review][Patch] Config-write failure path in `runConfigGeneration` has no closing `outro`/`cancel` — user gets an abrupt exit [src/pipeline/config.ts:50-58, src/commands/init.ts:100-108] — added closing `p.outro` on both failure branches
+- [x] [Review][Patch] `readToolVersion` is exported as public API — leaky abstraction tied to this package's install path [src/index.ts:65-69] — removed from the public re-export
+- [x] [Review][Defer] Extract shared `package.json` version resolution between `cli.ts` and `config-writer.ts` [src/cli.ts:28-37, src/output/config-writer.ts:14-35] — deferred, touches Story 1.1 scope
+- [x] [Review][Defer] `compareVersions` semver fidelity gaps (pre-release / `v` prefix / `+build` / non-numeric) [src/utils/config.ts:18-36] — deferred, `loadConfig` is test-only until Epic 3
+- [x] [Review][Defer] `loadConfig` does no structural validation past `version` — any JSON with a `version` string passes through [src/utils/config.ts:87-100] — deferred, Epic 3 consumers will dictate validation shape
+- [x] [Review][Defer] `loadConfig` returns `null` for both "missing" and "corrupt" — callers cannot disambiguate [src/utils/config.ts:73-100] — deferred, Epic 3 consumers
+- [x] [Review][Defer] `loadConfig` warns via `console.warn` instead of Clack — inconsistent with rest of CLI [src/utils/config.ts:99-102] — deferred, align when wired into user-facing path
+- [x] [Review][Defer] Concurrent `init` runs can race on `writeFile` [src/pipeline/config.ts:56-65] — deferred, low likelihood for solo-dev tool
+- [x] [Review][Defer] `formatPath.startsWith("..")` edge case matches filenames like `..foo.css` [src/pipeline/config.ts:19-22, src/pipeline/output.ts:~17-20] — deferred, pattern inherited from `output.ts`; fix in shared helper
 
 ## Dev Notes
 
@@ -190,10 +207,46 @@ src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.7 (Cursor)
 
 ### Debug Log References
 
+- `npm run type-check` — clean, no errors.
+- `npm test` — 17 test files, 249 tests passing (adds 31 new tests across `config-writer`, `utils/config`, and `pipeline/config`).
+- `npm run build` — tsup ESM + DTS build succeeds.
+
 ### Completion Notes List
 
+- Added `QuietoConfig` type in `src/types/config.ts` with a forward-compatible, flat shape (`inputs` / `overrides` / `output`) plus an exported `DEFAULT_OUTPUT_CONFIG` so the writer and schema stay in sync. `$schema` is optional/reserved — deliberately not populated in MVP per story guidance.
+- `src/output/config-writer.ts` exposes three pieces: `readToolVersion()` (resolves from `package.json`, works in both `dist/` runtime and `src/` test contexts), pure `buildConfig()` (easy to unit-test), and `writeConfig()` (writes pretty-printed JSON with trailing newline).
+- Extended `src/utils/config.ts` with `loadConfig()` and exported `CONFIG_FILENAME`. Validation is lenient-safe: returns `null` for missing/malformed/missing-`version` files, warns via `console.warn` when the config version is newer than the tool (compared with a coarse numeric semver tokenizer that ignores pre-release tags).
+- Created `src/pipeline/config.ts` — the final pipeline step. Narrates via Clack (`log.step` → `log.success` with the full file list → `log.info` with the "What's next" guide → `outro` with the AC #6 "Config saved" line). Catches write errors and returns `false` so `init` can set `process.exitCode = 1` without throwing through Clack.
+- Wired `runConfigGeneration` into `src/commands/init.ts` after `runOutputGeneration`, replacing the placeholder "Done — thanks for using quieto-tokens." outro. Overrides come from `previewResult.overrides`.
+- Updated `src/index.ts` to export the new config public API (`QuietoConfig`, `buildConfig`, `writeConfig`, `runConfigGeneration`, `loadConfig`, etc.) so downstream consumers (and future stories) can import them without reaching into internals.
+- AC coverage:
+  - **AC #1** — `writeConfig` + pipeline writes `quieto.config.json` in the project root; verified end-to-end in `pipeline/__tests__/config.test.ts`.
+  - **AC #2** — `buildConfig` maps quick-start inputs (brand color, spacing base, type scale, darkMode) into `inputs`; verified in `config-writer.test.ts`.
+  - **AC #3** — `overrides` Map is serialized via `Object.fromEntries` and round-trips through JSON; covered in `config-writer.test.ts` and the pipeline integration test.
+  - **AC #4** — `version` read from `package.json`; `generated` from `new Date().toISOString()`; covered in `config-writer.test.ts`.
+  - **AC #5** — Clack `log.success` emits the "Token system generated successfully!" + "Files created:" block with relative paths; verified via mocked Clack in `pipeline/__tests__/config.test.ts`.
+  - **AC #6** — The exact outro string "Config saved — you can re-run to modify your system anytime." is asserted verbatim in the pipeline test.
+
 ### File List
+
+- `src/types/config.ts` (new) — `QuietoConfig` interface + `DEFAULT_OUTPUT_CONFIG`.
+- `src/output/config-writer.ts` (new) — `readToolVersion`, `buildConfig`, `writeConfig`.
+- `src/output/__tests__/config-writer.test.ts` (new) — 14 tests covering mapping, serialization, and filesystem errors.
+- `src/utils/config.ts` (modified) — added `CONFIG_FILENAME` export, `loadConfig`, `LoadConfigOptions`, internal semver comparator.
+- `src/utils/__tests__/config.test.ts` (new) — 11 tests covering filename constant, `configExists`, `loadConfig` happy/invalid paths, and version warning.
+- `src/pipeline/config.ts` (new) — `runConfigGeneration` orchestrator with Clack narrative and outro.
+- `src/pipeline/__tests__/config.test.ts` (new) — 5 tests covering config write, files-created summary, AC-#6 outro text, what's-next guide, and write-failure handling.
+- `src/commands/init.ts` (modified) — imports and invokes `runConfigGeneration` as the final pipeline step, removed placeholder outro.
+- `src/index.ts` (modified) — exports new public APIs.
+- `docs/planning/sprint-status.yaml` (modified) — flipped `1-9-config-file-generation` from `ready-for-dev` → `in-progress` → `review`.
+
+## Change Log
+
+| Date       | Change                                                                 | Author |
+|------------|------------------------------------------------------------------------|--------|
+| 2026-04-16 | Story 1.9 implementation: config file generation + final success outro | Dev    |
+| 2026-04-16 | Code review: 7 patches applied (atomic write, BOM, TOCTOU, error detail, frozen defaults, failure outro, public API trim); 7 items deferred to `deferred-work.md` | Review |

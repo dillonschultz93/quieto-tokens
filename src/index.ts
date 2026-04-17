@@ -62,6 +62,19 @@ export { writeTokensToJson } from "./output/json-writer.js";
 export { buildCss } from "./output/style-dictionary.js";
 export { runOutputGeneration } from "./pipeline/output.js";
 export type { OutputResult } from "./pipeline/output.js";
+export { buildConfig, writeConfig } from "./output/config-writer.js";
+export type { BuildConfigInput } from "./output/config-writer.js";
+export { runConfigGeneration } from "./pipeline/config.js";
+export type { ConfigGenerationInput } from "./pipeline/config.js";
+export type { QuietoConfig } from "./types/config.js";
+export { DEFAULT_OUTPUT_CONFIG } from "./types/config.js";
+export {
+  CONFIG_FILENAME,
+  configExists,
+  getConfigPath,
+  loadConfig,
+} from "./utils/config.js";
+export type { LoadConfigOptions } from "./utils/config.js";
 export { hexToRgb, hexToAnsi, supportsColor } from "./utils/color-display.js";
 export type { RGB } from "./utils/color-display.js";
 export {

@@ -10,6 +10,7 @@ import { generateSemanticTokens } from "../mappers/semantic.js";
 import { generateThemes } from "../generators/themes.js";
 import { previewAndConfirm } from "../ui/preview.js";
 import { runOutputGeneration } from "../pipeline/output.js";
+import { runConfigGeneration } from "../pipeline/config.js";
 
 export async function initCommand(): Promise<void> {
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
@@ -96,7 +97,16 @@ export async function initCommand(): Promise<void> {
       return;
     }
 
-    p.outro("Done — thanks for using quieto-tokens.");
+    const configOk = await runConfigGeneration({
+      options,
+      overrides: previewResult.overrides,
+      output: outputResult,
+    });
+
+    if (!configOk) {
+      process.exitCode = 1;
+      return;
+    }
   } catch (error) {
     if (error instanceof Error && error.message === "cancelled") {
       return;

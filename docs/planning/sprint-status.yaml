@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-16
+# last_updated: 2026-04-16 (epic-1 retrospective completed; epic-1 done)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -43,7 +43,7 @@ story_location: docs/planning/stories
 
 development_status:
   # Epic 1: Quick-Start Token Generation (MVP)
-  epic-1: in-progress
+  epic-1: done
   1-1-cli-scaffolding-and-init-entry-point: done
   1-2-quick-start-prompt-flow: done
   1-3-color-primitive-token-generation: done
@@ -52,8 +52,8 @@ development_status:
   1-6-theme-variant-generation: done
   1-7-preview-override-and-confirmation: done
   1-8-dtcg-json-and-css-output-via-style-dictionary: done
-  1-9-config-file-generation: ready-for-dev
-  epic-1-retrospective: optional
+  1-9-config-file-generation: done
+  epic-1-retrospective: done
 
   # Epic 2: Advanced Token Authoring
   epic-2: backlog

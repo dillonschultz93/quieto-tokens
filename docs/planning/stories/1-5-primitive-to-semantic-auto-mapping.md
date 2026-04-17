@@ -1,6 +1,6 @@
 # Story 1.5: Primitive-to-Semantic Auto-Mapping
 
-Status: review
+Status: done
 
 ## Story
 
