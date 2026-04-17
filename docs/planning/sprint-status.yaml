@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-16 (story 2-1 spec drafted; ready-for-dev)
+# last_updated: 2026-04-16 (story 2-1 done — review-pass patches applied: 23 patches, 1 deferred, 1 defer-carryover)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -57,7 +57,7 @@ development_status:
 
   # Epic 2: Advanced Token Authoring
   epic-2: in-progress
-  2-1-advanced-mode-for-core-categories: ready-for-dev
+  2-1-advanced-mode-for-core-categories: done
   2-2-add-subcommand-for-new-token-categories: backlog
   2-3-guided-component-token-generation: backlog
   epic-2-retrospective: optional

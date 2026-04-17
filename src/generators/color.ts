@@ -122,3 +122,41 @@ export function generateColorPrimitives(brandHex: string): ColorRamp[] {
   const neutral = generateNeutralRamp(brandHex);
   return [primary, neutral];
 }
+
+/**
+ * Generate an additional hue ramp with a user-supplied name. Unlike
+ * {@link generatePrimaryRamp}, which infers the hue name from the seed's
+ * hue angle, this function respects the user's chosen label (e.g.
+ * "accent", "success") so the output token names match the role they
+ * have in mind.
+ *
+ * Used by advanced-mode to attach extra ramps like `color.accent.500` to
+ * the primitive set. The seed is parsed identically to the primary ramp
+ * so ramp math stays consistent across all hues in a system.
+ */
+export function generateCustomRamp(
+  name: string,
+  seedHex: string,
+): ColorRamp {
+  const parsed = parseColor(seedHex);
+  if (!parsed.ok) {
+    throw new Error(
+      `Failed to parse seed color "${seedHex}" for hue "${name}": ${parsed.error.message}`,
+    );
+  }
+
+  const result = generateRamp({
+    seed: parsed.value.oklch,
+    steps: RAMP_STEPS,
+    ...RAMP_CONFIG,
+    name,
+  });
+
+  if (!result.ok) {
+    throw new Error(
+      `Failed to generate ramp for "${name}": ${result.error.message}`,
+    );
+  }
+
+  return engineRampToColorRamp(result.value, name);
+}

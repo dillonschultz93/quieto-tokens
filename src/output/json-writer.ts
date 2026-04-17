@@ -14,6 +14,47 @@ type DtcgLeaf = {
 
 type DtcgTree = { [key: string]: DtcgTree | DtcgLeaf };
 
+/**
+ * Root-level banner written to every generated DTCG JSON file. Marks the
+ * file as tool-generated per ADR-001 so users do not hand-edit it expecting
+ * their changes to survive `add`/`init` re-runs.
+ *
+ * DTCG reserves `$`-prefixed keys at the group level; Style Dictionary's
+ * DTCG reader ignores them when walking for tokens, so this is safe to
+ * place alongside the token tree.
+ */
+export interface DtcgMetadata {
+  generatedBy: "quieto-tokens";
+  /**
+   * AC 16 / ADR-001 contract: every generated DTCG JSON file carries
+   * `doNotEdit: true` at its `$metadata` root so downstream consumers and
+   * humans inspecting the file have an unambiguous signal not to hand-edit.
+   */
+  doNotEdit: true;
+  generatedAt: string;
+  notice: string;
+}
+
+export function buildDtcgMetadata(
+  generatedAt: string = new Date().toISOString(),
+): DtcgMetadata {
+  return {
+    generatedBy: "quieto-tokens",
+    doNotEdit: true,
+    generatedAt,
+    notice:
+      "This file is tool-generated. Edit quieto.config.json and re-run `quieto-tokens init` instead.",
+  };
+}
+
+/**
+ * Serialized document shape — `$metadata` plus the token tree. Kept as a
+ * `Record<string, unknown>` because TypeScript cannot express "index
+ * signature excluding one known key" without contortions, and the file is
+ * only consumed via `JSON.stringify`.
+ */
+type DtcgDocument = Record<string, unknown>;
+
 type AnyToken = PrimitiveToken | SemanticToken;
 
 export function tokensToDtcgTree(tokens: AnyToken[]): DtcgTree {
@@ -66,9 +107,23 @@ function isLeaf(node: DtcgTree | DtcgLeaf): node is DtcgLeaf {
 async function writeJsonFile(
   filePath: string,
   content: DtcgTree,
+  metadata: DtcgMetadata,
 ): Promise<void> {
   await mkdir(dirname(filePath), { recursive: true });
-  await writeFile(filePath, JSON.stringify(content, null, 2) + "\n", "utf-8");
+  // `$metadata` must land at the top for human readability AND must not be
+  // clobberable by a future token tree that happens to emit a root-level
+  // `$metadata` key. Spread `content` first, then assign `$metadata` last
+  // to guarantee the banner wins regardless of tree shape.
+  const document: DtcgDocument = { ...content };
+  document.$metadata = metadata;
+  // Re-key so `$metadata` is first in iteration order (matters for
+  // JSON.stringify output ordering — users eyeball the file top-down).
+  const ordered: DtcgDocument = { $metadata: metadata };
+  for (const key of Object.keys(document)) {
+    if (key === "$metadata") continue;
+    ordered[key] = document[key];
+  }
+  await writeFile(filePath, JSON.stringify(ordered, null, 2) + "\n", "utf-8");
 }
 
 const CATEGORIES = ["color", "spacing", "typography"] as const;
@@ -81,9 +136,18 @@ function byCategory<T extends { category: string }>(
   return tokens.filter((t) => t.category === category);
 }
 
+export interface WriteTokensOptions {
+  /**
+   * Override for deterministic `$metadata.generatedAt`. Defaults to
+   * `new Date().toISOString()` at call-time.
+   */
+  generatedAt?: string;
+}
+
 export async function writeTokensToJson(
   collection: ThemeCollection,
   outputDir: string,
+  options: WriteTokensOptions = {},
 ): Promise<string[]> {
   const themeNames = collection.themes.map((t) => t.name);
   if (new Set(themeNames).size !== themeNames.length) {
@@ -91,6 +155,11 @@ export async function writeTokensToJson(
       `Duplicate theme names in collection: ${themeNames.join(", ")}`,
     );
   }
+
+  // One metadata object per run, reused across every file — the timestamp
+  // stays identical across all files generated in a single init pass so
+  // users can correlate them at a glance.
+  const metadata = buildDtcgMetadata(options.generatedAt);
 
   const written: string[] = [];
 
@@ -100,7 +169,7 @@ export async function writeTokensToJson(
 
     const tree = tokensToDtcgTree(primitivesInCategory);
     const filePath = join(outputDir, "tokens", "primitive", `${category}.json`);
-    await writeJsonFile(filePath, tree);
+    await writeJsonFile(filePath, tree, metadata);
     written.push(filePath);
   }
 
@@ -117,7 +186,7 @@ export async function writeTokensToJson(
         theme.name,
         `${category}.json`,
       );
-      await writeJsonFile(filePath, tree);
+      await writeJsonFile(filePath, tree, metadata);
       written.push(filePath);
     }
   }

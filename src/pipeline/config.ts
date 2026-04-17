@@ -1,6 +1,7 @@
 import { relative } from "node:path";
 import * as p from "@clack/prompts";
 import type { QuickStartOptions } from "../types.js";
+import type { AdvancedConfig } from "../types/config.js";
 import {
   buildConfig,
   readToolVersion,
@@ -13,6 +14,17 @@ export interface ConfigGenerationInput {
   overrides: Map<string, string>;
   output: OutputResult;
   cwd?: string;
+  /**
+   * Advanced-mode authoring details collected by `runAdvancedFlow`.
+   * `undefined` for quick-start runs — the config will omit the `advanced`
+   * block entirely.
+   */
+  advanced?: AdvancedConfig;
+  /**
+   * Active categories list written into `config.categories`. Defaults to
+   * the three core categories when omitted.
+   */
+  categories?: string[];
 }
 
 /**
@@ -53,6 +65,8 @@ export async function runConfigGeneration(
     options: input.options,
     overrides: input.overrides,
     version,
+    advanced: input.advanced,
+    categories: input.categories,
   });
 
   let configPath: string;
@@ -90,6 +104,7 @@ export async function runConfigGeneration(
       "  • Import build/light.css into your project for CSS variables",
       "  • Use --quieto-* custom properties in your styles",
       '  • Re-run "quieto-tokens init" to modify your system',
+      '  • Run "quieto-tokens init --advanced" for per-category customization',
       '  • Run "quieto-tokens add shadow" to add new categories (coming soon)',
     ].join("\n"),
   );

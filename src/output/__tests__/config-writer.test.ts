@@ -125,6 +125,72 @@ describe("buildConfig", () => {
     expect(when).toBeGreaterThanOrEqual(before);
     expect(when).toBeLessThanOrEqual(after);
   });
+
+  it("defaults `categories` to the three core categories when none is supplied", () => {
+    const config = buildConfig({
+      options: makeOptions(),
+      overrides: new Map(),
+      version: "0.1.0",
+      generated: "2026-04-16T12:00:00.000Z",
+    });
+
+    expect(config.categories).toEqual(["color", "spacing", "typography"]);
+  });
+
+  it("preserves a caller-supplied categories list (and copies it defensively)", () => {
+    const categories = ["color", "spacing", "typography", "shadow"];
+    const config = buildConfig({
+      options: makeOptions(),
+      overrides: new Map(),
+      version: "0.1.0",
+      generated: "2026-04-16T12:00:00.000Z",
+      categories,
+    });
+
+    expect(config.categories).toEqual(categories);
+    // Mutating the input must not mutate the stored config — defensive copy.
+    categories.push("border");
+    expect(config.categories).toEqual(["color", "spacing", "typography", "shadow"]);
+  });
+
+  it("omits `advanced` when no advanced block is supplied", () => {
+    const config = buildConfig({
+      options: makeOptions(),
+      overrides: new Map(),
+      version: "0.1.0",
+      generated: "2026-04-16T12:00:00.000Z",
+    });
+
+    expect("advanced" in config).toBe(false);
+  });
+
+  it("includes the supplied advanced block verbatim", () => {
+    const config = buildConfig({
+      options: makeOptions(),
+      overrides: new Map(),
+      version: "0.1.0",
+      generated: "2026-04-16T12:00:00.000Z",
+      advanced: {
+        color: {
+          additionalHues: [
+            { name: "accent", seed: "#FF00AA" },
+            { name: "error", seed: "#D12020" },
+          ],
+        },
+        spacing: { customValues: { "space-4": 18 } },
+      },
+    });
+
+    expect(config.advanced).toEqual({
+      color: {
+        additionalHues: [
+          { name: "accent", seed: "#FF00AA" },
+          { name: "error", seed: "#D12020" },
+        ],
+      },
+      spacing: { customValues: { "space-4": 18 } },
+    });
+  });
 });
 
 describe("writeConfig", () => {

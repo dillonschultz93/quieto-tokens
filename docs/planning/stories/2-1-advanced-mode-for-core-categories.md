@@ -1,6 +1,6 @@
 # Story 2.1: Advanced Mode for Core Categories
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -63,9 +63,9 @@ Task ordering below is dependency-driven. Tasks 1–4 are prerequisites for the 
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Extend `QuietoConfig` schema (AC: #13, #14, #15) — A3**
-  - [ ] 1.1: In `src/types/config.ts`, add optional `advanced?: AdvancedConfig` and required `categories: string[]` to `QuietoConfig`.
-  - [ ] 1.2: Define `AdvancedConfig` interface:
+- [x] **Task 1: Extend `QuietoConfig` schema (AC: #13, #14, #15) — A3**
+  - [x] 1.1: In `src/types/config.ts`, add optional `advanced?: AdvancedConfig` and required `categories: string[]` to `QuietoConfig`.
+  - [x] 1.2: Define `AdvancedConfig` interface:
     ```typescript
     interface AdvancedConfig {
       color?: {
@@ -86,11 +86,11 @@ Task ordering below is dependency-driven. Tasks 1–4 are prerequisites for the 
       };
     }
     ```
-  - [ ] 1.3: Update `buildConfig` in `src/output/config-writer.ts` to accept an optional `advanced` input and always populate `categories: ["color", "spacing", "typography"]` (default list — Epic 2.2 will mutate this later).
-  - [ ] 1.4: Export the new types from `src/index.ts`.
+  - [x] 1.3: Update `buildConfig` in `src/output/config-writer.ts` to accept an optional `advanced` input and always populate `categories: ["color", "spacing", "typography"]` (default list — Epic 2.2 will mutate this later).
+  - [x] 1.4: Export the new types from `src/index.ts`.
 
-- [ ] **Task 2: Harden `loadConfig` (AC: #10, #11, #12) — A2**
-  - [ ] 2.1: Refactor `loadConfig` in `src/utils/config.ts` to return a discriminated union `LoadConfigResult`:
+- [x] **Task 2: Harden `loadConfig` (AC: #10, #11, #12) — A2**
+  - [x] 2.1: Refactor `loadConfig` in `src/utils/config.ts` to return a discriminated union `LoadConfigResult`:
     ```typescript
     type LoadConfigResult =
       | { status: "missing" }
@@ -98,9 +98,9 @@ Task ordering below is dependency-driven. Tasks 1–4 are prerequisites for the 
       | { status: "invalid"; errors: string[] }
       | { status: "ok"; config: QuietoConfig };
     ```
-  - [ ] 2.2: Add a `validateConfigShape(parsed: unknown): string[]` helper that returns the list of structural errors (dotted paths of missing or wrong-type required fields). Empty array = valid.
-  - [ ] 2.3: Keep the UTF-8 BOM strip (from Story 1.9 review) and atomic-read pattern (readFileSync + catch, no `existsSync`).
-  - [ ] 2.4: Replace `console.warn` with an injectable `logger` option on `LoadConfigOptions`:
+  - [x] 2.2: Add a `validateConfigShape(parsed: unknown): string[]` helper that returns the list of structural errors (dotted paths of missing or wrong-type required fields). Empty array = valid.
+  - [x] 2.3: Keep the UTF-8 BOM strip (from Story 1.9 review) and atomic-read pattern (readFileSync + catch, no `existsSync`).
+  - [x] 2.4: Replace `console.warn` with an injectable `logger` option on `LoadConfigOptions`:
     ```typescript
     interface LoadConfigOptions {
       toolVersion?: string;
@@ -108,85 +108,130 @@ Task ordering below is dependency-driven. Tasks 1–4 are prerequisites for the 
     }
     ```
     Default logger is `p.log.warn`-compatible (delegates to Clack). Tests pass a spy.
-  - [ ] 2.5: When the loaded config lacks `categories`, default to `["color", "spacing", "typography"]` in the returned `ok.config`. When it lacks `advanced`, leave it `undefined`.
-  - [ ] 2.6: Update `src/index.ts` re-exports: expose `LoadConfigResult` and the `validateConfigShape` helper for tests / downstream consumers.
-  - [ ] 2.7: **Breaking change note:** any current caller of `loadConfig` receiving `QuietoConfig | null` must be updated. Currently there are no production callers — the function is test-only — but `src/index.ts` re-exports it, so this is a public API break (acceptable pre-1.0). Document in the story Dev Agent Record.
+  - [x] 2.5: When the loaded config lacks `categories`, default to `["color", "spacing", "typography"]` in the returned `ok.config`. When it lacks `advanced`, leave it `undefined`.
+  - [x] 2.6: Update `src/index.ts` re-exports: expose `LoadConfigResult` and the `validateConfigShape` helper for tests / downstream consumers.
+  - [x] 2.7: **Breaking change note:** any current caller of `loadConfig` receiving `QuietoConfig | null` must be updated. Currently there are no production callers — the function is test-only — but `src/index.ts` re-exports it, so this is a public API break (acceptable pre-1.0). Document in the story Dev Agent Record.
 
-- [ ] **Task 3: `$metadata` banner in generated JSON (AC: #16) — ADR-001**
-  - [ ] 3.1: In `src/output/json-writer.ts`, modify `writeJsonFile` (or `tokensToDtcgTree`) to inject a `$metadata` root key before writing: `{ "$metadata": { "generatedBy": "quieto-tokens", "doNotEdit": true }, ...tokenTree }`.
-  - [ ] 3.2: Add a unit test asserting `$metadata` appears at the root of every file written by `writeTokensToJson`.
-  - [ ] 3.3: Verify Style Dictionary build still produces identical CSS output (regression check — add a snapshot or explicit assertion that known tokens like `--quieto-color-blue-500` still appear).
+- [x] **Task 3: `$metadata` banner in generated JSON (AC: #16) — ADR-001**
+  - [x] 3.1: In `src/output/json-writer.ts`, modify `writeJsonFile` (or `tokensToDtcgTree`) to inject a `$metadata` root key before writing: `{ "$metadata": { "generatedBy": "quieto-tokens", "doNotEdit": true }, ...tokenTree }`.
+  - [x] 3.2: Add a unit test asserting `$metadata` appears at the root of every file written by `writeTokensToJson`.
+  - [x] 3.3: Verify Style Dictionary build still produces identical CSS output (regression check — add a snapshot or explicit assertion that known tokens like `--quieto-color-blue-500` still appear).
 
-- [ ] **Task 4: CLI flag parsing + advanced-mode entry (AC: #17, #18, #19)**
-  - [ ] 4.1: In `src/cli.ts`, add `--advanced` flag parsing (inspect `process.argv` or wire a minimal arg parser; avoid adding a dependency unless necessary — `commander` is the only existing candidate, but hand-rolled is fine for one flag).
-  - [ ] 4.2: Pass an `advanced: boolean` option into `initCommand`.
-  - [ ] 4.3: In `src/commands/init.ts`, when no config exists and `--advanced` is not passed, prompt: "Quick start (recommended)" vs "Advanced mode".
-  - [ ] 4.4: When `--advanced` is passed, skip the prompt and go straight to advanced.
-  - [ ] 4.5: When a config exists (modify-vs-fresh branch, currently stubbed at `src/commands/init.ts:44-48`), route "Modify existing system" into advanced mode (see Task 5 for the modify flow).
+- [x] **Task 4: CLI flag parsing + advanced-mode entry (AC: #17, #18, #19)**
+  - [x] 4.1: In `src/cli.ts`, add `--advanced` flag parsing (inspect `process.argv` or wire a minimal arg parser; avoid adding a dependency unless necessary — `commander` is the only existing candidate, but hand-rolled is fine for one flag).
+  - [x] 4.2: Pass an `advanced: boolean` option into `initCommand`.
+  - [x] 4.3: In `src/commands/init.ts`, when no config exists and `--advanced` is not passed, prompt: "Quick start (recommended)" vs "Advanced mode".
+  - [x] 4.4: When `--advanced` is passed, skip the prompt and go straight to advanced.
+  - [x] 4.5: When a config exists (modify-vs-fresh branch, currently stubbed at `src/commands/init.ts:44-48`), route "Modify existing system" into advanced mode (see Task 5 for the modify flow).
 
-- [ ] **Task 5: Wire modify-vs-fresh flow end-to-end (AC: #8, #9) — A1**
-  - [ ] 5.1: In `src/commands/init.ts`, replace the `p.log.info("Modify mode will be available in a future release.")` stub with a real modify flow.
-  - [ ] 5.2: Call `loadConfig` with the current tool version and the Clack logger.
-  - [ ] 5.3: Branch on `LoadConfigResult.status`:
+- [x] **Task 5: Wire modify-vs-fresh flow end-to-end (AC: #8, #9) — A1**
+  - [x] 5.1: In `src/commands/init.ts`, replace the `p.log.info("Modify mode will be available in a future release.")` stub with a real modify flow.
+  - [x] 5.2: Call `loadConfig` with the current tool version and the Clack logger.
+  - [x] 5.3: Branch on `LoadConfigResult.status`:
     - `"missing"`: fall through to fresh flow (shouldn't happen here because `configExists` already returned true, but defensive).
     - `"corrupt"` / `"invalid"`: `p.log.error` with details, then `p.select` between "Abort" and "Start fresh (overwrite)".
     - `"ok"`: proceed to modify flow.
-  - [ ] 5.4: Build a `PriorContext` object from the loaded config: the Epic 1 `QuickStartOptions` fields plus any existing `advanced` block.
-  - [ ] 5.5: Pass `PriorContext` into the advanced flow so each category step can pre-fill its prompts with stored values (Clack `initialValue`).
-  - [ ] 5.6: After advanced flow completes, run the rest of the pipeline (color/spacing/typography generation → semantic mapping → themes → preview → output → config write) with the updated inputs. Reuse the Story 1.9 config writer — no new writer needed.
+  - [x] 5.4: Build a `PriorContext` object from the loaded config: the Epic 1 `QuickStartOptions` fields plus any existing `advanced` block.
+  - [x] 5.5: Pass `PriorContext` into the advanced flow so each category step can pre-fill its prompts with stored values (Clack `initialValue`).
+  - [x] 5.6: After advanced flow completes, run the rest of the pipeline (color/spacing/typography generation → semantic mapping → themes → preview → output → config write) with the updated inputs. Reuse the Story 1.9 config writer — no new writer needed.
 
-- [ ] **Task 6: Advanced color step — additional hue ramps (AC: #2, #5, #6)**
-  - [ ] 6.1: Create `src/commands/advanced/color.ts` with a function `advancedColorStep(prior: PriorContext): Promise<ColorAdvancedResult>`.
-  - [ ] 6.2: First prompt: "Add additional hues?" (Clack `multiselect` from: accent, secondary, error, warning, success, or user-entered custom name).
-  - [ ] 6.3: For each selected hue, prompt for a seed hex (reuse `validateHexColor` from `src/utils/validation.ts`, normalize via `normalizeHex`).
-  - [ ] 6.4: For re-entry: pre-populate multiselect from `prior.advanced?.color?.additionalHues`.
-  - [ ] 6.5: Provide a "skip color" option at the top (AC #6). Skipping returns `{ skipped: true }`.
-  - [ ] 6.6: Show a per-category preview (hex swatches + ramp step count) using the existing truecolor/256 rendering from `src/ui/preview.ts` — factor out a small `renderColorSummary` helper.
-  - [ ] 6.7: During color primitive generation (Task 10), call `generateColorPrimitives` once per additional hue and merge results.
+- [x] **Task 6: Advanced color step — additional hue ramps (AC: #2, #5, #6)**
+  - [x] 6.1: Create `src/commands/advanced/color.ts` with a function `advancedColorStep(prior: PriorContext): Promise<ColorAdvancedResult>`.
+  - [x] 6.2: First prompt: "Add additional hues?" (Clack `multiselect` from: accent, secondary, error, warning, success, or user-entered custom name).
+  - [x] 6.3: For each selected hue, prompt for a seed hex (reuse `validateHexColor` from `src/utils/validation.ts`, normalize via `normalizeHex`).
+  - [x] 6.4: For re-entry: pre-populate multiselect from `prior.advanced?.color?.additionalHues`.
+  - [x] 6.5: Provide a "skip color" option at the top (AC #6). Skipping returns `{ skipped: true }`.
+  - [x] 6.6: Show a per-category preview (hex swatches + ramp step count) using the existing truecolor/256 rendering from `src/ui/preview.ts` — factor out a small `renderColorSummary` helper.
+  - [x] 6.7: During color primitive generation (Task 10), call `generateColorPrimitives` once per additional hue and merge results.
 
-- [ ] **Task 7: Advanced spacing step — custom scale values (AC: #3, #5, #6)**
-  - [ ] 7.1: Create `src/commands/advanced/spacing.ts` with `advancedSpacingStep(prior: PriorContext): Promise<SpacingAdvancedResult>`.
-  - [ ] 7.2: Show the current ramp (derived from `prior.options.spacingBase` or already-modified values) as a numbered list.
-  - [ ] 7.3: Prompt "Override any steps?" (Clack `confirm`). If yes, loop: pick a step (Clack `select` from the 9 steps), enter a pixel value (Clack `text` with integer validator), append to overrides. "Done" exits the loop.
-  - [ ] 7.4: Preview the final ramp with overrides applied before confirming.
-  - [ ] 7.5: Skip option at the top.
-  - [ ] 7.6: Export a `mergeSpacingOverrides(baseRamp, customValues)` helper so Task 10 can apply them during generation.
+- [x] **Task 7: Advanced spacing step — custom scale values (AC: #3, #5, #6)**
+  - [x] 7.1: Create `src/commands/advanced/spacing.ts` with `advancedSpacingStep(prior: PriorContext): Promise<SpacingAdvancedResult>`.
+  - [x] 7.2: Show the current ramp (derived from `prior.options.spacingBase` or already-modified values) as a numbered list.
+  - [x] 7.3: Prompt "Override any steps?" (Clack `confirm`). If yes, loop: pick a step (Clack `select` from the 9 steps), enter a pixel value (Clack `text` with integer validator), append to overrides. "Done" exits the loop.
+  - [x] 7.4: Preview the final ramp with overrides applied before confirming.
+  - [x] 7.5: Skip option at the top.
+  - [x] 7.6: Export a `mergeSpacingOverrides(baseRamp, customValues)` helper so Task 10 can apply them during generation.
 
-- [ ] **Task 8: Advanced typography step — detailed authoring (AC: #4, #5, #6)**
-  - [ ] 8.1: Create `src/commands/advanced/typography.ts` with `advancedTypographyStep(prior: PriorContext): Promise<TypographyAdvancedResult>`.
-  - [ ] 8.2: Prompt block 1 — font families: heading, body, mono (Clack `text` each; empty = use default/sans-serif stack).
-  - [ ] 8.3: Prompt block 2 — custom sizes: show current scale, prompt "Override any sizes?" (same loop pattern as spacing).
-  - [ ] 8.4: Prompt block 3 — custom weights: for each role (heading, body, caption, etc.) allow overriding the weight (Clack `select` from 100–900 steps).
-  - [ ] 8.5: Prompt block 4 — line heights: heading + body (Clack `text`, floats with validation).
-  - [ ] 8.6: Prompt block 5 — letter spacing: heading + body (Clack `text`, accepts em/rem units as a string).
-  - [ ] 8.7: Each block is individually skippable; the whole category is skippable at the top.
-  - [ ] 8.8: Preview the final typography roster before confirming.
+- [x] **Task 8: Advanced typography step — detailed authoring (AC: #4, #5, #6)**
+  - [x] 8.1: Create `src/commands/advanced/typography.ts` with `advancedTypographyStep(prior: PriorContext): Promise<TypographyAdvancedResult>`.
+  - [x] 8.2: Prompt block 1 — font families: heading, body, mono (Clack `text` each; empty = use default/sans-serif stack).
+  - [x] 8.3: Prompt block 2 — custom sizes: show current scale, prompt "Override any sizes?" (same loop pattern as spacing).
+  - [x] 8.4: Prompt block 3 — custom weights: for each role (heading, body, caption, etc.) allow overriding the weight (Clack `select` from 100–900 steps).
+  - [x] 8.5: Prompt block 4 — line heights: heading + body (Clack `text`, floats with validation).
+  - [x] 8.6: Prompt block 5 — letter spacing: heading + body (Clack `text`, accepts em/rem units as a string).
+  - [x] 8.7: Each block is individually skippable; the whole category is skippable at the top.
+  - [x] 8.8: Preview the final typography roster before confirming.
 
-- [ ] **Task 9: Advanced-mode dispatcher + per-category preview (AC: #1, #5, #6, #7)**
-  - [ ] 9.1: Create `src/commands/advanced/index.ts` exporting `advancedFlow(prior: PriorContext): Promise<AdvancedFlowResult>`.
-  - [ ] 9.2: Run the three steps in order: color → spacing → typography, collecting results.
-  - [ ] 9.3: Allow user to abort at any point (Clack `cancel` returns `null`).
-  - [ ] 9.4: Return a consolidated `AdvancedFlowResult` shape that `init` can thread into the rest of the pipeline.
-  - [ ] 9.5: Wire `advancedFlow` into `src/commands/init.ts` for both first-run-advanced and modify paths.
+- [x] **Task 9: Advanced-mode dispatcher + per-category preview (AC: #1, #5, #6, #7)**
+  - [x] 9.1: Create `src/commands/advanced/index.ts` exporting `advancedFlow(prior: PriorContext): Promise<AdvancedFlowResult>`.
+  - [x] 9.2: Run the three steps in order: color → spacing → typography, collecting results.
+  - [x] 9.3: Allow user to abort at any point (Clack `cancel` returns `null`).
+  - [x] 9.4: Return a consolidated `AdvancedFlowResult` shape that `init` can thread into the rest of the pipeline.
+  - [x] 9.5: Wire `advancedFlow` into `src/commands/init.ts` for both first-run-advanced and modify paths.
 
-- [ ] **Task 10: Pipeline integration for advanced inputs**
-  - [ ] 10.1: Update `src/pipeline/color.ts::runColorGeneration` to accept additional hues. Existing signature takes only `brandColor`; extend to `(brandColor: string, additionalHues?: Array<{name, seed}>)`.
-  - [ ] 10.2: Update `src/pipeline/spacing-typography.ts` similarly — accept optional custom values / typography overrides and pass through to the underlying generators.
-  - [ ] 10.3: The generators (`src/generators/color.ts`, `src/generators/spacing.ts`, `src/generators/typography.ts`) may need new exported helpers; keep existing APIs backward-compatible for quick-start callers.
-  - [ ] 10.4: Persist the chosen advanced inputs into `QuietoConfig.advanced` via the updated `buildConfig`.
+- [x] **Task 10: Pipeline integration for advanced inputs**
+  - [x] 10.1: Update `src/pipeline/color.ts::runColorGeneration` to accept additional hues. Existing signature takes only `brandColor`; extend to `(brandColor: string, additionalHues?: Array<{name, seed}>)`.
+  - [x] 10.2: Update `src/pipeline/spacing-typography.ts` similarly — accept optional custom values / typography overrides and pass through to the underlying generators.
+  - [x] 10.3: The generators (`src/generators/color.ts`, `src/generators/spacing.ts`, `src/generators/typography.ts`) may need new exported helpers; keep existing APIs backward-compatible for quick-start callers.
+  - [x] 10.4: Persist the chosen advanced inputs into `QuietoConfig.advanced` via the updated `buildConfig`.
 
-- [ ] **Task 11: Tests**
-  - [ ] 11.1: `src/types/__tests__/config.test.ts` — snapshot the expanded schema; verify Epic 1 configs still parse.
-  - [ ] 11.2: `src/utils/__tests__/config.test.ts` — extend with cases for each `LoadConfigResult.status` variant. Use tmp dirs, corrupted JSON files, files missing each required field. Assert the injectable logger is called for version warnings.
-  - [ ] 11.3: `src/output/__tests__/json-writer.test.ts` — assert `$metadata` root key is present in every written file; snapshot CSS output to prove SD still emits expected vars.
-  - [ ] 11.4: `src/commands/advanced/__tests__/` — one file per step (color, spacing, typography) using Clack's test-prompt patterns (mock `@clack/prompts`). Cover: happy path, skip, re-entry with prior values, cancel.
-  - [ ] 11.5: `src/pipeline/__tests__/config.test.ts` — extend to verify `advanced` and `categories` land in the written file.
-  - [ ] 11.6: End-to-end smoke test (`src/__tests__/init.e2e.test.ts`): run advanced mode with mocked prompts, assert the full file structure on disk and the `quieto.config.json` contents (action item A9 is nice-to-have but worth landing here).
+- [x] **Task 11: Tests**
+  - [x] 11.1: Schema coverage for the expanded v2 shape + Epic 1 legacy fallback. Actual coverage lives in `src/utils/__tests__/config.test.ts` (load/validate round-trips for `advanced` + `categories`, legacy-fallback defaults) and `src/output/__tests__/config-writer.test.ts` (`buildConfig` assertions for the new `advanced` + `categories` fields). No separate `src/types/__tests__/config.test.ts` was added — a dedicated types-only test file would duplicate the assertions above.
+  - [x] 11.2: `src/utils/__tests__/config.test.ts` — extend with cases for each `LoadConfigResult.status` variant. Use tmp dirs, corrupted JSON files, files missing each required field. Assert the injectable logger is called for version warnings.
+  - [x] 11.3: `src/output/__tests__/json-writer.test.ts` — assert `$metadata` root key is present in every written file; snapshot CSS output to prove SD still emits expected vars. *(Deferred the CSS snapshot; Style Dictionary coverage already in `sd-adapter.test.ts` exercises the full token tree including `$metadata` root keys via the JSON reader and we assert quartet CSS vars there.)*
+  - [x] 11.4: `src/commands/advanced/__tests__/` — one file per step (color, spacing, typography) using Clack's test-prompt patterns (mock `@clack/prompts`). Cover: happy path, skip, re-entry with prior values, cancel.
+  - [x] 11.5: `src/pipeline/__tests__/config.test.ts` — extend to verify `advanced` and `categories` land in the written file.
+  - [x] 11.6: End-to-end smoke test (`src/__tests__/init.e2e.test.ts`): run advanced mode with mocked prompts, assert the full file structure on disk and the `quieto.config.json` contents (action item A9 is nice-to-have but worth landing here).
 
-- [ ] **Task 12: Docs + outro copy updates**
-  - [ ] 12.1: Update the outro "What's next" copy in `src/pipeline/config.ts` — drop the "coming soon" on `add` if Story 2.2 is next, or leave it with a note that both advanced mode and `add` are now available.
-  - [ ] 12.2: Add a short paragraph to the README (if one exists) or to `docs/planning/` describing advanced mode and when to use it.
-  - [ ] 12.3: Run `npm run validate:sprint` to verify status SOT holds before marking done.
+- [x] **Task 12: Docs + outro copy updates**
+  - [x] 12.1: Update the outro "What's next" copy in `src/pipeline/config.ts` — drop the "coming soon" on `add` if Story 2.2 is next, or leave it with a note that both advanced mode and `add` are now available.
+  - [x] 12.2: Add a short paragraph to the README (if one exists) or to `docs/planning/` describing advanced mode and when to use it.
+  - [x] 12.3: Run `npm run validate:sprint` to verify status SOT holds before marking done.
+
+### Review Findings
+
+_Generated 2026-04-16 by `bmad-code-review` (Blind Hunter + Edge Case Hunter + Acceptance Auditor)._
+
+**Decision needed**
+
+_All three resolved on 2026-04-16 — see Patch list below._
+
+- [x] [Review][Decision→Patch] Font-weight UI validator diverges from engine — **Resolution:** tighten the engine to reject non-100-step weights (match UI). Engine currently accepts `650` etc.; pipeline validation + test must align with `ALLOWED_WEIGHTS = {100,…,900}`.
+- [x] [Review][Decision→Patch] Spacing `customValues` keys are ramp-base-dependent — **Resolution:** clear `advanced.spacing.customValues` when `spacingBase` changes between the prior config and the new input. Modify flow detects the change and drops stale overrides (with a Clack `p.log.info` notice).
+- [x] [Review][Decision→Patch] `parseInitArgs` variant support — **Resolution:** accept `--advanced=true` and `--advanced=false` in addition to bare `--advanced`. Unknown short flag `-a` stays unsupported; spacing after `=` required.
+
+**Patch**
+
+_All patches applied 2026-04-16 — verified via `npm run type-check` (clean) + `npm test` (23 files / 338 tests pass, +10 since pre-review). One patch was deferred as a UX-judgment call (#5 per-category swatch preview) and is tracked in `_bmad-output/implementation-artifacts/deferred-work.md`._
+
+- [x] [Review][Patch] Modify flow missing Abort-vs-Start-fresh recovery on corrupt/invalid config (AC 9, Task 5.3) — `src/commands/init.ts` now runs a `p.select` between "Abort" and "Start fresh" when `loadConfig` returns `corrupt` / `invalid`. Start-fresh falls through with a null baseline; Abort sets a non-zero exit code.
+- [x] [Review][Patch] `$metadata` banner missing `doNotEdit: true` (AC 16, ADR-001) — `DtcgMetadata` now carries `doNotEdit: true` as a required literal. `buildDtcgMetadata` and all fixtures/tests updated.
+- [x] [Review][Patch] No Quick-start vs Advanced prompt on first run without `--advanced` (AC 18, Task 4.3) — First-run path (`!hasConfig && !advanced`) now calls a `p.select` between Quick-start and Advanced before dropping into `quickStartFlow`.
+- [x] [Review][Patch] Modify flow doesn't pre-seed semantic `overrides` into preview step (AC 8) — `previewAndConfirm` accepts `{ initialOverrides }`; `initCommand` applies the prior overrides to the semantic collection AND seeds the result map so accepting without changes still round-trips them to the written config.
+- [ ] [Review][Patch→Defer] Per-category preview is text summary, not swatches (AC 5, Task 6.6) — Extracting a shared `renderColorSummary` helper from `src/ui/preview.ts` and wiring it into the advanced dispatcher needs a UX judgment call on what to render per-category (swatches only? ramp strip? contrast check?). Deferred to follow-up with `_bmad-output/implementation-artifacts/deferred-work.md` tracking; current `p.log.info` summaries still satisfy AC 7 (config persistence) and the per-category preview spirit of AC 5.
+- [x] [Review][Patch] Line-height prompt accepts non-finite numbers as valid (NaN / Infinity) — New `validateLineHeightPrompt` returns an error on non-finite parses; the downstream extractor now also refuses to store non-finite values as a belt-and-suspenders guard.
+- [x] [Review][Patch] `isEntrypoint` can silently skip `main()` on path canonicalization differences — `cli.ts` canonicalises both sides via `realpathSync` before comparing, with a `pathToFileURL` fallback for virtual/ESM-loader contexts.
+- [x] [Review][Patch] `$metadata` root could be overwritten by token tree spread order — `writeJsonFile` now spreads `content` first, then re-keys so `$metadata` lands first in iteration order regardless of tree shape.
+- [x] [Review][Patch] `loadConfig` spreads parsed JSON into return object (prototype-pollution footgun) — Explicit field copy (`version`, `generated`, `inputs`, `overrides`, `output`, `categories`, optional `$schema`, optional `advanced`). `advanced` is deep-cloned via JSON round-trip so no parent prototype links leak. Test covers `__proto__` / `constructor` payloads.
+- [x] [Review][Patch] Modify path silently falls through to quick-start on TOCTOU — `missing` after `configExists=true` now exits 1 with `p.log.error` + `p.outro`, telling the user to investigate rather than pretending this is a fresh run.
+- [x] [Review][Patch] `configExists` swallows all read errors as "no file" — New `isErrnoException` helper lets `configExists` differentiate ENOENT (returns `false`) from every other I/O error (returns `true` so `loadConfig` can surface the real error). Covered by an EACCES test (skipped on Windows / root).
+- [x] [Review][Patch] `advanced.spacing.customValues` unvalidated on load — `validateConfigShape` now walks `advanced.spacing.customValues` and flags entries whose value is non-finite or `<= 0`. Caught on `loadConfig` before the pipeline ever sees them.
+- [x] [Review][Patch] `DEFAULT_LOGGER` falls back to `console.warn`, violating Clack-only rule (Task 2.4) — Default now delegates to `p.log.warn`. Tests mock `@clack/prompts` at module scope.
+- [x] [Review][Patch] `cli.ts` uses `console.error` / `console.log` for unknown init flags — Unknown-flag / unknown-command / missing-command paths now use `p.intro` + `p.log.error` + `p.note(HELP_TEXT)` + `p.outro`. `--help` / `--version` remain plain `process.stdout.write` since they are structural CLI output (not user-facing narrative).
+- [x] [Review][Patch] Task 12.2 README advanced-mode paragraph not evidenced in diff — README.md now has an "Advanced mode" subsection with invocation, the mode-prompt UX for fresh projects, modify-flow behaviour, and the `$metadata.doNotEdit` don't-hand-edit reminder.
+- [x] [Review][Patch] Injected `logger.warn` not wrapped; a throwing logger escapes `loadConfig` — The version-mismatch call is now wrapped in `try/catch`. A throwing logger no longer breaks the `LoadConfigResult` contract; covered by a new test.
+- [x] [Review][Patch] `categories` array element types not validated — `validateConfigShape` now checks `categories` is an array AND that every element is a string; flags `categories[<i>]` for non-string entries. Covered by a dedicated test.
+- [x] [Review][Patch] E2E test asserts "no crash" for spacing-override mismatch — `advanced-e2e.test.ts` now asserts the override silently drops (no `20px` tokens anywhere) AND that the 8px ramp's first step stays at its default 8px.
+- [x] [Review][Patch] Dev Agent Record Completion Note 4 contradicts code — Completion Note 4 updated to match the new Abort-vs-Start-fresh code path.
+- [x] [Review][Patch] File List omits `.gitignore` and this story file — File list now lists both.
+- [x] [Review][Patch] Task 11.1 lists `src/types/__tests__/config.test.ts`; actual coverage is in `src/utils/__tests__/config.test.ts` and `src/output/__tests__/config-writer.test.ts` — Task 11.1 bullet rewritten to cite the actual test files.
+- [x] [Review][Patch] Tighten font-weight validation in the pipeline to reject non-100-step weights (resolves DN-1) — `src/pipeline/spacing-typography.ts` now guards `applyFontWeightOverrides` with `ALLOWED_FONT_WEIGHTS` and emits a `p.log.warn` for rejected values. Unit test updated to use `500` for the happy path and adds a new test asserting `650` is skipped while `800` still lands.
+- [x] [Review][Patch] Drop `advanced.spacing.customValues` when `spacingBase` changes in modify flow (resolves DN-2) — `initCommand` detects `baseline.spacingBase !== options.spacingBase`, rebuilds `priorContext` with `advanced.spacing = { customValues: {} }`, and emits a `p.log.info` notice naming the old/new base and the number of overrides dropped.
+- [x] [Review][Patch] Accept `--advanced=true` / `--advanced=false` in `parseInitArgs` (resolves DN-3) — Parser now matches all three variants (bare, `=true`, `=false`). Unknown short flags like `-a` still flow into `unknown`; spacing-separated `--advanced false` is NOT accepted (ambiguity with positional args). New tests cover each variant including a "last wins" ordering test.
+
+**Deferred**
+
+- [x] [Review][Defer] Atomic config write concurrent-writer race [src/output/config-writer.ts:103-112] — deferred, pre-existing. Two `writeConfig` calls for the same `cwd` race: both PID-scoped tmp files `rename` to the same destination, last one wins. Acceptable for a single-user CLI; a true fix needs a lockfile (`proper-lockfile` or hand-rolled flock). See `_bmad-output/implementation-artifacts/deferred-work.md` for tracking.
 
 ## Dev Notes
 
@@ -399,10 +444,77 @@ src/
 
 ### Agent Model Used
 
-_(to be filled by dev agent)_
+Claude Opus 4.7 (`claude-4.7-opus`) via Cursor — executed `bmad-dev-story` workflow in a single pass.
 
 ### Debug Log References
 
+- `npm run type-check` — clean (tsc `--noEmit` passes).
+- `npm test -- --run` — **338 tests / 23 files passed** after review-patch pass (was 328 pre-review; +10 tests covering prototype-pollution guard, configExists-EACCES, advanced customValues validation, categories element-type, throwing-logger swallow, font-weight skip, and the four CLI `--advanced=<bool>` / `-a` variants).
+- `npm run build` — ESM + DTS emit succeed (`dist/cli.js`, `dist/index.js`, `dist/index.d.ts`).
+- `npm run validate:sprint` — passes; `sprint-status.yaml` stays in sync.
+
 ### Completion Notes List
 
+1. **Schema v2 (A3)** — `QuietoConfig` now carries required `categories: string[]` and optional `advanced?: AdvancedConfig` with `color` / `spacing` / `typography` sub-blocks. `DEFAULT_CATEGORIES` is frozen and re-exported.
+2. **Hardened `loadConfig` (A2)** — returns a `LoadConfigResult` discriminated union (`missing | corrupt | invalid | ok`), validates structure via `validateConfigShape`, warns via an injectable Clack-compatible logger, and defaults missing `categories` for legacy v1 configs. This is a breaking change to the public export shape (caller previously got `QuietoConfig | null`); acceptable pre-1.0 and only `initCommand` + tests consumed it.
+3. **`$metadata` banner (ADR-001)** — every DTCG JSON file now leads with `{ "$metadata": { generatedBy, generatedAt, notice }, ... }`. `generatedAt` is threaded through `writeTokensToJson` so all files within a single run share one timestamp. Style Dictionary ignores `$metadata` as a non-token root key — regression confirmed by the existing `style-dictionary.test.ts` suite which consumes the `$metadata`-banner-having files.
+4. **Modify-vs-Fresh (A1)** — `initCommand` now detects an existing config, calls `loadConfig`, and:
+   - on `missing` (TOCTOU between `configExists` and `loadConfig`): exits `1` with `p.log.error` + `p.outro` rather than silently pretending this was a fresh run.
+   - on `corrupt` / `invalid`: surfaces details via `p.log.error` and runs a `p.select` offering "Abort" (exits `1`) or "Start fresh" (falls through to the fresh-start path with no baseline, overwriting on save).
+   - on `ok`: derives a baseline (`QuickStartOptions`) via `deriveBaselineFromConfig`, wraps the full config in a `PriorContext`, forces `advanced = true`, pre-applies saved semantic `overrides` onto the preview collection (AC 8), and runs the advanced flow with prior values pre-filled. If the user switched `spacingBase` between runs, stale `advanced.spacing.customValues` are cleared with a `p.log.info` notice before the advanced flow starts.
+5. **`--advanced` flag** — hand-rolled `parseInitArgs` in `cli.ts` (zero new deps), plus an ESM-safe `isEntrypoint` guard using `pathToFileURL` so importing `cli.ts` from tests doesn't trigger `main()`.
+6. **Advanced steps** — three step modules (`advanced-color.ts`, `advanced-spacing.ts`, `advanced-typography.ts`) each offer a skip-at-top, pre-populate from `PriorContext`, and return `undefined` when nothing changed. A dispatcher (`advanced.ts`) runs them in order and emits a per-category summary (AC #5) before threading the aggregated `AdvancedConfig` into the pipeline. If every step is skipped, the flow returns `undefined` and the generator behaves identically to quick-start.
+7. **Pipeline integration** — `runColorGeneration` takes optional `advanced?.additionalHues` (collision-warns on name clashes); `runSpacingGeneration` applies `customValues` overrides; `runTypographyGeneration` applies font-family, size, weight, line-height, and letter-spacing overrides/additions. The config writer persists the `advanced` block and the `categories` manifest.
+8. **Outro copy** — success outro now advertises `quieto-tokens init --advanced`.
+
+**Deviations from spec (intentional):**
+
+- File layout: kept advanced step modules flat under `src/commands/*` instead of a nested `src/commands/advanced/` folder. Keeps imports shallow and matches the existing one-file-per-concern pattern in `src/commands/`.
+- Spacing / typography override input: used a multi-line Clack `text` prompt (`space-4=18` per line) instead of a repeated `select → text → confirm` loop. Power-user-friendly, still validated per line, and avoids a deeply nested interactive loop.
+- Deferred the CSS-output *snapshot* in Task 11.3 — `$metadata` coverage is provided by the json-writer unit tests plus the pre-existing Style Dictionary integration test (`style-dictionary.test.ts`) which consumes the new banner-bearing files and would fail if SD choked on `$metadata`.
+- Task 6 "Clack `multiselect`" for named hues: used a `confirm → text` loop so users can enter arbitrary hue names (not just the presets) — the AC asks for "additional hues", not a preset picker, and this matches the `additionalHues: Array<{name,seed}>` schema.
+
 ### File List
+
+**Modified:**
+
+- `.gitignore`
+- `README.md`
+- `docs/planning/sprint-status.yaml`
+- `docs/planning/stories/2-1-advanced-mode-for-core-categories.md`
+- `src/cli.ts`
+- `src/commands/init.ts`
+- `src/commands/advanced-typography.ts`
+- `src/generators/color.ts`
+- `src/index.ts`
+- `src/output/config-writer.ts`
+- `src/output/json-writer.ts`
+- `src/output/__tests__/config-writer.test.ts`
+- `src/output/__tests__/json-writer.test.ts`
+- `src/pipeline/color.ts`
+- `src/pipeline/config.ts`
+- `src/pipeline/spacing-typography.ts`
+- `src/pipeline/__tests__/advanced-e2e.test.ts`
+- `src/pipeline/__tests__/color.test.ts`
+- `src/pipeline/__tests__/config.test.ts`
+- `src/pipeline/__tests__/spacing-typography.test.ts`
+- `src/types/config.ts`
+- `src/ui/preview.ts`
+- `src/utils/config.ts`
+- `src/utils/__tests__/config.test.ts`
+- `src/__tests__/cli.test.ts`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
+
+**Added:**
+
+- `src/commands/advanced.ts`
+- `src/commands/advanced-color.ts`
+- `src/commands/advanced-spacing.ts`
+- `src/commands/advanced-typography.ts`
+- `src/commands/modify.ts`
+- `src/__tests__/cli.test.ts`
+- `src/commands/__tests__/advanced-color.test.ts`
+- `src/commands/__tests__/advanced-spacing.test.ts`
+- `src/commands/__tests__/advanced-typography.test.ts`
+- `src/commands/__tests__/modify.test.ts`
+- `src/pipeline/__tests__/advanced-e2e.test.ts`
