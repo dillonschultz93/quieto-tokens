@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-16 (epic-1 retrospective completed; epic-1 done)
+# last_updated: 2026-04-16 (story 2-1 spec drafted; ready-for-dev)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -56,8 +56,8 @@ development_status:
   epic-1-retrospective: done
 
   # Epic 2: Advanced Token Authoring
-  epic-2: backlog
-  2-1-advanced-mode-for-core-categories: backlog
+  epic-2: in-progress
+  2-1-advanced-mode-for-core-categories: ready-for-dev
   2-2-add-subcommand-for-new-token-categories: backlog
   2-3-guided-component-token-generation: backlog
   epic-2-retrospective: optional
