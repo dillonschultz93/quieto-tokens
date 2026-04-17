@@ -10,6 +10,50 @@ Quieto Tokens generates a three-tier design token system (primitive, semantic, a
 
 **Quick-start mode** asks 3-4 questions and generates a production-ready token set. **Advanced mode** gives full control over every category.
 
+## Installation
+
+Quieto Tokens is not yet published to npm. For now, install it from source:
+
+```bash
+git clone https://github.com/dillonschultz93/quieto-tokens.git
+cd quieto-tokens
+npm install
+npm run build
+npm link
+```
+
+`npm link` makes the `quieto-tokens` binary available globally so you can run it from any project directory. Requires Node.js 18 or newer.
+
+## Quick Start
+
+From the root of the project you want to add tokens to, run:
+
+```bash
+quieto-tokens init
+```
+
+You'll be walked through a handful of prompts — pick a mode, provide a brand hex color, a base spacing unit, and a typography feel. Quieto then generates:
+
+```
+tokens/
+  primitive/
+    color.json            # Primitive color ramps (DTCG)
+    spacing.json          # Primitive spacing scale
+    typography.json       # Primitive type scale
+  semantic/
+    default/              # Semantic tokens (theme-agnostic references)
+    light/                # Light-theme overrides (if dark mode enabled)
+    dark/                 # Dark-theme overrides (if dark mode enabled)
+build/
+  tokens.css              # All primitives + default semantics
+  primitives.css          # Primitives only
+  light.css               # Light-theme semantic layer
+  dark.css                # Dark-theme semantic layer
+quieto.config.json        # Your answers, so you can re-run to modify
+```
+
+Running `quieto-tokens init` again on a project that already has `quieto.config.json` routes through a "Modify existing system" flow with your prior answers pre-filled — you only adjust what's changing.
+
 ### Advanced mode
 
 Reach for advanced mode when the quick-start defaults aren't enough — you want to add hue ramps beyond your primary brand color, tune individual spacing steps, or override specific font families, sizes, weights, line heights, or letter spacing. Launch it with:
@@ -26,16 +70,31 @@ Each category (color → spacing → typography) is an independently skippable s
 
 ### Token Tiers
 
-- **Primitive** — Core values: color ramps, spacing scales, type scales. Obfuscation layer over raw values.
-- **Semantic** — UI-meaningful assignments: `color.background.primary`, `spacing.md`, `typography.body`. References primitives.
-- **Component** — Component-specific decisions: `button.primary.color.background.hover`. References semantics.
+- **Primitive** — Core values: color ramps, spacing scales, type scales. Obfuscation layer over raw values. _(shipped)_
+- **Semantic** — UI-meaningful assignments: `color.background.primary`, `spacing.md`, `typography.body`. References primitives. _(shipped)_
+- **Component** — Component-specific decisions: `button.primary.color.background.hover`. References semantics. _(planned — Epic 2)_
+
+### Color Ramps
+
+Every color hue is generated as a **10-step ramp** using the industry-standard labeling convention:
+
+| Step | Role |
+|---|---|
+| `50` | Lightest — page backgrounds, subtle surfaces |
+| `100`–`400` | Light to mid tones — hover states, soft fills, muted content |
+| `500` | Base — typically the seed color, used for primary surfaces |
+| `600`–`800` | Mid to dark tones — emphasis, active states, borders |
+| `900` | Darkest — strong content, dark-theme backgrounds |
+
+This matches Tailwind, Radix, and Material conventions, so Quieto-generated tokens drop into existing design systems predictably. All steps are WCAG AA–compliant against their intended usage context, enforced structurally by `@quieto/palettes`.
 
 ### Output Formats
 
-- CSS custom properties (MVP)
-- JSON for Figma Variables / Tokens Studio (planned)
-- iOS Swift (planned)
-- Android XML / Compose (planned)
+- CSS custom properties _(shipped)_
+- DTCG JSON source tokens _(shipped)_
+- JSON for Figma Variables / Tokens Studio _(planned — Epic 4)_
+- iOS Swift _(planned — Epic 4)_
+- Android XML / Compose _(planned — Epic 4)_
 
 ## Key Features
 
@@ -43,12 +102,22 @@ Each category (color → spacing → typography) is an independently skippable s
 - **No framework lock-in** — Platform-native output that works with any framework
 - **Light/dark themes** — Generated from a single yes/no question using the same primitive palette
 - **Re-entrant editing** — Modify your token system without starting over
-- **Design system changelog** — Automatic tracking of what changed and why
+- **Design system changelog** — Automatic tracking of what changed and why (planned)
 - **DTCG-aligned** — Interoperable with the growing design token tool ecosystem
 
 ## Status
 
-This project is in active development. See [docs/planning/epics.md](docs/planning/epics.md) for the full roadmap.
+This project is in active development. Progress by epic:
+
+| Epic | Scope | Status |
+|---|---|---|
+| 1 — Quick-Start Token Generation (MVP) | CLI scaffold, quick-start flow, primitives, semantics, theming, preview, DTCG + CSS output, config | **Done** |
+| 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | In progress |
+| 3 — Token System Evolution | Re-entrant editing, diff display, dry-run, design-system changelog | Backlog |
+| 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | Backlog |
+| 5 — Design System Intelligence | `inspect` command, `migrate` command | Backlog |
+
+See [`docs/planning/epics.md`](docs/planning/epics.md) for the full roadmap and [`docs/planning/sprint-status.yaml`](docs/planning/sprint-status.yaml) for per-story status.
 
 ## License
 
