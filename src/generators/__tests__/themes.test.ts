@@ -97,7 +97,7 @@ function makeTypoSemantic(
   };
 }
 
-const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
 const BLUE_PRIMITIVES = STEPS.map((s) => makeColorPrimitive("blue", s));
 const NEUTRAL_PRIMITIVES = STEPS.map((s) => makeColorPrimitive("neutral", s));
 const ALL_COLOR_PRIMITIVES = [...BLUE_PRIMITIVES, ...NEUTRAL_PRIMITIVES];
@@ -183,8 +183,8 @@ describe("ThemeCollection type contract", () => {
 });
 
 describe("NEUTRAL_STEP_INVERSION", () => {
-  it("is a symmetric reversal of the 11-step ramp", () => {
-    const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+  it("is a symmetric reversal of the 10-step ramp", () => {
+    const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
     for (const step of steps) {
       const inverted = NEUTRAL_STEP_INVERSION[step]!;
       expect(steps).toContain(inverted);
@@ -192,21 +192,29 @@ describe("NEUTRAL_STEP_INVERSION", () => {
     }
   });
 
-  it("maps 50↔950, 100↔900, 200↔800", () => {
-    expect(NEUTRAL_STEP_INVERSION[50]).toBe(950);
-    expect(NEUTRAL_STEP_INVERSION[950]).toBe(50);
-    expect(NEUTRAL_STEP_INVERSION[100]).toBe(900);
-    expect(NEUTRAL_STEP_INVERSION[200]).toBe(800);
+  it("maps 50↔900, 100↔800, 200↔700, 300↔600, 400↔500", () => {
+    expect(NEUTRAL_STEP_INVERSION[50]).toBe(900);
+    expect(NEUTRAL_STEP_INVERSION[900]).toBe(50);
+    expect(NEUTRAL_STEP_INVERSION[100]).toBe(800);
+    expect(NEUTRAL_STEP_INVERSION[800]).toBe(100);
+    expect(NEUTRAL_STEP_INVERSION[200]).toBe(700);
+    expect(NEUTRAL_STEP_INVERSION[300]).toBe(600);
+    expect(NEUTRAL_STEP_INVERSION[400]).toBe(500);
+    expect(NEUTRAL_STEP_INVERSION[500]).toBe(400);
   });
 
-  it("maps 500→500 (midpoint stays)", () => {
-    expect(NEUTRAL_STEP_INVERSION[500]).toBe(500);
+  it("does not define a 950 key (10-step ramp)", () => {
+    expect(NEUTRAL_STEP_INVERSION[950]).toBeUndefined();
+  });
+
+  it("has exactly 10 keys — catches stray/unexpected additions", () => {
+    expect(Object.keys(NEUTRAL_STEP_INVERSION)).toHaveLength(10);
   });
 });
 
 describe("PRIMARY_STEP_INVERSION", () => {
-  it("maps all 11 valid steps to valid steps", () => {
-    const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+  it("maps all 10 valid steps to valid steps", () => {
+    const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
     for (const step of steps) {
       expect(steps).toContain(PRIMARY_STEP_INVERSION[step]);
     }
@@ -218,6 +226,14 @@ describe("PRIMARY_STEP_INVERSION", () => {
 
   it("maps 700→300 (light for readability on dark)", () => {
     expect(PRIMARY_STEP_INVERSION[700]).toBe(300);
+  });
+
+  it("does not define a 950 key", () => {
+    expect(PRIMARY_STEP_INVERSION[950]).toBeUndefined();
+  });
+
+  it("has exactly 10 keys — catches stray/unexpected additions", () => {
+    expect(Object.keys(PRIMARY_STEP_INVERSION)).toHaveLength(10);
   });
 });
 
@@ -254,25 +270,25 @@ describe("generateDarkTheme", () => {
     expect(darkTheme.semanticTokens).toHaveLength(ALL_SEMANTICS.length);
   });
 
-  it("inverts neutral background references (50→950)", () => {
+  it("inverts neutral background references (50→900)", () => {
     const bgDefault = darkTheme.semanticTokens.find(
       (t) => t.name === "color.background.default",
     );
-    expect(bgDefault!.$value).toBe("{color.neutral.950}");
+    expect(bgDefault!.$value).toBe("{color.neutral.900}");
   });
 
-  it("inverts neutral content references (900→100)", () => {
+  it("inverts neutral content references (900→50)", () => {
     const contentDefault = darkTheme.semanticTokens.find(
       (t) => t.name === "color.content.default",
     );
-    expect(contentDefault!.$value).toBe("{color.neutral.100}");
+    expect(contentDefault!.$value).toBe("{color.neutral.50}");
   });
 
-  it("inverts neutral border references (200→800)", () => {
+  it("inverts neutral border references (200→700)", () => {
     const borderDefault = darkTheme.semanticTokens.find(
       (t) => t.name === "color.border.default",
     );
-    expect(borderDefault!.$value).toBe("{color.neutral.800}");
+    expect(borderDefault!.$value).toBe("{color.neutral.700}");
   });
 
   it("inverts primary background references (500→400)", () => {

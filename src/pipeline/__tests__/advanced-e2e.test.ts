@@ -79,8 +79,8 @@ describe("advanced mode — end-to-end pipeline", () => {
     const spacing = runSpacingGeneration(8, ADVANCED.spacing);
     const typography = runTypographyGeneration("balanced", ADVANCED.typography);
 
-    // Color: 22 defaults + 22 extras (2 hues × 11 steps).
-    expect(color.length).toBe(44);
+    // Color: 20 defaults + 20 extras (2 hues × 10 steps).
+    expect(color.length).toBe(40);
     expect(color.some((t) => t.path[1] === "accent")).toBe(true);
     expect(color.some((t) => t.path[1] === "error")).toBe(true);
 

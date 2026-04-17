@@ -33,7 +33,7 @@ So that I support both appearances without designing two separate color systems.
   - [x] 2.3: Implement `generateThemes(semanticTokens, primitives, enableDarkMode: boolean): ThemeCollection`
 - [x] Task 3: Define the dark-mode inversion strategy (AC: #2, #3)
   - [x] 3.1: Create an inversion mapping that knows how to flip primitive references:
-    - For neutral ramps: reverse the step order (50↔950, 100↔900, 200↔800, etc.)
+    - For neutral ramps: reverse the step order (50↔900, 100↔800, 200↔700, 300↔600, 400↔500) _[Story 1.10: ramp reduced from 11 to 10 steps.]_
     - For primary/accent ramps: shift steps to maintain contrast on dark backgrounds
     - For non-color tokens (spacing, typography): no change between themes
   - [x] 3.2: The inversion must preserve DTCG reference syntax — dark theme tokens still reference the same primitives, just different steps
@@ -153,7 +153,7 @@ src/
 ### Previous Story Intelligence
 
 - **Semantic token output from 1.5:** Array of `SemanticToken[]` with DTCG references to primitives
-- **Color ramp from 1.3:** Contains step numbers that can be inverted (50↔950, etc.)
+- **Color ramp from 1.3:** Contains step numbers that can be inverted (50↔900, 100↔800, etc.) _[Story 1.10: ramp is now 10 steps, not 11.]_
 - **Pipeline pattern:** Each step receives output from the previous step and passes enriched data forward
 - **Clack narrative pattern:** `log.step()` for phase announcements, `log.info()` for details
 
@@ -179,7 +179,7 @@ No issues encountered; all tests passed on first implementation.
 
 - Added `Theme` and `ThemeCollection` interfaces to `src/types/tokens.ts`; exported from barrel `src/index.ts`
 - Created `src/generators/themes.ts` with `generateLightTheme`, `generateDarkTheme`, `generateThemes` and two inversion maps (`NEUTRAL_STEP_INVERSION`, `PRIMARY_STEP_INVERSION`)
-- Neutral inversion: symmetric 11-step ramp reversal (50↔950, 100↔900, …, 500 stays)
+- Neutral inversion: symmetric 10-step ramp reversal (50↔900, 100↔800, 200↔700, 300↔600, 400↔500) _[Story 1.10: was 11-step with 50↔950; the 950 step was dropped.]_
 - Primary inversion: shifted for dark-mode contrast (500→400, 700→300 per story spec)
 - Non-color semantics (spacing, typography) pass through unchanged between themes
 - `enableDarkMode=false` produces a single "default" theme with the original semantic mappings

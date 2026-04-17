@@ -56,8 +56,8 @@ function makeTypoPrimitive(
   };
 }
 
-const BLUE_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
-const NEUTRAL_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const BLUE_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+const NEUTRAL_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 const BLUE_PRIMITIVES = BLUE_STEPS.map((s) => makeColorPrimitive("blue", s));
 const NEUTRAL_PRIMITIVES = NEUTRAL_STEPS.map((s) =>

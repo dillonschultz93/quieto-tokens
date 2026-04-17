@@ -12,7 +12,10 @@ export interface ColorRamp {
   steps: ColorPrimitive[];
 }
 
-const STEP_LABELS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+// Canonical 10-step ramp labels (50 = lightest, 900 = darkest), matching the
+// Tailwind / Radix / Material conventions. Story 1.10 dropped the exploratory
+// 950 step that Story 1.3 inherited from the @quieto/palettes CLI contract.
+const STEP_LABELS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 const RAMP_STEPS = STEP_LABELS.length;
 
@@ -50,7 +53,16 @@ function engineRampToColorRamp(ramp: Ramp, hueName: string): ColorRamp {
     );
   }
 
-  const steps: ColorPrimitive[] = ramp.steps.map(
+  // `@quieto/engine` emits steps ordered dark → light (index 0 ≈ range.min L,
+  // index N-1 ≈ range.max L — see buildPositions in generate.js). Industry
+  // convention labels the lightest step as `50` and the darkest as `900`, so
+  // reverse the engine output before pairing with STEP_LABELS. Reversing the
+  // steps (rather than the labels) keeps per-step metadata like `isSeed`
+  // aligned with the label position a user expects — a mid-L seed hex lands
+  // near the `500` label, not somewhere counterintuitive.
+  const orderedSteps = [...ramp.steps].reverse();
+
+  const steps: ColorPrimitive[] = orderedSteps.map(
     (step: RampStep, index: number) => ({
       name: `color.${hueName}.${STEP_LABELS[index]}`,
       step: STEP_LABELS[index]!,

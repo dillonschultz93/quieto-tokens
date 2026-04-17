@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-16 (story 2-1 done — review-pass patches applied: 23 patches, 1 deferred, 1 defer-carryover)
+# last_updated: 2026-04-16 (story 1-10 code review pass: 2 patches applied, 1 decision accepted as-is, 1 deferred, 16 dismissed; 350/350 tests; epic-1 flips back to done)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -37,12 +37,15 @@
 generated: 2026-04-16
 last_updated: 2026-04-16
 project: Quieto Tokens CLI
+# NOTE: Story 1.10 is a post-retrospective defect fix. Epic 1 temporarily reopened to accommodate.
 project_key: QUIETO
 tracking_system: file-system
 story_location: docs/planning/stories
 
 development_status:
   # Epic 1: Quick-Start Token Generation (MVP)
+  # Reopened from 'done' on 2026-04-16 for story 1-10 (post-retro defect fix); flipped back to 'done' same day after code review passed.
+  # epic-1-retrospective stays 'done' — the retro already happened; this is a defect correction, not a new retro event.
   epic-1: done
   1-1-cli-scaffolding-and-init-entry-point: done
   1-2-quick-start-prompt-flow: done
@@ -53,6 +56,7 @@ development_status:
   1-7-preview-override-and-confirmation: done
   1-8-dtcg-json-and-css-output-via-style-dictionary: done
   1-9-config-file-generation: done
+  1-10-color-ramp-corrections: done
   epic-1-retrospective: done
 
   # Epic 2: Advanced Token Authoring

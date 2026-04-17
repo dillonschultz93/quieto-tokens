@@ -104,10 +104,10 @@ function makeTypoSemantic(
   };
 }
 
-const BLUE_PRIMITIVES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(
+const BLUE_PRIMITIVES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map(
   (s) => makeColorPrimitive("blue", s, `#${(s * 100).toString(16).padStart(6, "0")}`),
 );
-const NEUTRAL_PRIMITIVES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(
+const NEUTRAL_PRIMITIVES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map(
   (s) => makeColorPrimitive("neutral", s, `#${(s * 100).toString(16).padStart(6, "0")}`),
 );
 

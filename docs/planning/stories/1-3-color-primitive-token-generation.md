@@ -13,7 +13,7 @@ So that I have a full set of color primitives without needing to understand colo
 1. **Given** the user has provided a brand color hex value (from Story 1.2 prompt flow), **When** the color generation step runs, **Then** `@quieto/palettes` generates an accessible primary color ramp (full step scale).
 2. **Given** the primary ramp is generated, **When** color generation continues, **Then** a neutral/gray ramp is generated for backgrounds, text, and borders.
 3. **Given** all ramps are generated, **When** the output is validated, **Then** all generated color steps are WCAG AA compliant against their intended usage context (enforced by `@quieto/palettes` — inaccessible output is structurally impossible).
-4. **Given** color generation is in progress, **When** each ramp is generated, **Then** the progress narrative displays each ramp being generated with step counts (e.g., "Generated primary ramp: 11 steps").
+4. **Given** color generation is in progress, **When** each ramp is generated, **Then** the progress narrative displays each ramp being generated with step counts (e.g., "Generated primary ramp: 10 steps"). _[Updated by Story 1.10: 11 steps → 10 steps.]_
 5. **Given** all color primitives are generated, **When** token naming is applied, **Then** tokens follow the primitive naming convention: `color.<hue>.<step>` (e.g., `color.blue.400`, `color.neutral.100`).
 
 ## Tasks / Subtasks
@@ -38,8 +38,8 @@ So that I have a full set of color primitives without needing to understand colo
   - [x] 4.3: Wire into the init command flow after Story 1.2's prompt collection completes
 - [x] Task 5: Implement progress narrative for color generation (AC: #4)
   - [x] 5.1: Use Clack `log.step()` and `log.info()` to narrate each ramp generation (e.g., "Generating primary color ramp from #3B82F6...")
-  - [x] 5.2: Display step count after each ramp (e.g., "✓ Primary ramp: 11 steps")
-  - [x] 5.3: Display total color primitive count at completion (e.g., "22 color primitives generated")
+  - [x] 5.2: Display step count after each ramp (e.g., "✓ Primary ramp: 10 steps") _[Story 1.10: 11 → 10.]_
+  - [x] 5.3: Display total color primitive count at completion (e.g., "20 color primitives generated") _[Story 1.10: 22 → 20, matching the 10-step × 2-ramp contract.]_
 
 ### Review Findings
 
@@ -72,7 +72,7 @@ Color primitive tokens follow the three-tier nomenclature from `docs/qds/design-
 - **Pattern:** `color.<hue>.<step>` (e.g., `color.blue.400`, `color.neutral.50`)
 - **Category:** `color`
 - **Sub-category:** The hue name (e.g., `blue`, `neutral`, `green`)
-- **Value:** The step number from the ramp (e.g., `50`, `100`, `200`, ..., `900`, `950`)
+- **Value:** The step number from the ramp (`50`, `100`, `200`, …, `800`, `900`). _Story 1.10 dropped the exploratory `950` step; the canonical ramp is 10 entries, 50 = lightest, 900 = darkest._
 
 The hue name for the primary ramp should be derived from the closest named hue to the brand color (e.g., if brand hex is `#3B82F6`, the hue name is `blue`). `@quieto/palettes` may provide this mapping — check its API.
 
@@ -160,6 +160,7 @@ Claude Opus 4.6
 ### Change Log
 
 - 2026-04-16: Story 1.3 implementation — color primitive token generation via @quieto/engine
+- 2026-04-16: Story 1.10 corrected ramp direction (50 = lightest, 900 = darkest) and reduced to 10 steps.
 
 ### File List
 

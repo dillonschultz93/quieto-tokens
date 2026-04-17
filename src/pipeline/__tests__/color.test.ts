@@ -17,9 +17,9 @@ describe("runColorGeneration", () => {
     vi.clearAllMocks();
   });
 
-  it("returns 22 primitive tokens for a valid brand color", async () => {
+  it("returns 20 primitive tokens for a valid brand color", async () => {
     tokens = await runColorGeneration("#3B82F6");
-    expect(tokens).toHaveLength(22);
+    expect(tokens).toHaveLength(20);
   });
 
   it("all tokens have tier 'primitive' and category 'color'", async () => {
@@ -30,9 +30,9 @@ describe("runColorGeneration", () => {
     }
   });
 
-  it("first 11 tokens are the primary ramp (same hue)", async () => {
+  it("first 10 tokens are the primary ramp (same hue)", async () => {
     tokens = await runColorGeneration("#3B82F6");
-    const primaryTokens = tokens.slice(0, 11);
+    const primaryTokens = tokens.slice(0, 10);
     const primaryHue = primaryTokens[0]!.path[1];
     for (const t of primaryTokens) {
       expect(t.path[1]).toBe(primaryHue);
@@ -40,9 +40,9 @@ describe("runColorGeneration", () => {
     expect(primaryHue).not.toBe("neutral");
   });
 
-  it("last 11 tokens are the neutral ramp", async () => {
+  it("last 10 tokens are the neutral ramp", async () => {
     tokens = await runColorGeneration("#3B82F6");
-    const neutralTokens = tokens.slice(11);
+    const neutralTokens = tokens.slice(10);
     for (const t of neutralTokens) {
       expect(t.path[1]).toBe("neutral");
     }
@@ -59,13 +59,13 @@ describe("runColorGeneration", () => {
       expect.stringContaining("neutral"),
     );
     expect(clack.log.info).toHaveBeenCalledWith(
-      expect.stringMatching(/ramp: 11 steps/),
+      expect.stringMatching(/ramp: 10 steps/),
     );
     expect(clack.log.info).toHaveBeenCalledWith(
       expect.stringContaining("Neutral ramp"),
     );
     expect(clack.log.info).toHaveBeenCalledWith(
-      expect.stringContaining("22 color primitives generated"),
+      expect.stringContaining("20 color primitives generated"),
     );
   });
 
@@ -84,19 +84,19 @@ describe("runColorGeneration", () => {
       ],
     });
 
-    // 2 default ramps (11 each) + 2 additional ramps (11 each) = 44
-    expect(tokens).toHaveLength(44);
+    // 2 default ramps (10 each) + 2 additional ramps (10 each) = 40
+    expect(tokens).toHaveLength(40);
     expect(tokens.some((t) => t.path[1] === "accent")).toBe(true);
     expect(tokens.some((t) => t.path[1] === "error")).toBe(true);
   });
 
-  it("each additional ramp has 11 steps with the expected naming", async () => {
+  it("each additional ramp has 10 steps with the expected naming", async () => {
     tokens = await runColorGeneration("#3B82F6", {
       additionalHues: [{ name: "accent", seed: "#FF00AA" }],
     });
 
     const accentTokens = tokens.filter((t) => t.path[1] === "accent");
-    expect(accentTokens).toHaveLength(11);
+    expect(accentTokens).toHaveLength(10);
     for (const t of accentTokens) {
       expect(t.name).toMatch(/^color\.accent\.\d+$/);
     }
@@ -113,11 +113,11 @@ describe("runColorGeneration", () => {
       expect.stringMatching(/conflicts/i),
     );
     // No extra ramp appended.
-    expect(tokens).toHaveLength(22);
+    expect(tokens).toHaveLength(20);
   });
 
   it("treats empty additionalHues list as a no-op", async () => {
     tokens = await runColorGeneration("#3B82F6", { additionalHues: [] });
-    expect(tokens).toHaveLength(22);
+    expect(tokens).toHaveLength(20);
   });
 });

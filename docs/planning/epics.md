@@ -260,6 +260,26 @@ So that I can re-run the tool later to modify my token system without starting o
 **And** a final success message is displayed with the output directory path and a brief "what's next" guide
 **And** the progress narrative confirms "Config saved -- you can re-run to modify your system anytime"
 
+### Story 1.10: Color Ramp Corrections
+
+_Post-retrospective defect fix against Stories 1.3 and 2.1._ The shipped color generator has two defects: (1) the ramp direction is inverted — `color.<hue>.50` is currently the darkest step instead of the lightest, because `@quieto/engine`'s dark→light step emission was paired with label index 0; and (2) the ramp contains 11 steps (50–950) instead of the industry-standard 10 (50–900). Epic 1 is temporarily reopened from `done` → `in-progress` for this correction; `epic-1-retrospective` stays `done`.
+
+As a **solo developer using Quieto-generated color tokens**,
+I want palette steps to follow the industry-standard labeling (50 = lightest, 900 = darkest) with exactly 10 steps per hue,
+So that my generated tokens match Tailwind / Radix / Material conventions and integrate predictably with existing design systems.
+
+**Acceptance Criteria:**
+
+**Given** any brand hex **When** `generatePrimaryRamp`, `generateNeutralRamp`, or `generateCustomRamp` runs **Then** the returned ramp has exactly 10 steps with labels `[50, 100, 200, 300, 400, 500, 600, 700, 800, 900]` in that order
+**And** `steps[0]` (label `50`) is the lightest (highest OKLCH L) and `steps[9]` (label `900`) is the darkest (lowest OKLCH L)
+**And** OKLCH L is monotonically non-increasing from index 0 → 9
+**And** no `color.<hue>.950` tokens appear in any emitted artifact (DTCG JSON, CSS, config, preview)
+**And** progress narrative step counts read "10 steps"
+**And** `PRIMARY_STEP_INVERSION` / `NEUTRAL_STEP_INVERSION` cover exactly the 10 valid steps with no `950` keys
+**And** the entire test suite passes with assertions updated from the old contract
+**And** Story 1.3 / Story 1.6 docs are updated to reflect the corrected step count and direction
+**And** the committed fixture artifacts (`tokens/primitive/color.json`, `tokens/semantic/default/color.json`, `build/tokens.css`) are regenerated (not hand-edited) from a fresh `init` run
+
 ---
 
 ## Epic 2: Advanced Token Authoring
