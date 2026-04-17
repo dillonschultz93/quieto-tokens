@@ -58,6 +58,10 @@ export {
   previewAndConfirm,
 } from "./ui/preview.js";
 export type { OverrideResult, PreviewResult } from "./ui/preview.js";
+export { writeTokensToJson } from "./output/json-writer.js";
+export { buildCss } from "./output/style-dictionary.js";
+export { runOutputGeneration } from "./pipeline/output.js";
+export type { OutputResult } from "./pipeline/output.js";
 export { hexToRgb, hexToAnsi, supportsColor } from "./utils/color-display.js";
 export type { RGB } from "./utils/color-display.js";
 export {

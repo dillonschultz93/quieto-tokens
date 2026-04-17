@@ -6,6 +6,8 @@ export interface PrimitiveToken {
   name: string;
   $type: string;
   $value: string;
+  /** Optional human-readable description emitted as DTCG `$description`. */
+  description?: string;
   path: string[];
 }
 
@@ -15,6 +17,8 @@ export interface SemanticToken {
   name: string;
   $type: string;
   $value: string;
+  /** Optional human-readable description emitted as DTCG `$description`. */
+  description?: string;
   path: string[];
 }
 
