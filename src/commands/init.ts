@@ -10,7 +10,6 @@ import {
 import { runAdvancedFlow } from "./advanced.js";
 import type { QuickStartOptions } from "../types.js";
 import type { AdvancedConfig } from "../types/config.js";
-import type { ThemeCollection } from "../types/tokens.js";
 import { runColorGeneration } from "../pipeline/color.js";
 import {
   runSpacingGeneration,
@@ -21,6 +20,7 @@ import { generateThemes } from "../generators/themes.js";
 import { previewAndConfirm } from "../ui/preview.js";
 import { runOutputGeneration } from "../pipeline/output.js";
 import { runConfigGeneration } from "../pipeline/config.js";
+import { applyPriorOverrides } from "../utils/overrides.js";
 
 export interface InitCommandOptions {
   /**
@@ -295,6 +295,7 @@ export async function initCommand(
       overrides: previewResult.overrides,
       output: outputResult,
       advanced: advancedConfig,
+      themeNames: previewResult.collection.themes.map((t) => t.name),
     });
 
     if (!configOk) {
@@ -310,24 +311,3 @@ export async function initCommand(
   }
 }
 
-/**
- * Mutate `collection` so every semantic token whose name appears in
- * `priorOverrides` carries the recorded DTCG reference. Used on the modify
- * path so the preview shows the user's last saved choices instead of the
- * mapper's fresh defaults.
- *
- * Skips override keys whose target token no longer exists (e.g. a semantic
- * role was renamed between versions) rather than throwing — the override
- * simply drops, same policy as the write side.
- */
-function applyPriorOverrides(
-  collection: ThemeCollection,
-  priorOverrides: Record<string, string>,
-): void {
-  for (const [tokenName, value] of Object.entries(priorOverrides)) {
-    for (const theme of collection.themes) {
-      const match = theme.semanticTokens.find((t) => t.name === tokenName);
-      if (match) match.$value = value;
-    }
-  }
-}

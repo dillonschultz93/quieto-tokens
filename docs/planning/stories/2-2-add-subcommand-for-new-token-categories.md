@@ -1,6 +1,6 @@
 # Story 2.2: Add Subcommand for New Token Categories
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -474,10 +474,177 @@ src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Opus 4.7 (Cursor Agent, 2026-04-17)
 
 ### Debug Log References
 
+- `npm run type-check` — passes
+- `npm test` — 416 tests / 31 files pass
+- `npm run build` — ESM + DTS build clean
+- `npm run validate:sprint` — OK (13 stories, 5 epics)
+
 ### Completion Notes List
 
+- **Schema v3** — `QuietoConfig.categoryConfigs` added as an optional top-level
+  block. Shape-validated in `src/utils/config.ts` with the same
+  prototype-pollution guard and JSON round-trip deep clone as `advanced`.
+  Declarative per-category validators (`validateShadowCategoryConfig`,
+  `validateBorderCategoryConfig`, `validateAnimationCategoryConfig`) keep the
+  error messages targeted. `src/output/config-writer.ts#buildConfig` opts in
+  to emitting the block only when present so pre-existing configs don't grow
+  an empty property.
+- **Canonical ordering** — new `src/utils/categories.ts` owns the immutable
+  `CANONICAL_CATEGORY_ORDER` (`color → spacing → typography → shadow →
+  border → animation`), `sortCategoriesCanonical()`, and
+  `ADDABLE_CATEGORIES`. The JSON writer now discovers categories dynamically
+  off the collection and sorts through this helper, so file output order is
+  stable regardless of traversal order.
+- **Three generators** — each one pure, no prompts: `generateShadowPrimitives`
+  (soft/hard blur + spread ramp, DTCG composite `$value` stringified),
+  `generateBorderPrimitives` (width + radius sub-ramps; largest radius becomes
+  the `9999px` pill), `generateAnimationPrimitives` (duration ramp +
+  preset-driven `cubicBezier` JSON string values). Each has a sibling
+  `collect*Inputs` that drives the Clack prompts and a matching `map*Semantics`
+  on `src/mappers/semantic.ts` that follows the shrink-to-fit policy used by
+  the existing core mappers.
+- **Pipeline** — `src/pipeline/add.ts#runAdd` loads the existing config,
+  rebuilds every pre-configured category's primitives + semantics in memory
+  (so the `ThemeCollection` is complete for the CSS build), collects inputs
+  for the category being added, merges in the new tokens, hands off to the
+  existing `runOutputGeneration`, then calls the pruner (AC #5 / ADR-001 A5).
+- **Pruner** — `src/output/pruner.ts` scans `tokens/primitive/` and each
+  `tokens/semantic/<theme>/` directory, unlinks `.json` files whose basename
+  isn't in the canonical category set, and explicitly skips
+  `tokens/component/` (Story 2.3 territory). Best-effort: unlink failures are
+  collected into `errors` and surfaced via `p.log.warn`, never abort. A small
+  `_fs` test-seam object is exported so unit tests can force error branches
+  without ESM namespace spies.
+- **Command wiring** — `src/cli.ts` grew an `add` branch with `parseAddArgs`
+  (rejects unknown flags / extra positionals loudly, mirrors `parseInitArgs`).
+  `src/commands/add.ts` handles the interactive flow: missing-config exit
+  (AC #4), corrupt-config "Abort only" recovery (AC #5), re-author confirm
+  (AC #6), pipeline invocation, atomic config re-write with a deterministic
+  canonical `categories[]` and a merged `categoryConfigs` block.
+- **Shared utility** — `applyPriorOverrides` moved from `src/commands/init.ts`
+  into `src/utils/overrides.ts` so both `init` and `add` can honour prior
+  semantic overrides without code duplication.
+- **Outro** — `src/pipeline/config.ts` now lists all three `add` commands in
+  the post-`init` next-steps panel. README grew an "Adding categories over
+  time" section with the canonical order, pill behaviour, and the manual
+  `categories[]` removal + pruning contract.
+
 ### File List
+
+Added:
+
+- `src/commands/add.ts`
+- `src/commands/add-shadow.ts`
+- `src/commands/add-border.ts`
+- `src/commands/add-animation.ts`
+- `src/commands/__tests__/add-shadow.test.ts`
+- `src/commands/__tests__/add-border.test.ts`
+- `src/commands/__tests__/add-animation.test.ts`
+- `src/generators/shadow.ts`
+- `src/generators/border.ts`
+- `src/generators/animation.ts`
+- `src/generators/__tests__/shadow.test.ts`
+- `src/generators/__tests__/border.test.ts`
+- `src/generators/__tests__/animation.test.ts`
+- `src/output/pruner.ts`
+- `src/output/__tests__/pruner.test.ts`
+- `src/pipeline/add.ts`
+- `src/utils/categories.ts`
+- `src/utils/overrides.ts`
+- `src/utils/__tests__/categories.test.ts`
+
+Modified:
+
+- `src/cli.ts`
+- `src/__tests__/cli.test.ts`
+- `src/commands/init.ts`
+- `src/index.ts`
+- `src/mappers/semantic.ts`
+- `src/mappers/__tests__/semantic.test.ts`
+- `src/output/config-writer.ts`
+- `src/output/json-writer.ts`
+- `src/pipeline/config.ts`
+- `src/types/config.ts`
+- `src/utils/config.ts`
+- `README.md`
+- `docs/planning/sprint-status.yaml`
+- `docs/planning/stories/2-2-add-subcommand-for-new-token-categories.md`
+
+### Review Findings
+
+Generated by `bmad-code-review` on 2026-04-17 using three parallel adversarial layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor) against the full working-tree diff for this story. Ordered: `decision-needed` → `patch` → `defer`. `dismiss` findings were dropped.
+
+#### Decisions resolved (2026-04-17)
+
+All 7 decisions resolved as `patch`:
+
+- **D1 — Border pill encoding:** add an explicit "include a pill radius?" prompt; overwrite the user's largest value with `9999px` **only when they opt in**. `validateBorderList` and `collectBorderInputs` must surface the opt-in; `generateBorderPrimitives` must accept an explicit `pill: boolean` signal.
+- **D2 — Partial-write rollback:** on `writeConfig` failure after a successful `runAdd`, best-effort unlink of the newly-written token files for the added category (both primitive and per-theme semantic). Do not touch files for categories that existed before the run.
+- **D3 — Orphan theme directories:** scan `tokens/semantic/` with `readdir` and treat any subdir that doesn't match an active `ThemeCollection.themes` entry as a fully-orphaned theme — delete all category JSON under it and then the empty directory itself.
+- **D4 — Middle index convention:** unify on `Math.floor((n-1)/2)` (lower-middle). Update `mapBorderSemantics` + `mapAnimationSemantics` and their tests to match shadow's existing convention.
+- **D5 — Core-file rewrites on `add`:** enforce AC #16. Only write the one category's primitive + semantic JSON files. Rebuild `build/*.css` from the already-on-disk JSON (Style Dictionary can source from disk, not from the in-memory collection). This is a non-trivial pipeline refactor.
+- **D6 — Custom colorRef validation:** strict. `validateCustomColorRef` (and `validateShadowCategoryConfig` for loaded configs) must require the ref to match one of `availableColorRefs`.
+- **D7 — Pruner wiring into `runConfigGeneration`:** wire now. `src/pipeline/config.ts` runs `prune` after `runOutputGeneration` using the same `canonicalCategories = sortCategoriesCanonical(config.categories)` logic as `runAdd`.
+
+The decision items are folded into the patch list below.
+
+#### Patches
+
+##### From resolved decisions (D1–D7)
+
+- [x] [Review][Patch] **D1: add 'include a pill radius?' prompt; conditional 9999px overwrite** [src/commands/add-border.ts + src/generators/border.ts + src/types/config.ts `BorderCategoryConfig`] — introduce `pill: boolean` on `BorderCategoryConfig`, collect it via a new `p.confirm` in `collectBorderInputs`, thread it through the generator so the last radius is only overwritten when `pill === true`; update validator, tests, and README.
+- [x] [Review][Patch] **D2: rollback newly-written token files on `writeConfig` failure** [src/commands/add.ts + src/pipeline/add.ts] — have `runAdd` return the list of newly-written file paths (distinct from rewritten-but-pre-existing files); on `writeConfig` throw, best-effort `unlink` that list (log each failure via `p.log.warn`) before exiting non-zero.
+- [x] [Review][Patch] **D3: aggressively prune orphan theme directories** [src/output/pruner.ts + src/pipeline/add.ts + src/pipeline/config.ts] — `prune` takes the set of active themes; scans `tokens/semantic/` via `readdir`; for any subdir not in the active set, deletes all `*.json` inside and removes the directory if empty. Category-pruning inside active-theme directories keeps current behavior.
+- [x] [Review][Patch] **D4: unify middle-index to `Math.floor((n-1)/2)` in border + animation mappers** [src/mappers/semantic.ts + src/mappers/__tests__/semantic.test.ts] — update `mapBorderSemantics` radius `mid` calculation and `mapAnimationSemantics` duration `mid` calculation; update any tests that codified the `floor(n/2)` expectation.
+- [ ] [Review][Patch] **D5: enforce AC #16 — `add` only writes the one category's files** [src/pipeline/add.ts + src/output/json-writer.ts + src/output/style-dictionary.ts (or pipeline/output.ts)] — split `runOutputGeneration` so the JSON writer can target only the added category's primitive + per-theme semantic files; have the CSS build re-source from disk (or from a minimal in-memory subset) so color/spacing/typography JSON files are not rewritten. Largest patch item by far; consider landing as its own commit. **(Deferred to a follow-up commit — scope is judgment-heavy; current behaviour is idempotent disk-rewrites of all core categories.)**
+- [x] [Review][Patch] **D6: strict custom colorRef validation** [src/commands/add-shadow.ts + src/utils/config.ts:validateShadowCategoryConfig] — thread `availableColorRefs` into `validateCustomColorRef` and reject refs not in the set; surface the valid refs in the error message; mirror the check in the schema validator so hand-edited configs can't smuggle dangling refs.
+- [x] [Review][Patch] **D7: wire `prune` into `runConfigGeneration`** [src/pipeline/config.ts] — after `runOutputGeneration`, call `prune(cwd, sortCategoriesCanonical(config.categories), collection.themes.map(t => t.name))` with the same aggressive-theme behavior introduced by D3.
+
+##### From adversarial + edge-case review
+
+- [x] [Review][Patch] **`mapBorderSemantics` picks wrong primitives for ≤3 radii** [src/mappers/semantic.ts] — with `[a,b]` the `md` role resolves to the pill primitive (`9999px`) and `lg` falls back onto `a`; with three radii `md`/`lg` both land on the second entry.
+- [x] [Review][Patch] **`validateIntArray` accepts empty arrays** [src/utils/config.ts] — a hand-edited config with empty `widths`/`radii`/`durations` passes validation, resulting in a category registered with zero primitives.
+- [x] [Review][Patch] **`generateBorderPrimitives` docstring contradicts implementation** [src/generators/border.ts:4-12] — comment says "does NOT deduplicate" but the first line of the body is `dedupeSorted(input.widths)`.
+- [x] [Review][Patch] **Recovery `p.select` on corrupt/invalid config is missing `isCancel` handling** [src/commands/add.ts:93-107] — Ctrl-C at the recovery prompt silently skips the "Show details" branch and suppresses the "Operation cancelled." feedback.
+- [x] [Review][Patch] **Shadow level bounds duplicated in validator and generator** [src/utils/config.ts + src/generators/shadow.ts] — validator hardcodes `2..6`; generator exports `SHADOW_MIN_LEVELS` / `SHADOW_MAX_LEVELS`. Import the constants instead of re-specifying the range.
+- [x] [Review][Patch] **Default-config literals duplicated across prompts and pipeline** [src/commands/add-{shadow,border,animation}.ts + src/pipeline/add.ts] — prompt defaults (`DEFAULT_DURATIONS`, `DEFAULT_WIDTHS`, etc.) and pipeline fallbacks (`DEFAULT_SHADOW_CONFIG`, `DEFAULT_BORDER_CONFIG`, `DEFAULT_ANIMATION_CONFIG`) hold the same numbers in two places. Consolidate to a single source of truth.
+- [x] [Review][Patch] **Dead imports and unreachable branches** [src/pipeline/add.ts + src/commands/add.ts] — `ThemeCollection` import is unused in `pipeline/add.ts`; `formatPath`'s `rel.startsWith("..")` branch is unreachable for any path under `cwd`.
+- [x] [Review][Patch] **Pruner trusts unknown / typo category names in `config.categories`** [src/pipeline/add.ts + src/output/pruner.ts] — a typo like `"shadows"` is treated as canonical by the pruner, so the orphaned file is never swept. Whitelist against `CANONICAL_CATEGORY_ORDER` before passing to `prune`.
+- [x] [Review][Patch] **`quieto-tokens add --help` treats `--help` as unknown arg** [src/cli.ts:parseAddArgs] — the flag is not recognised because the top-level `--help` check only inspects `args[0]`. Add a `--help` / `-h` case inside `parseAddArgs` (or route through the top-level handler before dispatch).
+- [x] [Review][Patch] **Duplicate entries in hand-edited `config.categories` crash the pipeline** [src/pipeline/add.ts] — `rebuildPreviousCategory` runs twice for the duplicate, emitting duplicate primitive paths, and `tokensToDtcgTree` throws. Dedupe via `new Set(config.categories)` before iterating.
+- [x] [Review][Patch] **Unbounded durations accept values that overflow into float notation** [src/commands/add-animation.ts] — the regex allows any digit string; `Number.parseInt` of a 20-digit number yields `1e+22`, producing a token named `animation.duration.1e+22`. Cap durations at a sane max (e.g. 60000ms).
+- [x] [Review][Patch] **Unbounded widths/radii same as durations** [src/commands/add-border.ts] — cap at a sane pixel max (e.g. 10000).
+- [x] [Review][Patch] **Config validator does not verify `shadow.colorRef` DTCG shape** [src/utils/config.ts:validateShadowCategoryConfig] — a hand-edited config with `colorRef: "blue"` or whitespace passes validation and the generator emits garbage `$value`. Apply the same regex the prompt validator uses.
+- [x] [Review][Patch] **Config validator does not enforce the 9-entry cap that the prompts enforce** [src/utils/config.ts:validateIntArray] — the prompt caps `widths`/`radii`/`durations` at 9; a hand-edited config with 1000 entries passes validation.
+- [x] [Review][Patch] **Config validator does not enforce sane numeric ceilings** [src/utils/config.ts:validateIntArray] — `"durations": [1e15]` passes validation. Match the ceilings picked for the prompt validators.
+- [x] [Review][Patch] **Unknown keys under `categoryConfigs` silently retained** [src/utils/config.ts:validateCategoryConfigs] — a hand-edited config with `categoryConfigs.typo: {...}` or `categoryConfigs.__proto__: {...}` is preserved through the JSON round-trip. Reject any key outside `shadow | border | animation`.
+- [x] [Review][Patch] **Pruner deletes dotfiles** [src/output/pruner.ts:pruneDirectory] — any `tokens/primitive/.*.json` is eligible for unlink. Add `if (entry.startsWith(".")) continue;`.
+- [x] [Review][Patch] **Pruner does not stat entries before unlinking** [src/output/pruner.ts:pruneDirectory] — a directory named `shadow.json/` produces EISDIR on `unlink` and is collected as an error. Use `lstat` + `isFile()` check first.
+- [x] [Review][Patch] **Pruner follows symlinks** [src/output/pruner.ts:pruneDirectory] — if `tokens/primitive` itself or any entry in it is a symlink, the pruner will delete files in an unrelated location. Check `lstat().isSymbolicLink()` on both the dir and each entry; skip with a warning.
+- [x] [Review][Patch] **Generator-level `colorRef` guard missing** [src/generators/shadow.ts:generateShadowPrimitives] — the generator trusts the caller. The prompt validates, but the pipeline's `DEFAULT_SHADOW_CONFIG` fallback and any future programmatic caller can bypass. Throw on non-DTCG-shaped input.
+- [x] [Review][Patch] **Shadow mapper sort is undefined for non-numeric `path[2]`** [src/mappers/semantic.ts:mapShadowSemantics] — `parseInt(undefined, 10)` returns `NaN` and `NaN - NaN` is `NaN`, making `Array.prototype.sort` behaviour implementation-defined. Defend with `Number.isFinite` + fallback.
+- [x] [Review][Patch] **`runAdd` leaks unexpected errors from `collect*Inputs`** [src/pipeline/add.ts] — the outer catch in `addCommand` only handles `"cancelled"`. A transient Clack error propagates a raw stack trace to the user. Wrap `collect*Inputs` with a graceful `p.log.error` + return-null path.
+- [x] [Review][Patch] **Pruner iterates duplicate theme names without dedupe** [src/output/pruner.ts + src/pipeline/add.ts] — if `collection.themes` ever ends up with duplicates, the same directory is swept twice and the second pass emits ENOENT errors. `new Set(themeNames)` before iterating. **(Implicit: `activeThemes` is collected into a `Set` inside `prune`, so duplicate theme-name inputs cost at most one extra `Set.add`; no `ENOENT` loop occurs because `readdir` returns each directory once.)**
+- [x] [Review][Patch] **Cancel mid-pipeline exits 1 instead of 0** [src/pipeline/add.ts + src/commands/add.ts:133-137] — `runAdd` returns `null` for both cancel and error; `addCommand` treats all `null` as error. Differentiate (e.g. return a discriminated union) so cancel exits 0 and error exits 1.
+- [ ] [Review][Patch] **Missing: CLI routing test for `add`** [src/__tests__/cli.test.ts] — Task 9.4 requires coverage of unknown category, missing category → menu flow (mocked prompts), unknown flag, and `add shadow` happy path routing. Only `parseAddArgs` is currently tested.
+- [ ] [Review][Patch] **Missing: corrupt/invalid config "Abort only" recovery test** [src/commands/__tests__/add.test.ts or equivalent] — AC #5 recovery path in `addCommand` is untested.
+- [ ] [Review][Patch] **Missing: re-author confirm path test** [src/commands/__tests__/add.test.ts] — AC #6: `add shadow` twice in a row, assert the confirm prompt and both accept / decline paths.
+- [ ] [Review][Patch] **Missing: pipeline E2E smoke test** [src/pipeline/__tests__/add.test.ts] — Task 9.4 explicitly requires this: mocked prompts at module scope, tmp dir, assert full file tree + `categoryConfigs` persisted.
+- [ ] [Review][Patch] **Missing: `categoryConfigs` validator tests** [src/utils/__tests__/config.test.ts] — AC #23/#24: round-trip `buildConfig → writeConfig → loadConfig`; out-of-range `shadow.levels` rejection with `categoryConfigs.shadow.levels` in errors; prototype-pollution guard on `"__proto__"` payload inside `categoryConfigs.shadow`.
+- [ ] [Review][Patch] **Missing: json-writer dynamic-category test** [src/output/__tests__/json-writer.test.ts] — Task 3.5 refactor needs a test that exercises a non-hardcoded category (e.g. `shadow`) to prove output shape is preserved.
+- [ ] [Review][Patch] **Missing: collector prompt flow tests** [src/commands/__tests__/add-{shadow,border,animation}.test.ts] — AC #7/#10/#13 color-picker select + Custom fallback, profile select, easing select, default-vs-prior pre-fill. Current tests only exercise extracted validators.
+- [ ] [Review][Patch] **Missing: manual-category-removal prune integration test** [src/output/__tests__/pruner.test.ts or integration] — Testing Strategy #4: `add border` → user removes `"border"` from config → `add animation` → expects `tokens/primitive/border.json` deleted.
+- [ ] [Review][Patch] **Missing: missing-config error test** [src/commands/__tests__/add.test.ts] — AC #4 / Testing Strategy #1: no `quieto.config.json` → non-zero exit, no files written.
+
+#### Deferred
+
+- [x] [Review][Defer] **`process.exitCode = 1; return;` vs `process.exit(1)`** [src/commands/add.ts] — deferred, pre-existing pattern: `init` uses the same idiom; changing it is a cross-command refactor.
+- [x] [Review][Defer] **`_fs` seam is mutable and exported** [src/output/pruner.ts] — deferred, pre-existing tradeoff: intentional test seam; the risk is theoretical and the current test already manually save/restores around the spy.
+- [x] [Review][Defer] **`priorOverrides` applied before new category's semantics are appended** [src/pipeline/add.ts] — deferred, forward-looking: no current UX collects overrides for a newly-added category, so the ordering bug is latent.
+- [x] [Review][Defer] **Concurrent `add` invocations in the same cwd** [src/commands/add.ts] — deferred, pre-existing: `init` has the same exposure; requires a lockfile strategy that's out of scope for Story 2.2.
+- [x] [Review][Defer] **Config modified on disk between `loadConfig` and `writeConfig`** [src/commands/add.ts] — deferred, pre-existing: same optimistic-write assumption as `init`'s modify path.
+- [x] [Review][Defer] **Non-TTY / piped stdin causes Clack to hang** [src/commands/add-*.ts] — deferred, pre-existing project assumption: entire CLI presumes a TTY; addressing requires a first-class non-interactive mode.

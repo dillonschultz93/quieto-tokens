@@ -7,6 +7,8 @@ import {
   readToolVersion,
   writeConfig,
 } from "../output/config-writer.js";
+import { prune } from "../output/pruner.js";
+import { sortCategoriesCanonical } from "../utils/categories.js";
 import type { OutputResult } from "./output.js";
 
 export interface ConfigGenerationInput {
@@ -25,6 +27,17 @@ export interface ConfigGenerationInput {
    * the three core categories when omitted.
    */
   categories?: string[];
+  /**
+   * Names of the themes the pipeline wrote into `tokens/semantic/<name>/`.
+   * When provided, the post-write prune step uses this list to detect
+   * *orphan* theme directories (e.g. a `dark/` folder left over after the
+   * user toggled `darkMode: false`) and delete them wholesale.
+   *
+   * When omitted, the prune step only deletes *category* orphans inside
+   * every semantic subdirectory it finds — safer default for callers that
+   * can't cheaply enumerate the active themes.
+   */
+  themeNames?: readonly string[];
 }
 
 /**
@@ -84,6 +97,23 @@ export async function runConfigGeneration(
     return false;
   }
 
+  // Prune orphan category JSON (and orphan theme directories) left over
+  // from prior runs that used different categories/theme settings.
+  // Mirrors the behaviour of `runAdd` so `init` on a brownfield project
+  // can't silently leave stale tokens on disk. Pruner is best-effort —
+  // failures are surfaced to the user but don't fail the close-out.
+  //
+  // `themeNames` is required to run this safely: without it, the pruner
+  // would treat every theme directory as an orphan and nuke it. Callers
+  // that can't provide the active theme list skip pruning entirely.
+  if (input.themeNames !== undefined) {
+    await prune(
+      cwd,
+      sortCategoriesCanonical(config.categories),
+      input.themeNames,
+    );
+  }
+
   const allFiles = [
     ...input.output.jsonFiles,
     ...input.output.cssFiles,
@@ -105,7 +135,9 @@ export async function runConfigGeneration(
       "  • Use --quieto-* custom properties in your styles",
       '  • Re-run "quieto-tokens init" to modify your system',
       '  • Run "quieto-tokens init --advanced" for per-category customization',
-      '  • Run "quieto-tokens add shadow" to add new categories (coming soon)',
+      '  • Run "quieto-tokens add shadow" to add shadow elevation tokens',
+      '  • Run "quieto-tokens add border" to add border widths + radii',
+      '  • Run "quieto-tokens add animation" to add durations + easing',
     ].join("\n"),
   );
 

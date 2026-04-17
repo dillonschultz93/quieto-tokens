@@ -2,7 +2,11 @@ import { readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QuickStartOptions } from "../types.js";
-import type { AdvancedConfig, QuietoConfig } from "../types/config.js";
+import type {
+  AdvancedConfig,
+  CategoryConfigs,
+  QuietoConfig,
+} from "../types/config.js";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_OUTPUT_CONFIG,
@@ -63,6 +67,13 @@ export interface BuildConfigInput {
    * passes an extended list.
    */
   categories?: string[];
+  /**
+   * Per-category authoring inputs captured by `quieto-tokens add`. Omit or
+   * pass `undefined` for quick-start / legacy writes — the resulting
+   * `QuietoConfig.categoryConfigs` is absent rather than an empty object so
+   * `loadConfig`'s absence-vs-empty-map signal (AC #24) stays intact.
+   */
+  categoryConfigs?: CategoryConfigs;
 }
 
 /**
@@ -85,6 +96,9 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
   };
   if (input.advanced !== undefined) {
     config.advanced = input.advanced;
+  }
+  if (input.categoryConfigs !== undefined) {
+    config.categoryConfigs = input.categoryConfigs;
   }
   return config;
 }

@@ -71,12 +71,23 @@ export type {
   AdvancedColorConfig,
   AdvancedSpacingConfig,
   AdvancedTypographyConfig,
+  AnimationCategoryConfig,
+  BorderCategoryConfig,
+  CategoryConfigs,
   QuietoConfig,
+  ShadowCategoryConfig,
 } from "./types/config.js";
 export {
   DEFAULT_CATEGORIES,
   DEFAULT_OUTPUT_CONFIG,
 } from "./types/config.js";
+export {
+  ADDABLE_CATEGORIES,
+  CANONICAL_CATEGORY_ORDER,
+  isAddableCategory,
+  sortCategoriesCanonical,
+} from "./utils/categories.js";
+export type { AddableCategory } from "./utils/categories.js";
 export {
   CONFIG_FILENAME,
   configExists,
