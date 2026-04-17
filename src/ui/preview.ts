@@ -236,10 +236,22 @@ function getPrimitiveAlternatives(
   }));
 }
 
+export interface OverrideFlowOptions {
+  /**
+   * Overrides to seed the result with — typically the `overrides` block
+   * read back from a prior `quieto.config.json` during the modify flow.
+   * These are treated as "already applied"; the preview the user sees has
+   * them baked in and they survive into the returned `overrides` map even
+   * if the user accepts without changing anything.
+   */
+  initialOverrides?: Map<string, string>;
+}
+
 export async function runOverrideFlow(
   collection: ThemeCollection,
+  options: OverrideFlowOptions = {},
 ): Promise<OverrideResult> {
-  const overrides = new Map<string, string>();
+  const overrides = new Map<string, string>(options.initialOverrides ?? []);
   const baseTheme = collection.themes[0]!;
 
   while (true) {
@@ -328,11 +340,12 @@ export interface PreviewResult {
 
 export async function previewAndConfirm(
   collection: ThemeCollection,
+  options: OverrideFlowOptions = {},
 ): Promise<PreviewResult | null> {
   renderPreview(collection);
   renderTokenCountSummary(collection);
 
-  const result = await runOverrideFlow(collection);
+  const result = await runOverrideFlow(collection, options);
 
   if (result.cancelled) {
     p.cancel("Preview cancelled.");

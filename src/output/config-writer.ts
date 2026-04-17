@@ -2,8 +2,11 @@ import { readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QuickStartOptions } from "../types.js";
-import type { QuietoConfig } from "../types/config.js";
-import { DEFAULT_OUTPUT_CONFIG } from "../types/config.js";
+import type { AdvancedConfig, QuietoConfig } from "../types/config.js";
+import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_OUTPUT_CONFIG,
+} from "../types/config.js";
 import { getConfigPath } from "../utils/config.js";
 
 /**
@@ -48,6 +51,18 @@ export interface BuildConfigInput {
   version: string;
   /** Override for deterministic tests; defaults to `new Date().toISOString()`. */
   generated?: string;
+  /**
+   * Advanced-mode authoring details. Omit or pass `undefined` for quick-start
+   * configs — the resulting `QuietoConfig.advanced` will be absent rather
+   * than an empty object.
+   */
+  advanced?: AdvancedConfig;
+  /**
+   * Active token categories. Defaults to {@link DEFAULT_CATEGORIES}
+   * (`["color", "spacing", "typography"]`). Epic 2.2's `add` subcommand
+   * passes an extended list.
+   */
+  categories?: string[];
 }
 
 /**
@@ -55,7 +70,7 @@ export interface BuildConfigInput {
  * function — safe to unit-test without touching the filesystem.
  */
 export function buildConfig(input: BuildConfigInput): QuietoConfig {
-  return {
+  const config: QuietoConfig = {
     version: input.version,
     generated: input.generated ?? new Date().toISOString(),
     inputs: {
@@ -66,7 +81,12 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
     },
     overrides: Object.fromEntries(input.overrides),
     output: { ...DEFAULT_OUTPUT_CONFIG },
+    categories: input.categories ? [...input.categories] : [...DEFAULT_CATEGORIES],
   };
+  if (input.advanced !== undefined) {
+    config.advanced = input.advanced;
+  }
+  return config;
 }
 
 /**

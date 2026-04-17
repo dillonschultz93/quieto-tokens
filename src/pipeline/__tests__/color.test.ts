@@ -6,6 +6,7 @@ vi.mock("@clack/prompts", () => ({
   log: {
     step: vi.fn(),
     info: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -73,5 +74,50 @@ describe("runColorGeneration", () => {
     for (const t of tokens) {
       expect(t.name).toMatch(/^color\.\w+\.\d+$/);
     }
+  });
+
+  it("appends additional hue ramps when advanced config supplies them", async () => {
+    tokens = await runColorGeneration("#3B82F6", {
+      additionalHues: [
+        { name: "accent", seed: "#FF00AA" },
+        { name: "error", seed: "#D12020" },
+      ],
+    });
+
+    // 2 default ramps (11 each) + 2 additional ramps (11 each) = 44
+    expect(tokens).toHaveLength(44);
+    expect(tokens.some((t) => t.path[1] === "accent")).toBe(true);
+    expect(tokens.some((t) => t.path[1] === "error")).toBe(true);
+  });
+
+  it("each additional ramp has 11 steps with the expected naming", async () => {
+    tokens = await runColorGeneration("#3B82F6", {
+      additionalHues: [{ name: "accent", seed: "#FF00AA" }],
+    });
+
+    const accentTokens = tokens.filter((t) => t.path[1] === "accent");
+    expect(accentTokens).toHaveLength(11);
+    for (const t of accentTokens) {
+      expect(t.name).toMatch(/^color\.accent\.\d+$/);
+    }
+  });
+
+  it("warns and skips an additional hue that collides with the primary ramp name", async () => {
+    const clack = await import("@clack/prompts");
+    // `#3B82F6` resolves to `"blue"` — adding another "blue" must be rejected.
+    tokens = await runColorGeneration("#3B82F6", {
+      additionalHues: [{ name: "blue", seed: "#1234AB" }],
+    });
+
+    expect(clack.log.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/conflicts/i),
+    );
+    // No extra ramp appended.
+    expect(tokens).toHaveLength(22);
+  });
+
+  it("treats empty additionalHues list as a no-op", async () => {
+    tokens = await runColorGeneration("#3B82F6", { additionalHues: [] });
+    expect(tokens).toHaveLength(22);
   });
 });

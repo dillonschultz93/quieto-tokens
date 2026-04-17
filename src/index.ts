@@ -66,15 +66,29 @@ export { buildConfig, writeConfig } from "./output/config-writer.js";
 export type { BuildConfigInput } from "./output/config-writer.js";
 export { runConfigGeneration } from "./pipeline/config.js";
 export type { ConfigGenerationInput } from "./pipeline/config.js";
-export type { QuietoConfig } from "./types/config.js";
-export { DEFAULT_OUTPUT_CONFIG } from "./types/config.js";
+export type {
+  AdvancedConfig,
+  AdvancedColorConfig,
+  AdvancedSpacingConfig,
+  AdvancedTypographyConfig,
+  QuietoConfig,
+} from "./types/config.js";
+export {
+  DEFAULT_CATEGORIES,
+  DEFAULT_OUTPUT_CONFIG,
+} from "./types/config.js";
 export {
   CONFIG_FILENAME,
   configExists,
   getConfigPath,
   loadConfig,
 } from "./utils/config.js";
-export type { LoadConfigOptions } from "./utils/config.js";
+export type {
+  ConfigLogger,
+  LoadConfigOptions,
+  LoadConfigResult,
+} from "./utils/config.js";
+export { validateConfigShape } from "./utils/config.js";
 export { hexToRgb, hexToAnsi, supportsColor } from "./utils/color-display.js";
 export type { RGB } from "./utils/color-display.js";
 export {

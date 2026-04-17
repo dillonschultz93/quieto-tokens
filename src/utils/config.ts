@@ -1,6 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import * as p from "@clack/prompts";
 import type { QuietoConfig } from "../types/config.js";
+import { DEFAULT_CATEGORIES } from "../types/config.js";
 
 export const CONFIG_FILENAME = "quieto.config.json";
 
@@ -8,18 +10,84 @@ export function getConfigPath(cwd: string = process.cwd()): string {
   return resolve(cwd, CONFIG_FILENAME);
 }
 
+/**
+ * Report whether a readable `quieto.config.json` exists under `cwd`.
+ *
+ * Distinguishes ENOENT ("no config, first run") from other I/O errors
+ * ("config is there but we can't touch it — permissions, is-a-directory,
+ * etc."). The latter bubble up as `true` so the caller can route through
+ * {@link loadConfig}, which surfaces the real error to the user instead of
+ * silently treating a locked file as a missing one.
+ */
 export function configExists(cwd: string = process.cwd()): boolean {
-  return existsSync(getConfigPath(cwd));
+  try {
+    readFileSync(getConfigPath(cwd), "utf-8");
+    return true;
+  } catch (error) {
+    if (isErrnoException(error) && error.code === "ENOENT") {
+      return false;
+    }
+    // Any other read error (EACCES, EISDIR, EPERM, …) means "config is
+    // present but unreadable" — treat it as existing so the load path can
+    // surface a proper error instead of pretending this is a fresh run.
+    return true;
+  }
+}
+
+function isErrnoException(value: unknown): value is NodeJS.ErrnoException {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "code" in value &&
+    typeof (value as { code?: unknown }).code === "string"
+  );
+}
+
+/**
+ * Minimal structured-warning surface `loadConfig` emits its advisory
+ * messages through. Production callers should inject a Clack-backed logger
+ * (`{ warn: p.log.warn }`); tests inject a spy.
+ *
+ * The default logger routes through Clack's `p.log.warn` so warnings
+ * surface as proper steps in the UI instead of bare `console.warn`
+ * output (Dev Notes: "Clack is the only user-facing I/O").
+ */
+export interface ConfigLogger {
+  warn: (message: string) => void;
 }
 
 export interface LoadConfigOptions {
   /**
-   * The current tool version. When provided, `loadConfig` logs a warning via
-   * `console.warn` if the file records a *newer* version than the running
-   * tool (forward-incompatible scenario). Falsy/missing → skip the check.
+   * The current tool version. When provided, `loadConfig` emits a warning
+   * via the injected `logger` if the file records a *newer* version than
+   * the running tool (forward-incompatible scenario). Falsy/missing →
+   * skip the check.
    */
   toolVersion?: string;
+  /** Warning sink. Defaults to Clack's `p.log.warn`. */
+  logger?: ConfigLogger;
 }
+
+/**
+ * Discriminated result type for {@link loadConfig}. Callers can distinguish
+ * between "no config yet", "file present but we can't parse it", "parsed but
+ * structurally wrong", and "happy path" — each demands a different UX
+ * response in the modify-vs-fresh flow (Story 2.1).
+ */
+export type LoadConfigResult =
+  | { status: "missing" }
+  | { status: "corrupt"; error: Error }
+  | { status: "invalid"; errors: string[] }
+  | { status: "ok"; config: QuietoConfig };
+
+/**
+ * Clack-backed default logger. Uses `p.log.warn` so warnings render as
+ * framed steps in an interactive session. `p.log.warn` is safe to call
+ * in non-TTY contexts — it just prints a formatted line to stderr.
+ */
+const DEFAULT_LOGGER: ConfigLogger = {
+  warn: (message) => p.log.warn(message),
+};
 
 /**
  * Compare two dot-separated semver-like version strings. Returns a negative
@@ -49,29 +117,158 @@ function compareVersions(a: string, b: string): number {
 }
 
 /**
- * Read and parse an existing `quieto.config.json` from the given directory.
+ * Structurally validate a parsed unknown against the schema. Returns a list
+ * of dotted paths whose value is missing or of the wrong type; empty list
+ * means the value conforms.
  *
- * Returns `null` when the file doesn't exist or cannot be parsed as a valid
- * config (missing required `version` field, malformed JSON). Callers that
- * need the raw read error can catch above this; this function is designed
- * for the happy "does this look like a quieto config we can work with?"
- * path that drives re-entrant editing in Epic 3.
+ * Covers:
+ * - Epic 1 required fields (version/inputs/overrides/output).
+ * - Epic 2 additions that are optional on disk but type-checked when present
+ *   (`categories` must be `string[]`; `advanced.spacing.customValues` entries
+ *   must be finite positive numbers).
+ */
+export function validateConfigShape(parsed: unknown): string[] {
+  const errors: string[] = [];
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return ["<root>: expected object"];
+  }
+
+  const root = parsed as Record<string, unknown>;
+
+  if (typeof root.version !== "string") errors.push("version");
+  if (typeof root.generated !== "string") errors.push("generated");
+
+  const inputs = root.inputs;
+  if (typeof inputs !== "object" || inputs === null) {
+    errors.push("inputs");
+  } else {
+    const i = inputs as Record<string, unknown>;
+    if (typeof i.brandColor !== "string") errors.push("inputs.brandColor");
+    if (i.spacingBase !== 4 && i.spacingBase !== 8) {
+      errors.push("inputs.spacingBase");
+    }
+    if (
+      i.typeScale !== "compact" &&
+      i.typeScale !== "balanced" &&
+      i.typeScale !== "spacious"
+    ) {
+      errors.push("inputs.typeScale");
+    }
+    if (typeof i.darkMode !== "boolean") errors.push("inputs.darkMode");
+  }
+
+  if (
+    typeof root.overrides !== "object" ||
+    root.overrides === null ||
+    Array.isArray(root.overrides)
+  ) {
+    errors.push("overrides");
+  }
+
+  const output = root.output;
+  if (typeof output !== "object" || output === null) {
+    errors.push("output");
+  } else {
+    const o = output as Record<string, unknown>;
+    if (typeof o.tokensDir !== "string") errors.push("output.tokensDir");
+    if (typeof o.buildDir !== "string") errors.push("output.buildDir");
+    if (typeof o.prefix !== "string") errors.push("output.prefix");
+  }
+
+  // Epic 2 optional fields — only validated when present.
+  if (root.categories !== undefined) {
+    if (!Array.isArray(root.categories)) {
+      errors.push("categories");
+    } else {
+      for (let i = 0; i < root.categories.length; i++) {
+        if (typeof root.categories[i] !== "string") {
+          errors.push(`categories[${i}]`);
+        }
+      }
+    }
+  }
+
+  if (root.advanced !== undefined) {
+    if (
+      typeof root.advanced !== "object" ||
+      root.advanced === null ||
+      Array.isArray(root.advanced)
+    ) {
+      errors.push("advanced");
+    } else {
+      const advanced = root.advanced as Record<string, unknown>;
+      const spacing = advanced.spacing;
+      if (spacing !== undefined) {
+        if (typeof spacing !== "object" || spacing === null) {
+          errors.push("advanced.spacing");
+        } else {
+          const custom = (spacing as Record<string, unknown>).customValues;
+          if (custom !== undefined) {
+            if (
+              typeof custom !== "object" ||
+              custom === null ||
+              Array.isArray(custom)
+            ) {
+              errors.push("advanced.spacing.customValues");
+            } else {
+              for (const [key, value] of Object.entries(
+                custom as Record<string, unknown>,
+              )) {
+                if (
+                  typeof value !== "number" ||
+                  !Number.isFinite(value) ||
+                  value <= 0
+                ) {
+                  errors.push(`advanced.spacing.customValues.${key}`);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Read, parse, and validate an existing `quieto.config.json` from the given
+ * directory. Returns a {@link LoadConfigResult} discriminating between the
+ * four possible outcomes.
+ *
+ * Epic 1 configs — written before the schema grew `categories` and
+ * `advanced` — are accepted: the returned `config.categories` defaults to
+ * {@link DEFAULT_CATEGORIES} and `config.advanced` is left `undefined`. The
+ * on-disk file is NOT mutated; legacy configs migrate forward on their next
+ * write.
  *
  * When {@link LoadConfigOptions.toolVersion} is supplied and the config's
- * `version` is *newer* than the tool's, a `console.warn` is emitted but the
- * config is still returned — the caller decides whether to proceed.
+ * `version` is newer than the tool's, a warning is emitted via
+ * `options.logger` (defaulting to Clack's `p.log.warn`). The config is still
+ * returned as `"ok"` — the caller decides whether to proceed.
  */
 export function loadConfig(
   cwd: string = process.cwd(),
   options: LoadConfigOptions = {},
-): QuietoConfig | null {
+): LoadConfigResult {
   const filePath = getConfigPath(cwd);
 
   let raw: string;
   try {
     raw = readFileSync(filePath, "utf-8");
-  } catch {
-    return null;
+  } catch (error) {
+    if (isErrnoException(error) && error.code === "ENOENT") {
+      return { status: "missing" };
+    }
+    // Other read errors (EACCES, EISDIR, …) present as corruption to the
+    // caller — the file is there, but we can't get at it. Distinguishing
+    // further would bloat the surface without a user-facing benefit.
+    return {
+      status: "corrupt",
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
   }
 
   // Strip a leading UTF-8 BOM (some Windows editors save JSON with one);
@@ -83,28 +280,62 @@ export function loadConfig(
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch {
-    return null;
+  } catch (error) {
+    return {
+      status: "corrupt",
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
   }
 
-  if (
-    typeof parsed !== "object" ||
-    parsed === null ||
-    typeof (parsed as { version?: unknown }).version !== "string"
-  ) {
-    return null;
+  const errors = validateConfigShape(parsed);
+  if (errors.length > 0) {
+    return { status: "invalid", errors };
   }
 
-  const config = parsed as QuietoConfig;
+  // Structural validation passed. Copy known fields explicitly — NEVER
+  // spread the parsed JSON root, since attacker-controlled keys like
+  // `__proto__` or `constructor` would pollute the returned object's
+  // prototype chain (CVE-pattern). An explicit field copy is the only
+  // safe way to promote an untrusted record to our typed shape.
+  const root = parsed as Record<string, unknown>;
+  const rawCategories = root.categories;
+  const config: QuietoConfig = {
+    version: root.version as string,
+    generated: root.generated as string,
+    inputs: { ...(root.inputs as QuietoConfig["inputs"]) },
+    overrides: { ...(root.overrides as QuietoConfig["overrides"]) },
+    output: { ...(root.output as QuietoConfig["output"]) },
+    categories: Array.isArray(rawCategories)
+      ? (rawCategories as string[]).slice()
+      : [...DEFAULT_CATEGORIES],
+  };
+  if (typeof root.$schema === "string") config.$schema = root.$schema;
+  if (root.advanced !== undefined) {
+    // `advanced` passed structural validation above; deep-clone via
+    // JSON round-trip so the returned object is independent of the
+    // parsed tree. JSON.parse(JSON.stringify(...)) produces a plain
+    // prototype-free tree for any object that already round-trips
+    // through JSON (which `parsed` did, by definition).
+    config.advanced = JSON.parse(
+      JSON.stringify(root.advanced),
+    ) as QuietoConfig["advanced"];
+  }
 
+  const logger = options.logger ?? DEFAULT_LOGGER;
   if (
     options.toolVersion &&
     compareVersions(config.version, options.toolVersion) > 0
   ) {
-    console.warn(
-      `quieto.config.json was generated by a newer version of quieto-tokens (${config.version}) than the one currently installed (${options.toolVersion}). Some fields may not be understood.`,
-    );
+    // A throwing logger must not break the discriminated-union contract
+    // — swallow the failure so callers always get a `LoadConfigResult`.
+    try {
+      logger.warn(
+        `quieto.config.json was generated by a newer version of quieto-tokens (${config.version}) than the one currently installed (${options.toolVersion}). Some fields may not be understood.`,
+      );
+    } catch {
+      // Intentionally ignored; the warning is advisory.
+    }
   }
 
-  return config;
+  return { status: "ok", config };
 }

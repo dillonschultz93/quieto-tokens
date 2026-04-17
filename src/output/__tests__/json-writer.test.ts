@@ -201,6 +201,47 @@ describe("writeTokensToJson", () => {
     }
   });
 
+  it("injects a $metadata banner into every primitive and semantic JSON file", async () => {
+    const collection = sampleCollection(["light", "dark"]);
+    const files = await writeTokensToJson(collection, tempDir, {
+      generatedAt: "2026-04-16T12:00:00.000Z",
+    });
+
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const parsed = JSON.parse(readFileSync(file, "utf-8"));
+      expect(parsed.$metadata).toEqual({
+        generatedBy: "quieto-tokens",
+        doNotEdit: true,
+        generatedAt: "2026-04-16T12:00:00.000Z",
+        notice: expect.stringContaining("tool-generated"),
+      });
+    }
+  });
+
+  it("stamps the same generatedAt across all files in a single run", async () => {
+    const collection = sampleCollection(["light"]);
+    const files = await writeTokensToJson(collection, tempDir);
+
+    const timestamps = files.map(
+      (f) => (JSON.parse(readFileSync(f, "utf-8")) as { $metadata: { generatedAt: string } })
+        .$metadata.generatedAt,
+    );
+    expect(new Set(timestamps).size).toBe(1);
+  });
+
+  it("places $metadata at the top of the file for human readability", async () => {
+    const collection = sampleCollection(["light"]);
+    await writeTokensToJson(collection, tempDir);
+
+    const raw = readFileSync(
+      join(tempDir, "tokens", "primitive", "color.json"),
+      "utf-8",
+    );
+    // First non-whitespace key after `{` must be `$metadata`.
+    expect(raw).toMatch(/^{\s*"\$metadata":/);
+  });
+
   it("omits a category file when no tokens exist for it", async () => {
     const collection: ThemeCollection = {
       primitives: [makeColorPrimitive("blue", 500, "#3B82F6")],

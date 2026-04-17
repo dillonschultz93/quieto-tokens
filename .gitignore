@@ -8,3 +8,9 @@ _bmad-output/
 .claude/
 node_modules/
 dist/
+
+# Local test artifacts from running `quieto-tokens init` against the repo root.
+# These are generator *output*, not source.
+tokens/
+build/
+quieto.config.json

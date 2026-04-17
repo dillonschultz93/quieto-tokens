@@ -132,6 +132,7 @@ describe("runConfigGeneration", () => {
     expect(infoCalls).toMatch(/Import build\/light\.css/);
     expect(infoCalls).toMatch(/--quieto-\* custom properties/);
     expect(infoCalls).toMatch(/Re-run "quieto-tokens init"/);
+    expect(infoCalls).toMatch(/init --advanced/);
   });
 
   it("returns false and emits an error when the config write fails", async () => {
