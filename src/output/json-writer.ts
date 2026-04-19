@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type {
   PrimitiveToken,
@@ -9,11 +9,81 @@ import { sortCategoriesCanonical } from "../utils/categories.js";
 
 type DtcgLeaf = {
   $type: string;
-  $value: string;
+  /**
+   * DTCG leaf value. Scalar types (`color`, `dimension`, …) serialize as
+   * strings; composite types (`shadow`, `cubicBezier`, …) serialize as
+   * parsed objects/arrays so Style Dictionary's DTCG reader can walk into
+   * them for nested reference resolution (e.g. `{color.neutral.900}`
+   * embedded in a shadow's `color` field). If we left composites as
+   * JSON-stringified blobs, SD would treat the whole `"{...}"` string as
+   * one unresolvable ref and fail the build with "broken references".
+   */
+  $value: string | object;
   $description?: string;
 };
 
 type DtcgTree = { [key: string]: DtcgTree | DtcgLeaf };
+
+/**
+ * Generators that stringify composite shapes in-memory (`shadow`,
+ * `cubicBezier`) — see `generateShadowPrimitives` / `generateAnimationPrimitives`.
+ * Only those `$type`s are decoded at the write boundary; all other types
+ * keep `$value` as a string so a scalar that happens to look like JSON
+ * (e.g. a future `"[1,2,3]"` literal) is never reinterpreted.
+ */
+const COMPOSITE_JSON_DECODE_TYPES = new Set<string>(["shadow", "cubicBezier"]);
+
+function parsedCompositeHasBannedKeys(node: unknown): boolean {
+  if (node === null || typeof node !== "object") return false;
+  if (Array.isArray(node)) {
+    return node.some((item) => parsedCompositeHasBannedKeys(item));
+  }
+  const obj = node as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(obj, "__proto__")) return true;
+  if (Object.prototype.hasOwnProperty.call(obj, "constructor")) return true;
+  return Object.values(obj).some((v) => parsedCompositeHasBannedKeys(v));
+}
+
+/**
+ * Decode a stringified-JSON composite `$value` into a native object/array
+ * for known composite `$type`s only. Leading whitespace is ignored before
+ * the `{` / `[` probe and before `JSON.parse`. DTCG refs (`{color.blue.500}`)
+ * are not valid JSON — `JSON.parse` throws and the original string is kept.
+ *
+ * Parsed trees containing `__proto__` or `constructor` own keys (at any
+ * depth) are rejected — they would serialize back into prototype-pollution
+ * hazards on disk.
+ */
+function decodeCompositeValue(value: string, $type: string): string | object {
+  if (!COMPOSITE_JSON_DECODE_TYPES.has($type)) return value;
+  const trimmed = value.trimStart();
+  if (trimmed.length === 0) return value;
+  const first = trimmed[0];
+  if (first !== "{" && first !== "[") return value;
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (typeof parsed !== "object" || parsed === null) return value;
+    if (parsedCompositeHasBannedKeys(parsed)) {
+      throw new Error(
+        `Refusing to decode composite $value for $type "${$type}": forbidden key __proto__ or constructor`,
+      );
+    }
+    return parsed;
+  } catch (e) {
+    if (e instanceof SyntaxError) return value;
+    throw e;
+  }
+}
+
+async function bestEffortUnlinkPaths(paths: readonly string[]): Promise<void> {
+  for (const filePath of paths) {
+    try {
+      await unlink(filePath);
+    } catch {
+      // advisory cleanup — ignore ENOENT and other races
+    }
+  }
+}
 
 /**
  * Root-level banner written to every generated DTCG JSON file. Marks the
@@ -90,7 +160,7 @@ export function tokensToDtcgTree(tokens: AnyToken[]): DtcgTree {
 
     const leaf: DtcgLeaf = {
       $type: token.$type,
-      $value: token.$value,
+      $value: decodeCompositeValue(token.$value, token.$type),
     };
     if (token.description !== undefined && token.description.length > 0) {
       leaf.$description = token.description;
@@ -144,12 +214,43 @@ function collectCategories(tokens: ReadonlyArray<{ category: string }>): string[
   return sortCategoriesCanonical([...set]);
 }
 
+/**
+ * Subset of categories the writer is allowed to emit for a given call.
+ *
+ * - `"all"` (default): every category present in `collection.primitives` /
+ *   `theme.semanticTokens` is written — the behaviour Story 1.8 / 2.1
+ *   relies on for the `init` flow.
+ * - `{ categories }`: only files whose basename matches one of the listed
+ *   category names are written. The in-memory collection can still carry
+ *   other categories (for CSS source-from-disk to see a complete tree);
+ *   the writer simply won't touch their JSON files.
+ *
+ * Introduced by Story 2.4 to enforce Story 2.2 AC #16 on the `add`
+ * pipeline: `quieto-tokens add border` must only (re)write
+ * `tokens/primitive/border.json` and `tokens/semantic/<theme>/border.json`,
+ * leaving every other category's mtime stable.
+ */
+export type WriteScope = "all" | { categories: readonly string[] };
+
 export interface WriteTokensOptions {
   /**
    * Override for deterministic `$metadata.generatedAt`. Defaults to
    * `new Date().toISOString()` at call-time.
    */
   generatedAt?: string;
+  /**
+   * Restrict which categories land on disk. See {@link WriteScope}.
+   * Defaults to `"all"` — the historical Epic 1 behaviour.
+   */
+  scope?: WriteScope;
+}
+
+function isCategoryInScope(
+  scope: WriteScope | undefined,
+  category: string,
+): boolean {
+  if (scope === undefined || scope === "all") return true;
+  return scope.categories.includes(category);
 }
 
 export async function writeTokensToJson(
@@ -164,40 +265,78 @@ export async function writeTokensToJson(
     );
   }
 
+  if (
+    options.scope !== undefined &&
+    typeof options.scope === "object" &&
+    options.scope.categories.length === 0
+  ) {
+    throw new Error(
+      'writeTokensToJson: scope.categories must be non-empty when using a scoped write; use scope: "all" instead.',
+    );
+  }
+
   // One metadata object per run, reused across every file — the timestamp
   // stays identical across all files generated in a single init pass so
   // users can correlate them at a glance.
   const metadata = buildDtcgMetadata(options.generatedAt);
 
   const written: string[] = [];
+  try {
+    const primitiveCategories = collectCategories(collection.primitives);
+    for (const category of primitiveCategories) {
+      if (!isCategoryInScope(options.scope, category)) continue;
+      const primitivesInCategory = byCategory(collection.primitives, category);
+      if (primitivesInCategory.length === 0) continue;
 
-  const primitiveCategories = collectCategories(collection.primitives);
-  for (const category of primitiveCategories) {
-    const primitivesInCategory = byCategory(collection.primitives, category);
-    if (primitivesInCategory.length === 0) continue;
-
-    const tree = tokensToDtcgTree(primitivesInCategory);
-    const filePath = join(outputDir, "tokens", "primitive", `${category}.json`);
-    await writeJsonFile(filePath, tree, metadata);
-    written.push(filePath);
-  }
-
-  for (const theme of collection.themes) {
-    const semanticCategories = collectCategories(theme.semanticTokens);
-    for (const category of semanticCategories) {
-      const semanticsInCategory = byCategory(theme.semanticTokens, category);
-      if (semanticsInCategory.length === 0) continue;
-
-      const tree = tokensToDtcgTree(semanticsInCategory);
+      const tree = tokensToDtcgTree(primitivesInCategory);
       const filePath = join(
         outputDir,
         "tokens",
-        "semantic",
-        theme.name,
+        "primitive",
         `${category}.json`,
       );
       await writeJsonFile(filePath, tree, metadata);
       written.push(filePath);
+    }
+
+    for (const theme of collection.themes) {
+      const semanticCategories = collectCategories(theme.semanticTokens);
+      for (const category of semanticCategories) {
+        if (!isCategoryInScope(options.scope, category)) continue;
+        const semanticsInCategory = byCategory(theme.semanticTokens, category);
+        if (semanticsInCategory.length === 0) continue;
+
+        const tree = tokensToDtcgTree(semanticsInCategory);
+        const filePath = join(
+          outputDir,
+          "tokens",
+          "semantic",
+          theme.name,
+          `${category}.json`,
+        );
+        await writeJsonFile(filePath, tree, metadata);
+        written.push(filePath);
+      }
+    }
+  } catch (err) {
+    await bestEffortUnlinkPaths(written);
+    throw err;
+  }
+
+  if (
+    options.scope !== undefined &&
+    typeof options.scope === "object" &&
+    "categories" in options.scope
+  ) {
+    for (const c of options.scope.categories) {
+      const produced = written.some(
+        (w) => w.endsWith(`/${c}.json`) || w.endsWith(`\\${c}.json`),
+      );
+      if (!produced) {
+        throw new Error(
+          `writeTokensToJson: scope category "${c}" produced no JSON files — no tokens for that category in the collection`,
+        );
+      }
     }
   }
 

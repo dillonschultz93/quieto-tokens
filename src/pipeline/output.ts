@@ -1,13 +1,29 @@
-import { readFile } from "node:fs/promises";
+import { readFile, unlink } from "node:fs/promises";
 import { relative } from "node:path";
 import * as p from "@clack/prompts";
 import type { ThemeCollection } from "../types/tokens.js";
 import { writeTokensToJson } from "../output/json-writer.js";
+import type { WriteScope } from "../output/json-writer.js";
 import { buildCss } from "../output/style-dictionary.js";
 
 export interface OutputResult {
   jsonFiles: string[];
   cssFiles: string[];
+}
+
+export interface RunOutputOptions {
+  /**
+   * Restrict which categories' JSON files are (re)written on disk. See
+   * {@link WriteScope}. Defaults to `"all"` — the historical Epic 1
+   * behaviour used by the `init` pipeline.
+   *
+   * `add` passes `{ categories: [category] }` so only the newly-authored
+   * category's primitive + per-theme semantic JSON are touched (Story 2.4
+   * / Story 2.2 AC #16). CSS is then rebuilt by sourcing the full
+   * on-disk JSON tree, so the union of existing + newly-written
+   * categories always makes it into the `build/*.css` output.
+   */
+  scope?: WriteScope;
 }
 
 /**
@@ -38,12 +54,15 @@ async function countCssVariables(filePath: string): Promise<number> {
 export async function runOutputGeneration(
   collection: ThemeCollection,
   outputDir: string = process.cwd(),
+  options: RunOutputOptions = {},
 ): Promise<OutputResult | null> {
   p.log.step("Writing DTCG JSON source files…");
 
   let jsonFiles: string[];
   try {
-    jsonFiles = await writeTokensToJson(collection, outputDir);
+    jsonFiles = await writeTokensToJson(collection, outputDir, {
+      scope: options.scope,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown error";
@@ -70,6 +89,16 @@ export async function runOutputGeneration(
     p.log.info(
       "Check that the build/ directory is writable and that token JSON files are valid.",
     );
+    // Story 2.4 review (D2 extension): JSON already landed on disk — roll it
+    // back so a failed CSS build does not leave a half-written token tree
+    // (especially for scoped `add` writes where the user expects atomicity).
+    for (const path of jsonFiles) {
+      try {
+        await unlink(path);
+      } catch {
+        // best-effort — same spirit as `rollbackNewFiles` in pipeline/add.ts
+      }
+    }
     return null;
   }
 

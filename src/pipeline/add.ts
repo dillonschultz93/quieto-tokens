@@ -209,7 +209,14 @@ export async function runAdd(
     theme.semanticTokens = [...theme.semanticTokens, ...newSemantics];
   }
 
-  const output = await runOutputGeneration(collection, cwd);
+  // Scope JSON writes to just the newly-authored category — Story 2.2
+  // AC #16 ("only write what changed") is enforced here: existing
+  // primitive + semantic JSON files on disk keep their mtimes. CSS is
+  // rebuilt by sourcing the full on-disk tree in `buildCss`, so the
+  // union of old + new categories still lands in `build/*.css`.
+  const output = await runOutputGeneration(collection, cwd, {
+    scope: { categories: [category] },
+  });
   if (!output) return { status: "error", message: "output generation failed" };
 
   // --- Step 5: prune orphan files ---

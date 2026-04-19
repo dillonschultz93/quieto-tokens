@@ -326,6 +326,12 @@ function validateCategoryConfigs(
   }
 }
 
+const SHADOW_CATEGORY_CONFIG_KEYS = new Set([
+  "levels",
+  "colorRef",
+  "profile",
+]);
+
 function validateShadowCategoryConfig(
   value: unknown,
   errors: string[],
@@ -333,6 +339,11 @@ function validateShadowCategoryConfig(
   if (!isPlainObject(value)) {
     errors.push("categoryConfigs.shadow");
     return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!SHADOW_CATEGORY_CONFIG_KEYS.has(key)) {
+      errors.push(`categoryConfigs.shadow.${key}: unknown key`);
+    }
   }
   const levels = value.levels;
   if (
@@ -359,6 +370,8 @@ function validateShadowCategoryConfig(
   }
 }
 
+const BORDER_CATEGORY_CONFIG_KEYS = new Set(["widths", "radii", "pill"]);
+
 function validateBorderCategoryConfig(
   value: unknown,
   errors: string[],
@@ -366,6 +379,11 @@ function validateBorderCategoryConfig(
   if (!isPlainObject(value)) {
     errors.push("categoryConfigs.border");
     return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!BORDER_CATEGORY_CONFIG_KEYS.has(key)) {
+      errors.push(`categoryConfigs.border.${key}: unknown key`);
+    }
   }
   validateIntArray(
     value.widths,
@@ -387,6 +405,8 @@ function validateBorderCategoryConfig(
   }
 }
 
+const ANIMATION_CATEGORY_CONFIG_KEYS = new Set(["durations", "easing"]);
+
 function validateAnimationCategoryConfig(
   value: unknown,
   errors: string[],
@@ -394,6 +414,11 @@ function validateAnimationCategoryConfig(
   if (!isPlainObject(value)) {
     errors.push("categoryConfigs.animation");
     return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!ANIMATION_CATEGORY_CONFIG_KEYS.has(key)) {
+      errors.push(`categoryConfigs.animation.${key}: unknown key`);
+    }
   }
   validateIntArray(
     value.durations,

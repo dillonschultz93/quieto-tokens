@@ -342,6 +342,44 @@ So that I have a complete three-tier token system with component-specific design
 **And** CSS output is rebuilt to include the new component tokens
 **And** the user can define custom variants beyond default (e.g., `button primary`, `button secondary`)
 
+### Story 2.4: Story 2.2 Post-Review Hardening
+
+_Post-review follow-up to Story 2.2. Carries forward the 10 unchecked `[Review][Patch]` items from the 2026-04-17 code review (D5 scoping refactor + 9 test-coverage gaps). No new user-facing feature work._
+
+As a **maintainer of the Quieto Tokens CLI**,
+I want the deferred patches and missing test coverage from Story 2.2's code review landed in a dedicated follow-up,
+So that Story 2.2's acceptance criteria are fully enforced on disk and the `add` pipeline is covered by the tests Task 9.4 required.
+
+**Acceptance Criteria:**
+
+**Given** a `quieto.config.json` with existing core + added categories on disk
+**When** `quieto-tokens add <category>` runs
+**Then** only the target category's primitive + per-theme semantic JSON files are written (mtimes on all other category files are unchanged)
+**And** CSS is rebuilt by re-sourcing from disk so existing categories are preserved in the output
+**And** `quieto-tokens init` (fresh + modify) behaviour is unchanged — all core categories are written as today
+**And** test coverage gaps from Story 2.2 Task 9.4 are closed: CLI routing (unknown category / missing category / unknown flag / happy-path), corrupt-config Abort-only recovery, re-author confirm branches, pipeline E2E smoke, `categoryConfigs` validator (round-trip + out-of-range + prototype-pollution guard), json-writer dynamic-category, collector prompt flows (select + Custom fallback + **pill confirm (border)** + easing + default-vs-prior pre-fill), pruner manual-removal integration (`add shadow` as second add pending Story 2.5), missing-config error path
+**And** the 10 carried-forward items in `docs/planning/stories/2-2-add-subcommand-for-new-token-categories.md` → Review Findings are checked off with a `→ landed in Story 2.4` note
+
+### Story 2.5: Fix Animation Ease Primitive/Semantic Path Collision
+
+_Post-Story-2.4 defect fix. Surfaced when Story 2.4's D5 refactor rewired the Style Dictionary build to re-source from the on-disk JSON tree: primitive `animation.ease.{default,enter,exit}` and semantic `animation.ease.{default,enter,exit}` share identical paths, so merging the two layers on disk produces self-referencing tokens that Style Dictionary cannot resolve. Story 2.4 worked around this in its Task 8 pruner test by swapping `add animation` for `add shadow`; this story fixes the root cause so the swap can be reverted. No new user-facing feature work._
+
+As a **solo developer running `quieto-tokens add animation`**,
+I want the generated animation tokens to resolve cleanly through Style Dictionary,
+So that CSS is built without "broken references" errors and the easing semantic layer actually points at the primitive I authored.
+
+**Acceptance Criteria:**
+
+**Given** a project with the core categories initialised
+**When** `quieto-tokens add animation` runs to completion
+**Then** `runAdd` returns `{ status: "ok", … }` with no Style Dictionary reference errors
+**And** `build/tokens.css` contains fully-resolved cubic-bezier values for every semantic `--animation-ease-*` custom property (no unresolved `{animation.ease.*}` strings, no `var(--animation-ease-*)` self-references)
+**And** no primitive animation-ease token shares a path with a semantic animation-ease token on disk
+**And** every semantic ease `$value` reference resolves to an actual path in `tokens/primitive/animation.json`
+**And** Story 2.4's pruner integration test (`src/pipeline/__tests__/add.test.ts` → "prunes manually-removed categories on the next add run") is re-pointed back to `add animation` as the second add call and passes without further workaround
+**And** pre-fix projects whose `tokens/primitive/animation.json` was written under the colliding naming either auto-migrate on the next `add animation` run or surface a clear warning (dev's choice, documented)
+**And** `npm test` and `npm run type-check` are green
+
 ---
 
 ## Epic 3: Token System Evolution
