@@ -14,3 +14,6 @@ dist/
 tokens/
 build/
 quieto.config.json
+
+# Ephemeral code-review diff bundles (local tooling).
+.review-tmp/

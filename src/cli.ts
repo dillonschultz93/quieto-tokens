@@ -106,15 +106,21 @@ export function parseAddArgs(args: readonly string[]): {
   return category !== undefined ? { ...base, category } : base;
 }
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+/**
+ * Pure routing core extracted from `main()` for testability. Returns an
+ * exit code instead of calling `process.exit`, and accepts an explicit
+ * `argv` slice (already stripped of `node` + script path) so tests can
+ * drive routing without mutating `process.argv`. `main()` remains the
+ * thin `process.argv` / `process.exit` shim the CLI binary uses.
+ */
+export async function runCli(args: readonly string[]): Promise<number> {
   const command = args[0];
 
   if (command === "--help" || command === "-h") {
     // Plain stdout print: help text is structural CLI output, not user-
     // facing narrative. Every CLI does it this way so pipes/grep work.
     process.stdout.write(`${HELP_TEXT}\n`);
-    process.exit(0);
+    return 0;
   }
 
   if (command === "--version") {
@@ -126,7 +132,7 @@ async function main(): Promise<void> {
       readFileSync(resolve(__dirname, "..", "package.json"), "utf-8"),
     );
     process.stdout.write(`${pkg.version}\n`);
-    process.exit(0);
+    return 0;
   }
 
   if (!command) {
@@ -134,7 +140,7 @@ async function main(): Promise<void> {
     p.log.error("No command provided.");
     p.note(HELP_TEXT.trim(), "Usage");
     p.outro("Run `quieto-tokens --help` for more.");
-    process.exit(1);
+    return 1;
   }
 
   switch (command) {
@@ -145,10 +151,12 @@ async function main(): Promise<void> {
         p.log.error(`Unknown option(s) for init: ${unknown.join(", ")}`);
         p.note(HELP_TEXT.trim(), "Usage");
         p.outro("Fix the options and re-run.");
-        process.exit(1);
+        return 1;
       }
       await initCommand({ advanced });
-      break;
+      const initExit = process.exitCode;
+      process.exitCode = undefined;
+      return typeof initExit === "number" ? initExit : 0;
     }
     case "add": {
       const parsed = parseAddArgs(args.slice(1));
@@ -157,7 +165,7 @@ async function main(): Promise<void> {
         // does; unknown args alongside `--help` are ignored because the
         // user just wanted docs.
         process.stdout.write(`${HELP_TEXT}\n`);
-        process.exit(0);
+        return 0;
       }
       if (parsed.unknown.length > 0) {
         p.intro("◆  quieto-tokens");
@@ -170,18 +178,25 @@ async function main(): Promise<void> {
         );
         p.note(HELP_TEXT.trim(), "Help");
         p.outro("Fix the options and re-run.");
-        process.exit(1);
+        return 1;
       }
       await addCommand({ category: parsed.category });
-      break;
+      const addExit = process.exitCode;
+      process.exitCode = undefined;
+      return typeof addExit === "number" ? addExit : 0;
     }
     default:
       p.intro("◆  quieto-tokens");
       p.log.error(`Unknown command: ${command}`);
       p.note(HELP_TEXT.trim(), "Usage");
       p.outro("Run `quieto-tokens --help` for more.");
-      process.exit(1);
+      return 1;
   }
+}
+
+async function main(): Promise<void> {
+  const code = await runCli(process.argv.slice(2));
+  process.exit(code);
 }
 
 /**

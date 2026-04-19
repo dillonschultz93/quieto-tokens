@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-17 (story 2-2 implementation complete, moved to review)
+# last_updated: 2026-04-19 (story 2-4 started — post-review hardening for story 2-2)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-16
-last_updated: 2026-04-17
+last_updated: 2026-04-19
 project: Quieto Tokens CLI
 # NOTE: Story 1.10 is a post-retrospective defect fix. Epic 1 temporarily reopened to accommodate.
 project_key: QUIETO
@@ -60,10 +60,14 @@ development_status:
   epic-1-retrospective: done
 
   # Epic 2: Advanced Token Authoring
+  # NOTE: Story 2.4 is a post-review hardening story carrying forward 10 unchecked review items from Story 2.2.
+  # NOTE: Story 2.5 is a post-Story-2.4 defect fix (animation.ease primitive/semantic path collision surfaced by Story 2.4's D5 on-disk CSS sourcing refactor).
   epic-2: in-progress
   2-1-advanced-mode-for-core-categories: done
-  2-2-add-subcommand-for-new-token-categories: review
+  2-2-add-subcommand-for-new-token-categories: done
   2-3-guided-component-token-generation: ready-for-dev
+  2-4-story-2-2-post-review-hardening: review
+  2-5-fix-animation-ease-path-collision: ready-for-dev
   epic-2-retrospective: optional
 
   # Epic 3: Token System Evolution

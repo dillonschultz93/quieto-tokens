@@ -51,6 +51,14 @@ function makeCollection(themeNames: string[]): ThemeCollection {
       $value: "16px",
       path: ["spacing", "16"],
     },
+    {
+      tier: "primitive",
+      category: "typography",
+      name: "typography.scale.md",
+      $type: "dimension",
+      $value: "1rem",
+      path: ["typography", "scale", "md"],
+    },
   ];
 
   const semantics: SemanticToken[] = [
@@ -154,5 +162,47 @@ describe("runOutputGeneration", () => {
     expect(clack.log.error).toHaveBeenCalledWith(
       expect.stringMatching(/permission denied/),
     );
+  });
+
+  it("rolls back JSON files when CSS build fails (scoped-write atomicity / Story 2.4 review D2)", async () => {
+    const sd = await import("../../output/style-dictionary.js");
+    const spy = vi
+      .spyOn(sd, "buildCss")
+      .mockRejectedValueOnce(new Error("Style Dictionary boom"));
+
+    const { runOutputGeneration } = await import("../output.js");
+    const collection = makeCollection(["default"]);
+    const result = await runOutputGeneration(collection, tempDir);
+
+    expect(result).toBeNull();
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "color.json")),
+    ).toBe(false);
+
+    spy.mockRestore();
+  });
+
+  /**
+   * Story 2.4 code-review D3 — lighter substitute for snapshot tests on
+   * Story 1.8 / 2.1 fixtures: `runOutputGeneration` with default options
+   * must still emit every primitive category present in the collection
+   * (proves `scope` defaults to `"all"` and init-scale output is not
+   * regressed by the category-scoped `add` path).
+   */
+  it("writes one primitive JSON file per core category in the collection when scope is omitted (AC #3 structural guard)", async () => {
+    const { runOutputGeneration } = await import("../output.js");
+    const collection = makeCollection(["default"]);
+    const result = await runOutputGeneration(collection, tempDir);
+
+    expect(result).not.toBeNull();
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "color.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "spacing.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "typography.json")),
+    ).toBe(true);
   });
 });

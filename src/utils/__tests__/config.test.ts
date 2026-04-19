@@ -464,3 +464,376 @@ describe("configExists + loadConfig", () => {
     }
   });
 });
+
+/**
+ * `categoryConfigs` validator + round-trip coverage — Story 2.4 Task 5 /
+ * AC #8. Covers every category block (shadow / border / animation),
+ * every out-of-range error path, and the prototype-pollution guard so
+ * hand-edited / malicious configs can't sneak attacker keys past the
+ * validator into runtime code paths.
+ */
+describe("categoryConfigs validator + round-trip", () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-catconf-test-"));
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  describe("buildConfig → writeConfig → loadConfig round-trip (AC #23, #24)", () => {
+    it("round-trips a config with every categoryConfigs block intact", async () => {
+      const { buildConfig, writeConfig } = await import("../../output/config-writer.js");
+      const input = {
+        options: {
+          brandColor: "#3B82F6",
+          spacingBase: 8 as const,
+          typeScale: "balanced" as const,
+          generateThemes: true,
+        },
+        overrides: new Map<string, string>(),
+        version: "0.1.0",
+        generated: "2026-04-17T12:00:00.000Z",
+        categories: ["color", "spacing", "typography", "shadow", "border", "animation"],
+        categoryConfigs: {
+          shadow: {
+            levels: 4,
+            profile: "soft" as const,
+            colorRef: "{color.neutral.900}",
+          },
+          border: {
+            widths: [1, 2, 4, 8],
+            radii: [2, 4, 8, 16],
+            pill: true,
+          },
+          animation: {
+            durations: [100, 200, 300],
+            easing: "standard" as const,
+          },
+        },
+      };
+      const built = buildConfig(input);
+      await writeConfig(built, tempDir);
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok") return;
+
+      // Each block must survive untouched — values, keys, nested arrays.
+      expect(result.config.categoryConfigs).toEqual(input.categoryConfigs);
+      // Categories list survives with every entry in order.
+      expect(result.config.categories).toEqual(input.categories);
+    });
+
+    it("round-trips a config with only the shadow block set", async () => {
+      const { buildConfig, writeConfig } = await import("../../output/config-writer.js");
+      const built = buildConfig({
+        options: {
+          brandColor: "#3B82F6",
+          spacingBase: 8,
+          typeScale: "balanced",
+          generateThemes: true,
+        },
+        overrides: new Map(),
+        version: "0.1.0",
+        generated: "2026-04-17T12:00:00.000Z",
+        categories: ["color", "spacing", "typography", "shadow"],
+        categoryConfigs: {
+          shadow: {
+            levels: 3,
+            profile: "hard",
+            colorRef: "{color.gray.800}",
+          },
+        },
+      });
+      await writeConfig(built, tempDir);
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok") return;
+      expect(result.config.categoryConfigs?.shadow).toEqual({
+        levels: 3,
+        profile: "hard",
+        colorRef: "{color.gray.800}",
+      });
+      expect(result.config.categoryConfigs?.border).toBeUndefined();
+      expect(result.config.categoryConfigs?.animation).toBeUndefined();
+    });
+
+    it("preserves the absence of categoryConfigs when the build omits it", async () => {
+      const { buildConfig, writeConfig } = await import("../../output/config-writer.js");
+      const built = buildConfig({
+        options: {
+          brandColor: "#3B82F6",
+          spacingBase: 8,
+          typeScale: "balanced",
+          generateThemes: true,
+        },
+        overrides: new Map(),
+        version: "0.1.0",
+        generated: "2026-04-17T12:00:00.000Z",
+      });
+      // Quick-start build: no categoryConfigs at all. The absence-vs-empty
+      // signal must survive through write + reload so Story 2.1's "config
+      // predates add" detection stays intact.
+      expect(built.categoryConfigs).toBeUndefined();
+      await writeConfig(built, tempDir);
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok") return;
+      expect(result.config.categoryConfigs).toBeUndefined();
+    });
+  });
+
+  describe("shadow.levels out-of-range rejection", () => {
+    it("rejects levels below SHADOW_MIN_LEVELS (1) with the exact error-path", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        JSON.stringify({
+          ...sampleConfig(),
+          categoryConfigs: {
+            shadow: {
+              levels: 1,
+              profile: "soft",
+              colorRef: "{color.neutral.900}",
+            },
+          },
+        }),
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(result.errors).toContain("categoryConfigs.shadow.levels");
+    });
+
+    it("rejects levels above SHADOW_MAX_LEVELS (7) with the exact error-path", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        JSON.stringify({
+          ...sampleConfig(),
+          categoryConfigs: {
+            shadow: {
+              levels: 7,
+              profile: "soft",
+              colorRef: "{color.neutral.900}",
+            },
+          },
+        }),
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(result.errors).toContain("categoryConfigs.shadow.levels");
+    });
+
+    it("rejects non-integer levels (e.g. 3.5)", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        JSON.stringify({
+          ...sampleConfig(),
+          categoryConfigs: {
+            shadow: {
+              levels: 3.5,
+              profile: "soft",
+              colorRef: "{color.neutral.900}",
+            },
+          },
+        }),
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(result.errors).toContain("categoryConfigs.shadow.levels");
+    });
+
+    it("rejects malformed colorRef that doesn't match the DTCG ref shape", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        JSON.stringify({
+          ...sampleConfig(),
+          categoryConfigs: {
+            shadow: {
+              levels: 3,
+              profile: "soft",
+              colorRef: "not-a-ref",
+            },
+          },
+        }),
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(result.errors).toContain("categoryConfigs.shadow.colorRef");
+    });
+
+    it("rejects invalid profile values", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        JSON.stringify({
+          ...sampleConfig(),
+          categoryConfigs: {
+            shadow: {
+              levels: 3,
+              profile: "fluffy",
+              colorRef: "{color.neutral.900}",
+            },
+          },
+        }),
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(result.errors).toContain("categoryConfigs.shadow.profile");
+    });
+  });
+
+  describe("prototype-pollution guard", () => {
+    it("rejects `__proto__` nested under categoryConfigs.shadow (AC #8 path)", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        `{
+          "version": "0.1.0",
+          "generated": "2026-04-16T12:00:00.000Z",
+          "inputs": {
+            "brandColor": "#3B82F6",
+            "spacingBase": 8,
+            "typeScale": "balanced",
+            "darkMode": true
+          },
+          "overrides": {},
+          "output": { "tokensDir": "tokens", "buildDir": "build", "prefix": "quieto" },
+          "categories": ["color", "spacing", "typography"],
+          "categoryConfigs": {
+            "shadow": {
+              "__proto__": { "polluted": "yes" },
+              "levels": 3,
+              "profile": "soft",
+              "colorRef": "{color.neutral.900}"
+            }
+          }
+        }`,
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(
+        result.errors.some((e) =>
+          e.startsWith("categoryConfigs.shadow.__proto__"),
+        ),
+      ).toBe(true);
+    });
+
+    it("rejects an unknown `__proto__` key under categoryConfigs", () => {
+      // Hand-crafted JSON because `JSON.stringify({__proto__: ...})` drops
+      // `__proto__` silently — we need the key to actually land in the
+      // serialized text so `JSON.parse` will expose it as an own property.
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        `{
+          "version": "0.1.0",
+          "generated": "2026-04-16T12:00:00.000Z",
+          "inputs": {
+            "brandColor": "#3B82F6",
+            "spacingBase": 8,
+            "typeScale": "balanced",
+            "darkMode": true
+          },
+          "overrides": {},
+          "output": { "tokensDir": "tokens", "buildDir": "build", "prefix": "quieto" },
+          "categories": ["color", "spacing", "typography"],
+          "categoryConfigs": {
+            "__proto__": { "polluted": "yes" }
+          }
+        }`,
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      // Either "unknown key" rejection (most likely) or a specific
+      // prototype-pollution error — assert on the path prefix so the
+      // exact error message can evolve without breaking the test.
+      expect(
+        result.errors.some((e) => e.startsWith("categoryConfigs.__proto__")),
+      ).toBe(true);
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    });
+
+    it("rejects an unknown top-level category like `categoryConfigs.shadow2`", () => {
+      writeFileSync(
+        join(tempDir, "quieto.config.json"),
+        JSON.stringify({
+          ...sampleConfig(),
+          categoryConfigs: {
+            shadow2: {
+              levels: 3,
+            },
+          },
+        }),
+        "utf-8",
+      );
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("invalid");
+      if (result.status !== "invalid") return;
+      expect(result.errors).toContain("categoryConfigs.shadow2: unknown key");
+    });
+
+    it("keeps the loaded config's prototype clean after a valid load (no inherited keys)", async () => {
+      const { buildConfig, writeConfig } = await import("../../output/config-writer.js");
+      const built = buildConfig({
+        options: {
+          brandColor: "#3B82F6",
+          spacingBase: 8,
+          typeScale: "balanced",
+          generateThemes: true,
+        },
+        overrides: new Map(),
+        version: "0.1.0",
+        generated: "2026-04-17T12:00:00.000Z",
+        categoryConfigs: {
+          shadow: {
+            levels: 3,
+            profile: "soft",
+            colorRef: "{color.neutral.900}",
+          },
+        },
+      });
+      await writeConfig(built, tempDir);
+
+      const result = loadConfig(tempDir);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok") return;
+      // The returned categoryConfigs must not leak anything from the
+      // underlying JSON's prototype — Object.getPrototypeOf should be
+      // the plain-object prototype, nothing more.
+      const block = result.config.categoryConfigs?.shadow as
+        | Record<string, unknown>
+        | undefined;
+      expect(block).toBeDefined();
+      if (!block) return;
+      expect(Object.getPrototypeOf(block)).toBe(Object.prototype);
+      expect(
+        (block as unknown as Record<string, unknown>).polluted,
+      ).toBeUndefined();
+    });
+  });
+});

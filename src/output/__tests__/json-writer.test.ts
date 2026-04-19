@@ -315,3 +315,369 @@ describe("writeTokensToJson", () => {
     );
   });
 });
+
+/**
+ * Dynamic-category coverage — Story 2.4 Task 6 / AC #9.
+ *
+ * After Story 2.2's Task 3.5 refactor, `writeTokensToJson` no longer
+ * hardcodes the three core primitive/semantic category names (color,
+ * spacing, typography). It walks `collection.primitives` and each
+ * theme's `semanticTokens` and emits a file per distinct `category`.
+ * These tests drive `shadow` through that dynamic path and assert
+ * byte-equivalence with the hardcoded-category shape — a regression
+ * guard against any future change that re-introduces a closed-list
+ * dispatch.
+ */
+describe("writeTokensToJson — dynamic category coverage (AC #9)", () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-dyn-cat-"));
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("emits tokens/primitive/shadow.json for a dynamically-added shadow category", async () => {
+    const shadowPrimitive: PrimitiveToken = {
+      tier: "primitive",
+      category: "shadow",
+      name: "shadow.elevation.1",
+      $type: "shadow",
+      $value: JSON.stringify({
+        color: "{color.neutral.900}",
+        offsetX: "0px",
+        offsetY: "1px",
+        blur: "0px",
+        spread: "0px",
+      }),
+      path: ["shadow", "elevation", "1"],
+    };
+    const collection: ThemeCollection = {
+      primitives: [makeColorPrimitive("blue", 500, "#3B82F6"), shadowPrimitive],
+      themes: [
+        {
+          name: "light",
+          semanticTokens: [
+            makeColorSemantic("background", "primary", "{color.blue.500}"),
+            {
+              tier: "semantic",
+              category: "shadow",
+              name: "shadow.low",
+              $type: "shadow",
+              $value: "{shadow.elevation.1}",
+              path: ["shadow", "low"],
+            },
+          ],
+        },
+      ],
+    };
+
+    const files = await writeTokensToJson(collection, tempDir);
+
+    const shadowPrimPath = join(tempDir, "tokens", "primitive", "shadow.json");
+    const shadowSemPath = join(
+      tempDir,
+      "tokens",
+      "semantic",
+      "light",
+      "shadow.json",
+    );
+    expect(files).toContain(shadowPrimPath);
+    expect(files).toContain(shadowSemPath);
+    expect(existsSync(shadowPrimPath)).toBe(true);
+    expect(existsSync(shadowSemPath)).toBe(true);
+  });
+
+  it("emits composite `$value` as a native JSON object (not a stringified blob) for shadow tokens", async () => {
+    // Regression guard for the fix landed alongside this story's shadow
+    // E2E: before the fix, composite `$value`s were written as quoted
+    // strings (`"{\"color\":\"{color.neutral.900}\", …}"`), and Style
+    // Dictionary v5's DTCG reader couldn't resolve the embedded color
+    // ref from inside the string. The fix decodes composite values at
+    // the writer boundary so disk JSON is DTCG-spec-compliant.
+    const shadowPrimitive: PrimitiveToken = {
+      tier: "primitive",
+      category: "shadow",
+      name: "shadow.elevation.1",
+      $type: "shadow",
+      $value: JSON.stringify({
+        color: "{color.neutral.900}",
+        offsetX: "0px",
+        offsetY: "1px",
+        blur: "0px",
+        spread: "0px",
+      }),
+      path: ["shadow", "elevation", "1"],
+    };
+    const collection: ThemeCollection = {
+      primitives: [shadowPrimitive],
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+
+    await writeTokensToJson(collection, tempDir);
+
+    const parsed = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "primitive", "shadow.json"),
+        "utf-8",
+      ),
+    );
+    const leaf = parsed.shadow.elevation["1"];
+    expect(leaf.$type).toBe("shadow");
+    expect(typeof leaf.$value).toBe("object");
+    expect(leaf.$value).toEqual({
+      color: "{color.neutral.900}",
+      offsetX: "0px",
+      offsetY: "1px",
+      blur: "0px",
+      spread: "0px",
+    });
+  });
+
+  it("leaves DTCG scalar values untouched — refs stay strings, hex stays string", async () => {
+    // Composite decode runs only for `$type` in { shadow, cubicBezier }.
+    // Color / dimension scalars stay strings even when the literal looks
+    // like JSON (e.g. a bracketed string).
+    const collection: ThemeCollection = {
+      primitives: [makeColorPrimitive("blue", 500, "#3B82F6")],
+      themes: [
+        {
+          name: "default",
+          semanticTokens: [
+            makeColorSemantic("background", "primary", "{color.blue.500}"),
+          ],
+        },
+      ],
+    };
+    await writeTokensToJson(collection, tempDir);
+
+    const prim = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "primitive", "color.json"),
+        "utf-8",
+      ),
+    );
+    const sem = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "semantic", "default", "color.json"),
+        "utf-8",
+      ),
+    );
+    expect(prim.color.blue["500"].$value).toBe("#3B82F6");
+    expect(sem.color.background.primary.$value).toBe("{color.blue.500}");
+  });
+
+  it("does not JSON-decode a color primitive whose $value looks like a JSON array", async () => {
+    const collection: ThemeCollection = {
+      primitives: [
+        {
+          tier: "primitive",
+          category: "color",
+          name: "color.note.example",
+          $type: "color",
+          $value: "[1,2,3]",
+          path: ["color", "note", "example"],
+        },
+      ],
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+    await writeTokensToJson(collection, tempDir);
+    const prim = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "primitive", "color.json"),
+        "utf-8",
+      ),
+    );
+    expect(prim.color.note.example.$value).toBe("[1,2,3]");
+  });
+
+  it("rejects shadow $value JSON that embeds a __proto__ key", async () => {
+    const shadowPrimitive: PrimitiveToken = {
+      tier: "primitive",
+      category: "shadow",
+      name: "shadow.elevation.1",
+      $type: "shadow",
+      $value: '{"__proto__":{"polluted":true},"offsetX":"0px"}',
+      path: ["shadow", "elevation", "1"],
+    };
+    const collection: ThemeCollection = {
+      primitives: [shadowPrimitive],
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+    await expect(writeTokensToJson(collection, tempDir)).rejects.toThrow(
+      /forbidden key __proto__ or constructor/,
+    );
+  });
+
+  it("decodes leading-whitespace stringified shadow composites", async () => {
+    const shadowPrimitive: PrimitiveToken = {
+      tier: "primitive",
+      category: "shadow",
+      name: "shadow.elevation.1",
+      $type: "shadow",
+      $value: `  ${JSON.stringify({
+        color: "{color.neutral.900}",
+        offsetX: "0px",
+        offsetY: "1px",
+        blur: "0px",
+        spread: "0px",
+      })}`,
+      path: ["shadow", "elevation", "1"],
+    };
+    const collection: ThemeCollection = {
+      primitives: [shadowPrimitive],
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+    await writeTokensToJson(collection, tempDir);
+    const parsed = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "primitive", "shadow.json"),
+        "utf-8",
+      ),
+    );
+    expect(typeof parsed.shadow.elevation["1"].$value).toBe("object");
+  });
+
+  it("matches byte-for-byte between hardcoded and dynamic-category paths for the same token shape", async () => {
+    // Build two equivalent collections — one where the category name
+    // is a core category (`color`) and one where it's a dynamic name
+    // (`shadow`) but every other field of the token matches. After
+    // stripping the filename-dependent `$metadata.generatedAt`, the
+    // emitted JSON bodies must be identical in structure.
+    const coreOnly: ThemeCollection = {
+      primitives: [makeColorPrimitive("blue", 500, "#3B82F6")],
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+    const dynOnly: ThemeCollection = {
+      primitives: [
+        {
+          tier: "primitive",
+          category: "shadow",
+          name: "shadow.blue.500",
+          $type: "color",
+          $value: "#3B82F6",
+          path: ["shadow", "blue", "500"],
+        },
+      ],
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+
+    await writeTokensToJson(coreOnly, tempDir, {
+      generatedAt: "fixed-ts",
+    });
+    const coreJson = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "primitive", "color.json"),
+        "utf-8",
+      ),
+    );
+
+    // Second write: new tmp dir so the first file doesn't collide.
+    const dynDir = mkdtempSync(join(tmpdir(), "quieto-dyn-cat-b-"));
+    try {
+      await writeTokensToJson(dynOnly, dynDir, { generatedAt: "fixed-ts" });
+      const dynJson = JSON.parse(
+        readFileSync(
+          join(dynDir, "tokens", "primitive", "shadow.json"),
+          "utf-8",
+        ),
+      );
+      // Both files must share: $metadata shape, leaf shape, exact values.
+      expect(coreJson.$metadata).toEqual(dynJson.$metadata);
+      expect(coreJson.color.blue["500"]).toEqual(dynJson.shadow.blue["500"]);
+    } finally {
+      rmSync(dynDir, { recursive: true, force: true });
+    }
+  });
+});
+
+/**
+ * WriteScope filtering — Story 2.4 Task 1.2 / AC #1. Direct coverage of
+ * the new `options.scope` parameter so the filter behaviour has a
+ * focused unit regression guard in addition to the pipeline E2E.
+ */
+describe("writeTokensToJson — WriteScope filtering", () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-scope-"));
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("writes every category when scope is omitted (default `all` behaviour)", async () => {
+    const collection = sampleCollection(["light"]);
+    const files = await writeTokensToJson(collection, tempDir);
+    // color + spacing + typography primitives + color + spacing semantics
+    expect(files.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("writes every category when scope is explicit `all`", async () => {
+    const collection = sampleCollection(["light"]);
+    const files = await writeTokensToJson(collection, tempDir, {
+      scope: "all",
+    });
+    expect(files.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("writes only the listed categories when scope is `{ categories: [...] }`", async () => {
+    const collection = sampleCollection(["light", "dark"]);
+    const files = await writeTokensToJson(collection, tempDir, {
+      scope: { categories: ["color"] },
+    });
+
+    for (const file of files) {
+      expect(file).toMatch(/color\.json$/);
+    }
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "color.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "spacing.json")),
+    ).toBe(false);
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "typography.json")),
+    ).toBe(false);
+    expect(
+      existsSync(join(tempDir, "tokens", "semantic", "light", "color.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "semantic", "dark", "color.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "semantic", "light", "spacing.json")),
+    ).toBe(false);
+  });
+
+  it("throws when scope lists a category absent from the collection", async () => {
+    const collection = sampleCollection(["light"]);
+    await expect(
+      writeTokensToJson(collection, tempDir, {
+        scope: { categories: ["shadow"] },
+      }),
+    ).rejects.toThrow(/scope category "shadow" produced no JSON files/);
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "shadow.json")),
+    ).toBe(false);
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "color.json")),
+    ).toBe(false);
+  });
+
+  it("throws when scope.categories is empty", async () => {
+    const collection = sampleCollection(["light"]);
+    await expect(
+      writeTokensToJson(collection, tempDir, {
+        scope: { categories: [] },
+      }),
+    ).rejects.toThrow(/scope.categories must be non-empty/);
+  });
+});
