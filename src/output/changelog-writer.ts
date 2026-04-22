@@ -39,7 +39,7 @@ export function formatChangelogEntry(entry: ChangelogEntry): string {
 }
 
 function stripTitleBody(content: string): string {
-  const t = content.trim();
+  const t = content.trimStart();
   if (t.length === 0) return "";
   if (t.startsWith("# Design System Changelog")) {
     return t.slice("# Design System Changelog".length).replace(/^\s+/, "");
@@ -67,15 +67,8 @@ export async function appendChangelog(
   let existing: string;
   try {
     existing = await readFile(targetPath, "utf-8");
-  } catch (e) {
-    const code = e as { code?: string };
-    if (code?.code === "ENOENT") {
-      existing = "";
-    } else {
-      return {
-        error: e instanceof Error ? e.message : String(e),
-      };
-    }
+  } catch {
+    existing = "";
   }
 
   const newBlock = formatChangelogEntry(entry);

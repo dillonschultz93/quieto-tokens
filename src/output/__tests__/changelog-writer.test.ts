@@ -89,6 +89,15 @@ describe("changelog-writer", () => {
   });
 
   it("returns a structured error when the project root is not writable", async () => {
+    // Skip on Windows where POSIX permission modes don't apply.
+    if (process.platform === "win32") {
+      return;
+    }
+    // Skip when running as root — chmod cannot revoke write access for root.
+    if (typeof process.getuid === "function" && process.getuid() === 0) {
+      return;
+    }
+
     const r0 = await appendChangelog(
       { ...baseEntry, timestamp: "2026-04-22T10:00:00.000Z" },
       dir,
@@ -97,11 +106,14 @@ describe("changelog-writer", () => {
       throw new Error(r0.error);
     }
     chmodSync(dir, 0o555);
-    const r = await appendChangelog(
-      { ...baseEntry, timestamp: "2026-04-22T11:00:00.000Z" },
-      dir,
-    );
-    chmodSync(dir, 0o755);
-    expect("error" in r).toBe(true);
+    try {
+      const r = await appendChangelog(
+        { ...baseEntry, timestamp: "2026-04-22T11:00:00.000Z" },
+        dir,
+      );
+      expect("error" in r).toBe(true);
+    } finally {
+      chmodSync(dir, 0o755);
+    }
   });
 });
