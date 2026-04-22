@@ -164,6 +164,14 @@ export function tokensToDtcgTree(tokens: AnyToken[]): DtcgTree {
       // Node already exists as a group (children placed first); merge token
       // definition into it — valid DTCG (a group that is also a token).
       const group = existing as Record<string, unknown>;
+      // Guard: if this group was already merged with token data (e.g. same path
+      // repeated after a prior group→leaf merge), treat it as a duplicate rather
+      // than silently overwriting the stored $type/$value.
+      if ("$type" in group || "$value" in group) {
+        throw new Error(
+          `Duplicate token path: "${token.path.join(".")}" is defined more than once.`,
+        );
+      }
       group.$type = token.$type;
       group.$value = decodeCompositeValue(token.$value, token.$type);
       if (token.description !== undefined && token.description.length > 0) {

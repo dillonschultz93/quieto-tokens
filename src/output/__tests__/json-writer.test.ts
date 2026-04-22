@@ -104,6 +104,33 @@ describe("tokensToDtcgTree", () => {
     expect((blue.blue as Record<string, unknown>).$type).toBe("color");
     expect(((blue.blue as Record<string, unknown>)["500"] as Record<string, unknown>).$value).toBe("#2563EB");
   });
+
+  it("throws on duplicate token paths after a prior group→leaf merge", () => {
+    // Token at ["color", "blue"] is merged into an existing group (children
+    // placed first via the longer path). A second token with the same path
+    // must throw rather than silently overwrite the stored $type/$value.
+    expect(() =>
+      tokensToDtcgTree([
+        makeColorPrimitive("blue", 500, "#2563EB"),
+        {
+          tier: "primitive" as const,
+          category: "color",
+          name: "color.blue",
+          $type: "color",
+          $value: "#3B82F6",
+          path: ["color", "blue"],
+        },
+        {
+          tier: "primitive" as const,
+          category: "color",
+          name: "color.blue",
+          $type: "color",
+          $value: "#0ea5e9",
+          path: ["color", "blue"],
+        },
+      ]),
+    ).toThrow(/Duplicate token path/);
+  });
 });
 
 describe("writeTokensToJson", () => {

@@ -1137,6 +1137,28 @@ describe("validateConfigShape — components block", () => {
     }
   });
 
+  it("rejects a variant string with leading/trailing whitespace", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: [" primary "],
+          cells: [
+            {
+              variant: " primary ",
+              property: "color-background",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.variants[0]"),
+    );
+  });
+
   it("does not pollute Object.prototype via __proto__ in components", () => {
     const components = Object.create(null);
     Object.defineProperty(components, "__proto__", {

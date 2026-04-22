@@ -45,8 +45,10 @@ export interface PruneResult {
  *   `*.json` inside is removed and the directory itself is removed if
  *   it ends up empty. Subdirectories IN {@link activeThemes} are
  *   scanned for category orphans only.
- * - `tokens/component/*.json` is explicitly NOT touched — Story 2.3's
- *   component pruner owns that directory.
+ * - `tokens/component/*.json` is scanned when {@link knownComponents} is
+ *   provided: any `.json` file whose basename is not in that set is treated
+ *   as an orphaned component and deleted. When `knownComponents` is omitted
+ *   the component directory is not touched.
  *
  * Hardening:
  * - Dotfiles are skipped (a user-placed `.user-notes.json` inside

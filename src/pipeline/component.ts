@@ -80,6 +80,10 @@ export async function runComponent(
       collection.primitives,
     );
 
+    if (componentTokens.length === 0) {
+      return { status: "cancelled" };
+    }
+
     collection.components = componentTokens;
 
     p.log.step("Writing component tokens…");

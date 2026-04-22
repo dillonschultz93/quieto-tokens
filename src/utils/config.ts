@@ -488,6 +488,10 @@ function validateComponents(value: unknown, errors: string[]): void {
         const v = entry.variants[i];
         if (typeof v !== "string") {
           errors.push(`${prefix}.variants[${i}]`);
+        } else if (v !== v.trim()) {
+          // Whitespace-padded variant strings are invalid in config files — enforce
+          // pre-trimmed values so the variants Set matches cell.variant exactly.
+          errors.push(`${prefix}.variants[${i}]`);
         } else {
           const vErr = validateComponentName(v);
           if (vErr && v !== "default") {
@@ -515,7 +519,10 @@ function validateComponents(value: unknown, errors: string[]): void {
         continue;
       }
 
-      if (typeof cell.variant !== "string" || !variants.has(cell.variant)) {
+      if (
+        typeof cell.variant !== "string" ||
+        !variants.has(cell.variant.trim())
+      ) {
         errors.push(`${cp}.variant`);
       }
 

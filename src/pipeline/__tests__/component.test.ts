@@ -177,6 +177,20 @@ describe("runComponent — pipeline E2E", () => {
     expect(outcome.result.componentConfig).toEqual(BUTTON_CONFIG);
   });
 
+  it("returns cancelled status when collector yields zero component tokens", async () => {
+    const config = baseConfig();
+    await seedInitState(tempDir, config);
+
+    // Config with no cells means generateComponentTokens will return []
+    vi.mocked(collectComponentInputs).mockResolvedValue({
+      variants: ["primary"],
+      cells: [],
+    });
+
+    const outcome = await runComponent(config, "button", tempDir);
+    expect(outcome.status).toBe("cancelled");
+  });
+
   it("returns cancelled status when collector throws cancelled", async () => {
     const config = baseConfig();
     await seedInitState(tempDir, config);

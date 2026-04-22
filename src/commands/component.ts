@@ -8,6 +8,7 @@ import {
 } from "../output/config-writer.js";
 import type { QuietoConfig } from "../types/config.js";
 import { runComponent } from "../pipeline/component.js";
+import { validateComponentName } from "../utils/validation.js";
 
 export interface ComponentCommandOptions {
   name: string;
@@ -20,6 +21,14 @@ export async function componentCommand(
   p.intro("◆  quieto-tokens — Component token generation.");
 
   try {
+    const nameError = validateComponentName(options.name);
+    if (nameError) {
+      p.log.error(`Invalid component name: ${nameError}`);
+      p.outro("Provide a valid kebab-case component name and re-run.");
+      process.exitCode = 1;
+      return;
+    }
+
     if (!configExists(cwd)) {
       p.log.error(
         "No quieto.config.json found in this directory.",
