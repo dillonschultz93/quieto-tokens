@@ -1,6 +1,6 @@
 # Story 3.2: Token Diff Display
 
-Status: review
+Status: done
 
 ## Story
 
@@ -350,10 +350,12 @@ Cursor agent (Claude) — 2026-04-22
 - Refactored `src/commands/update.ts`: outer loop for re-entry after "Go back and modify further"; post-diff `p.select` (Accept / Full preview / Back / Cancel); `previewAndConfirm` on a `structuredClone` of the collection; `finalizeWrite` for shared write+config+prune path; early exit when `diff.isEmpty` (message + outro, no write).
 - Tests: `src/ui/__tests__/diff.test.ts`, `src/pipeline/__tests__/diff-loader.test.ts`, `src/commands/__tests__/update-empty-diff.test.ts` (mocked early exit on identical prior vs pipeline).
 - README and intro text updated to describe the diff + prompt flow. Task 7.5: existing `update.test.ts` still covers accept-through-write; new file covers no-changes early exit; full post-diff matrix not duplicated to avoid fragile infinite-loop mocks.
+- **2026-04-22 (post-merge):** GitHub code review complete; status moved to `done`.
 
 ### Change Log
 
 - 2026-04-22: Story 3.2 — token diff for `update`, post-diff menu, prior loader, tests, docs (see above).
+- 2026-04-22: Marked `done` after PR code review.
 
 ### File List
 
