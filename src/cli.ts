@@ -114,10 +114,6 @@ export function parseAddArgs(args: readonly string[]): {
 }
 
 /**
- * Parse the argv slice after the `component` command word. The first
- * positional is the component name; no flags are supported in this story.
- */
-/**
  * Parse argv after `update`. No flags in Story 3.1 — reject anything that
  * looks like an option or stray positional.
  */
@@ -131,6 +127,10 @@ export function parseUpdateArgs(args: readonly string[]): {
   return { unknown };
 }
 
+/**
+ * Parse the argv slice after the `component` command word. The first
+ * positional is the component name; no flags are supported in this story.
+ */
 export function parseComponentArgs(args: readonly string[]): {
   name?: string;
   unknown: string[];
