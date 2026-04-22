@@ -710,6 +710,29 @@ describe("writeTokensToJson — WriteScope filtering", () => {
       }),
     ).rejects.toThrow(/scope.categories must be non-empty/);
   });
+
+  it("does not write component JSON when skipComponents is true", async () => {
+    const componentToken: import("../../types/tokens.js").ComponentToken = {
+      tier: "component",
+      category: "component",
+      componentName: "button",
+      name: "button.primary.color.background",
+      $type: "color",
+      $value: "{color.background.primary}",
+      path: ["button", "primary", "color", "background"],
+    };
+    const collection: ThemeCollection = {
+      ...sampleCollection(["light"]),
+      components: [componentToken],
+    };
+    await writeTokensToJson(collection, tempDir, {
+      scope: { categories: ["color"] },
+      skipComponents: true,
+    });
+    expect(existsSync(join(tempDir, "tokens", "component", "button.json"))).toBe(
+      false,
+    );
+  });
 });
 
 describe("writeComponentTokens", () => {

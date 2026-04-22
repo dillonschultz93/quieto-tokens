@@ -1,0 +1,314 @@
+import { relative } from "node:path";
+import * as p from "@clack/prompts";
+import { configExists, loadConfig } from "../utils/config.js";
+import { readToolVersion, buildConfig, writeConfig } from "../output/config-writer.js";
+import { prune } from "../output/pruner.js";
+import { sortCategoriesCanonical } from "../utils/categories.js";
+import { previewAndConfirm } from "../ui/preview.js";
+import { runOutputGeneration } from "../pipeline/output.js";
+import { applyPriorOverrides } from "../utils/overrides.js";
+import {
+  detectOverrideConflicts,
+  resolveOverrideConflicts,
+} from "../utils/override-conflicts.js";
+import { collectUpdateInputs } from "./update-flow.js";
+import { runUpdate } from "../pipeline/update.js";
+export async function updateCommand(): Promise<void> {
+  p.intro("◆  quieto-tokens — Update specific categories.");
+
+  try {
+    const cwd = process.cwd();
+
+    if (!configExists(cwd)) {
+      p.log.error(
+        "No token system found — run 'quieto-tokens init' first.",
+      );
+      p.outro("Create a token system with `quieto-tokens init`, then re-run update.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const toolVersion = await readToolVersion().catch(() => undefined);
+    const loaded = loadConfig(cwd, {
+      toolVersion,
+      logger: { warn: (m) => p.log.warn(m) },
+    });
+
+    if (loaded.status === "missing") {
+      p.log.error(
+        "quieto.config.json disappeared between detection and load — refusing to continue so we don't overwrite anything.",
+      );
+      p.outro("Re-run `quieto-tokens update` once the filesystem has settled.");
+      process.exitCode = 1;
+      return;
+    }
+
+    if (loaded.status === "corrupt" || loaded.status === "invalid") {
+      const label =
+        loaded.status === "corrupt"
+          ? `Couldn't read quieto.config.json: ${loaded.error.message}`
+          : `quieto.config.json is missing required fields: ${loaded.errors.join(", ")}.`;
+      p.log.error(label);
+
+      const recovery = await p.select({
+        message: "How would you like to proceed?",
+        options: [
+          {
+            value: "abort" as const,
+            label: "Abort",
+            hint: "Exit without touching anything so you can fix the file manually",
+          },
+          {
+            value: "details" as const,
+            label: "Show details",
+            hint: "Print the validator / parser output",
+          },
+        ],
+      });
+      if (p.isCancel(recovery) || recovery === "abort") {
+        p.outro(
+          "Fix quieto.config.json (or delete it and re-run `quieto-tokens init`) to continue.",
+        );
+        process.exitCode = 1;
+        return;
+      }
+      if (loaded.status === "invalid" && recovery === "details") {
+        p.note(loaded.errors.join("\n"), "Validation errors");
+      } else if (loaded.status === "corrupt" && recovery === "details") {
+        p.note(loaded.error.message, "Parser error");
+      }
+      p.outro("Fix the config file and re-run `quieto-tokens update`.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const config = loaded.config;
+
+    const themeLabel = config.inputs.darkMode
+      ? "light + dark"
+      : "single theme";
+    const componentCount = config.components
+      ? Object.keys(config.components).length
+      : 0;
+    p.log.step(
+      [
+        "Current token system:",
+        `  Brand color:   ${config.inputs.brandColor}`,
+        `  Spacing base:  ${config.inputs.spacingBase}px`,
+        `  Type scale:    ${config.inputs.typeScale}`,
+        `  Themes:        ${themeLabel}`,
+        `  Categories:    ${config.categories.join(", ")}`,
+        `  Components:    ${componentCount}`,
+      ].join("\n"),
+    );
+
+    const updateResult = await collectUpdateInputs(config);
+
+    if (updateResult.modifiedCategories.length === 0) {
+      p.log.info("No changes to apply.");
+      p.outro("Nothing was modified.");
+      return;
+    }
+
+    const pipeline = await runUpdate(config, updateResult, cwd, {
+      warn: (m) => p.log.warn(m),
+    });
+    if (!pipeline) {
+      process.exitCode = 1;
+      return;
+    }
+
+    const priorOverrides = config.overrides ?? {};
+    const conflicts = detectOverrideConflicts(
+      priorOverrides,
+      pipeline.collection,
+    );
+    const cleanedOverrides =
+      conflicts.length > 0
+        ? await resolveOverrideConflicts(
+            conflicts,
+            priorOverrides,
+            pipeline.collection,
+          )
+        : { ...priorOverrides };
+
+    if (Object.keys(cleanedOverrides).length > 0) {
+      applyPriorOverrides(pipeline.collection, cleanedOverrides);
+    }
+
+    const previewResult = await previewAndConfirm(pipeline.collection, {
+      initialOverrides: new Map(Object.entries(cleanedOverrides)),
+    });
+
+    if (!previewResult) {
+      return;
+    }
+
+    const scopedCategories = [
+      ...new Set([
+        ...pipeline.modifiedCategories,
+        ...getChangedOverrideCategories(
+          cleanedOverrides,
+          previewResult.overrides,
+        ),
+      ]),
+    ];
+
+    const outputResult = await runOutputGeneration(
+      previewResult.collection,
+      cwd,
+      {
+        scope: { categories: scopedCategories },
+        skipComponents: true,
+      },
+    );
+
+    if (!outputResult) {
+      process.exitCode = 1;
+      return;
+    }
+
+    if (
+      previewResult.collection.components &&
+      previewResult.collection.components.length > 0
+    ) {
+      p.log.info(
+        "Component tokens reference semantic tokens — they'll pick up your changes automatically via the CSS cascade.",
+      );
+    }
+
+    const version = await readToolVersion();
+    const mergedCategoryConfigs: Record<string, unknown> = {
+      ...(config.categoryConfigs ?? {}),
+      ...updateResult.nextCategoryConfigs,
+    };
+    const categoryConfigs =
+      Object.keys(mergedCategoryConfigs).length > 0
+        ? (mergedCategoryConfigs as typeof config.categoryConfigs)
+        : undefined;
+
+    const built = buildConfig({
+      options: updateResult.nextOptions,
+      overrides: previewResult.overrides,
+      version,
+      advanced: updateResult.nextAdvanced,
+      categories: sortCategoriesCanonical(config.categories),
+      categoryConfigs,
+      components: config.components,
+    });
+    built.output = { ...config.output };
+    if (config.$schema) {
+      built.$schema = config.$schema;
+    }
+
+    p.log.step("Saving config…");
+    let configPath: string;
+    try {
+      configPath = await writeConfig(built, cwd);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      p.log.error(`Failed to write quieto.config.json: ${message}`);
+      p.outro("Tokens were written, but config save failed — fix permissions and re-run.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const themeNames = previewResult.collection.themes.map((t) => t.name);
+    const knownComponents = config.components
+      ? Object.keys(config.components)
+      : undefined;
+    await prune(
+      cwd,
+      sortCategoriesCanonical(built.categories),
+      themeNames,
+      knownComponents,
+    );
+
+    const allFiles = [
+      ...outputResult.jsonFiles,
+      ...outputResult.cssFiles,
+      configPath,
+    ];
+    const fileListLines = allFiles
+      .map((file) => `  ${formatPath(file, cwd)}`)
+      .join("\n");
+
+    p.log.success(
+      `Update complete!\n\nFiles written:\n${fileListLines}`,
+    );
+
+    p.log.info(
+      [
+        "What's next:",
+        "  • Import your built CSS as before",
+        '  • Run "quieto-tokens update" again to tweak another category',
+        '  • Run "quieto-tokens init" for a full regeneration pass',
+      ].join("\n"),
+    );
+
+    p.outro("Config saved — your selective updates are on disk.");
+  } catch (error) {
+    if (error instanceof Error && error.message === "cancelled") {
+      return;
+    }
+    p.cancel("Something went wrong.");
+    throw error;
+  }
+}
+
+function normalizeOverrides(
+  overrides: unknown,
+): Map<string, unknown> {
+  if (overrides instanceof Map) {
+    return new Map(overrides.entries());
+  }
+
+  if (overrides && typeof overrides === "object") {
+    return new Map(Object.entries(overrides as Record<string, unknown>));
+  }
+
+  return new Map();
+}
+
+function extractCategoryFromOverrideKey(key: string): string | null {
+  const trimmedKey = key.trim();
+
+  if (trimmedKey.length === 0) {
+    return null;
+  }
+
+  const separatorMatch = /[./]/.exec(trimmedKey);
+  if (!separatorMatch || separatorMatch.index === 0) {
+    return trimmedKey;
+  }
+
+  return trimmedKey.slice(0, separatorMatch.index);
+}
+
+function getChangedOverrideCategories(
+  previousOverrides: unknown,
+  nextOverrides: unknown,
+): string[] {
+  const previous = normalizeOverrides(previousOverrides);
+  const next = normalizeOverrides(nextOverrides);
+  const changedCategories = new Set<string>();
+  const keys = new Set([...previous.keys(), ...next.keys()]);
+
+  for (const key of keys) {
+    if (previous.get(key) === next.get(key)) {
+      continue;
+    }
+
+    const category = extractCategoryFromOverrideKey(key);
+    if (category) {
+      changedCategories.add(category);
+    }
+  }
+
+  return [...changedCategories];
+}
+
+function formatPath(absolutePath: string, cwd: string): string {
+  const rel = relative(cwd, absolutePath);
+  return rel.length > 0 && !rel.startsWith("..") ? rel : absolutePath;
+}

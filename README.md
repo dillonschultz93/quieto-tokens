@@ -54,6 +54,12 @@ quieto.config.json        # Your answers, so you can re-run to modify
 
 Running `quieto-tokens init` again on a project that already has `quieto.config.json` routes through a "Modify existing system" flow with your prior answers pre-filled — you only adjust what's changing.
 
+### Updating your token system
+
+Use **`quieto-tokens update`** when you only want to change one area (for example spacing or an add-on category) without re-running the full `init` pipeline for every category. The command loads `quieto.config.json`, lets you pick which categories to edit, regenerates **only** those categories’ primitives (and rebuilds semantics from the merged primitive set), then writes JSON for the categories you changed and rebuilds CSS from the full on-disk tree. Unchanged category files keep their previous mtimes.
+
+By contrast, **`quieto-tokens init` → Modify existing system** remains the path for a full regeneration of all core categories in one pass.
+
 ### Advanced mode
 
 Reach for advanced mode when the quick-start defaults aren't enough — you want to add hue ramps beyond your primary brand color, tune individual spacing steps, or override specific font families, sizes, weights, line heights, or letter spacing. Launch it with:

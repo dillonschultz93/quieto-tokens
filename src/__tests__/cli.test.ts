@@ -15,6 +15,9 @@ vi.mock("../commands/add.js", () => ({
 vi.mock("../commands/component.js", () => ({
   componentCommand: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("../commands/update.js", () => ({
+  updateCommand: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
   outro: vi.fn(),
@@ -39,11 +42,13 @@ import {
   parseAddArgs,
   parseComponentArgs,
   parseInitArgs,
+  parseUpdateArgs,
   runCli,
 } from "../cli.js";
 import { initCommand } from "../commands/init.js";
 import { addCommand } from "../commands/add.js";
 import { componentCommand } from "../commands/component.js";
+import { updateCommand } from "../commands/update.js";
 
 describe("parseInitArgs", () => {
   it("returns advanced=false and no unknowns for an empty arg list", () => {
@@ -148,6 +153,17 @@ describe("parseAddArgs", () => {
       category: "shadow",
       unknown: ["border"],
     });
+  });
+});
+
+describe("parseUpdateArgs", () => {
+  it("returns no unknowns for an empty arg list", () => {
+    expect(parseUpdateArgs([])).toEqual({ unknown: [] });
+  });
+
+  it("treats any token as unknown (flags and positionals)", () => {
+    expect(parseUpdateArgs(["--dry-run"])).toEqual({ unknown: ["--dry-run"] });
+    expect(parseUpdateArgs(["foo"])).toEqual({ unknown: ["foo"] });
   });
 });
 
@@ -362,6 +378,24 @@ describe("runCli — routing (AC #4)", () => {
       expect(code).toBe(1);
       expect(process.exitCode).toBeUndefined();
       process.exitCode = prior;
+    });
+  });
+
+  describe("update routing", () => {
+    it("dispatches to updateCommand on bare `update`", async () => {
+      const code = await runCli(["update"]);
+      expect(code).toBe(0);
+      expect(updateCommand).toHaveBeenCalledTimes(1);
+      expect(updateCommand).toHaveBeenCalledWith();
+    });
+
+    it("returns 1 and rejects unknown args (`update --dry-run`)", async () => {
+      const code = await runCli(["update", "--dry-run"]);
+      expect(code).toBe(1);
+      expect(vi.mocked(p.log.error)).toHaveBeenCalledWith(
+        expect.stringContaining("Unknown argument(s) for update"),
+      );
+      expect(updateCommand).not.toHaveBeenCalled();
     });
   });
 

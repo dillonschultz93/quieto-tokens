@@ -264,6 +264,11 @@ export interface WriteTokensOptions {
    * Defaults to `"all"` — the historical Epic 1 behaviour.
    */
   scope?: WriteScope;
+  /**
+   * When true, never writes `tokens/component/*.json` even if
+   * `collection.components` is populated (Story 3.1 selective `update`).
+   */
+  skipComponents?: boolean;
 }
 
 function isCategoryInScope(
@@ -361,7 +366,7 @@ export async function writeTokensToJson(
     }
   }
 
-  if (collection.components?.length) {
+  if (collection.components?.length && options.skipComponents !== true) {
     const componentFiles = await writeComponentTokens(
       collection.components,
       outputDir,
