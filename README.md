@@ -1,6 +1,6 @@
 # Quieto Tokens
 
-An open source CLI tool that walks developers through creating a complete design token system and outputs platform-specific artifacts. Built on the Quieto ecosystem: [`@quieto/engine`](https://www.npmjs.com/package/@quieto/engine) for color math and [`@quieto/palettes`](https://www.npmjs.com/package/@quieto/palettes) for accessible color ramp generation.
+An open source CLI tool that walks developers through creating a complete design token system and outputs platform-specific artifacts. Built on [`@quieto/engine`](https://www.npmjs.com/package/@quieto/engine) for color math and accessible color ramp generation.
 
 > Tailwind gives you someone else's design decisions. Quieto gives you your own.
 
@@ -133,7 +133,7 @@ Every color hue is generated as a **10-step ramp** using the industry-standard l
 | `600`–`800` | Mid to dark tones — emphasis, active states, borders |
 | `900` | Darkest — strong content, dark-theme backgrounds |
 
-This matches Tailwind, Radix, and Material conventions, so Quieto-generated tokens drop into existing design systems predictably. All steps are WCAG AA–compliant against their intended usage context, enforced structurally by `@quieto/palettes`.
+This matches Tailwind, Radix, and Material conventions, so Quieto-generated tokens drop into existing design systems predictably. All steps are WCAG AA–compliant against their intended usage context, enforced structurally by `@quieto/engine`.
 
 ### Output Formats
 
@@ -145,7 +145,7 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 
 ## Key Features
 
-- **Accessible by default** — All color tokens are WCAG AA compliant, enforced by `@quieto/palettes`
+- **Accessible by default** — All color tokens are WCAG AA compliant, enforced by `@quieto/engine`
 - **No framework lock-in** — Platform-native output that works with any framework
 - **Light/dark themes** — Generated from a single yes/no question using the same primitive palette
 - **Re-entrant editing** — Modify your token system without starting over
@@ -159,12 +159,16 @@ This project is in active development. Progress by epic:
 | Epic | Scope | Status |
 |---|---|---|
 | 1 — Quick-Start Token Generation (MVP) | CLI scaffold, quick-start flow, primitives, semantics, theming, preview, DTCG + CSS output, config | **Done** |
-| 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | In progress |
+| 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | **Done** |
 | 3 — Token System Evolution | Re-entrant editing, diff display, dry-run, design-system changelog | Backlog |
 | 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | Backlog |
 | 5 — Design System Intelligence | `inspect` command, `migrate` command | Backlog |
 
 See [`docs/planning/epics.md`](docs/planning/epics.md) for the full roadmap and [`docs/planning/sprint-status.yaml`](docs/planning/sprint-status.yaml) for per-story status.
+
+## Contributing
+
+Contributions are welcome! Check out the [contributing guide](CONTRIBUTING.md) to get started — it covers setup, development workflow, commit conventions, and how to submit a pull request.
 
 ## License
 
