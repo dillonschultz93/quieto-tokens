@@ -12,6 +12,9 @@ vi.mock("../commands/init.js", () => ({
 vi.mock("../commands/add.js", () => ({
   addCommand: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("../commands/component.js", () => ({
+  componentCommand: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
   outro: vi.fn(),
@@ -32,9 +35,15 @@ vi.mock("@clack/prompts", () => ({
 }));
 
 import * as p from "@clack/prompts";
-import { parseAddArgs, parseInitArgs, runCli } from "../cli.js";
+import {
+  parseAddArgs,
+  parseComponentArgs,
+  parseInitArgs,
+  runCli,
+} from "../cli.js";
 import { initCommand } from "../commands/init.js";
 import { addCommand } from "../commands/add.js";
+import { componentCommand } from "../commands/component.js";
 
 describe("parseInitArgs", () => {
   it("returns advanced=false and no unknowns for an empty arg list", () => {
@@ -138,6 +147,45 @@ describe("parseAddArgs", () => {
     expect(parseAddArgs(["shadow", "border"])).toEqual({
       category: "shadow",
       unknown: ["border"],
+    });
+  });
+});
+
+describe("parseComponentArgs", () => {
+  it("returns no name for an empty arg list", () => {
+    expect(parseComponentArgs([])).toEqual({ unknown: [] });
+  });
+
+  it("captures the first positional as the component name", () => {
+    expect(parseComponentArgs(["button"])).toEqual({
+      name: "button",
+      unknown: [],
+    });
+  });
+
+  it("collects a second positional as unknown", () => {
+    expect(parseComponentArgs(["button", "extra"])).toEqual({
+      name: "button",
+      unknown: ["extra"],
+    });
+  });
+
+  it("collects flags as unknown", () => {
+    expect(parseComponentArgs(["button", "--dry-run"])).toEqual({
+      name: "button",
+      unknown: ["--dry-run"],
+    });
+    expect(parseComponentArgs(["-x"])).toEqual({
+      unknown: ["-x"],
+    });
+  });
+
+  it("treats --help/-h as unknown (routing handles help at the top level)", () => {
+    expect(parseComponentArgs(["--help"])).toEqual({
+      unknown: ["--help"],
+    });
+    expect(parseComponentArgs(["-h"])).toEqual({
+      unknown: ["-h"],
     });
   });
 });
@@ -257,6 +305,63 @@ describe("runCli — routing (AC #4)", () => {
       expect(code).toBe(0);
       expect(stdoutBuffer).toMatch(/quieto-tokens/);
       expect(addCommand).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("component routing", () => {
+    it("dispatches to componentCommand with the parsed name on happy path (`component button`)", async () => {
+      const code = await runCli(["component", "button"]);
+      expect(code).toBe(0);
+      expect(componentCommand).toHaveBeenCalledTimes(1);
+      expect(componentCommand).toHaveBeenCalledWith({ name: "button" });
+    });
+
+    it("returns 1 when no component name is provided (`component`)", async () => {
+      const code = await runCli(["component"]);
+      expect(code).toBe(1);
+      expect(vi.mocked(p.log.error)).toHaveBeenCalledWith(
+        "A component name is required.",
+      );
+      expect(componentCommand).not.toHaveBeenCalled();
+    });
+
+    it("returns 1 when the component name is invalid (`component Button`)", async () => {
+      const code = await runCli(["component", "Button"]);
+      expect(code).toBe(1);
+      expect(vi.mocked(p.log.error)).toHaveBeenCalledWith(
+        expect.stringContaining("lowercase kebab-case"),
+      );
+      expect(componentCommand).not.toHaveBeenCalled();
+    });
+
+    it("returns 1 when a reserved name is used (`component component`)", async () => {
+      const code = await runCli(["component", "component"]);
+      expect(code).toBe(1);
+      expect(vi.mocked(p.log.error)).toHaveBeenCalledWith(
+        expect.stringContaining("reserved"),
+      );
+      expect(componentCommand).not.toHaveBeenCalled();
+    });
+
+    it("returns 1 and reports unknown flags (`component button --dry-run`)", async () => {
+      const code = await runCli(["component", "button", "--dry-run"]);
+      expect(code).toBe(1);
+      expect(vi.mocked(p.log.error)).toHaveBeenCalledWith(
+        expect.stringContaining("--dry-run"),
+      );
+      expect(componentCommand).not.toHaveBeenCalled();
+    });
+
+    it("returns 1 when componentCommand sets process.exitCode", async () => {
+      const prior = process.exitCode;
+      process.exitCode = undefined;
+      vi.mocked(componentCommand).mockImplementationOnce(async () => {
+        process.exitCode = 1;
+      });
+      const code = await runCli(["component", "button"]);
+      expect(code).toBe(1);
+      expect(process.exitCode).toBeUndefined();
+      process.exitCode = prior;
     });
   });
 

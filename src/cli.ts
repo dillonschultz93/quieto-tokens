@@ -3,11 +3,13 @@ import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { initCommand } from "./commands/init.js";
 import { addCommand } from "./commands/add.js";
+import { componentCommand } from "./commands/component.js";
 import {
   ADDABLE_CATEGORIES,
   isAddableCategory,
   type AddableCategory,
 } from "./utils/categories.js";
+import { validateComponentName } from "./utils/validation.js";
 
 const HELP_TEXT = `
   @quieto/tokens — Generate complete, accessible design token systems.
@@ -19,6 +21,9 @@ const HELP_TEXT = `
     init              Create a new design token system (or modify an existing one)
     add <category>    Add a new token category (shadow, border, animation) to an
                       existing token system. Omit the category to pick from a menu.
+    component <name>  Generate tier-3 component tokens (e.g., button, modal) that
+                      reference your semantic tokens. Walks through variants, states,
+                      and property assignments interactively.
 
   Command options:
     --advanced        (init) Enter advanced mode: customize individual tokens
@@ -107,6 +112,34 @@ export function parseAddArgs(args: readonly string[]): {
 }
 
 /**
+ * Parse the argv slice after the `component` command word. The first
+ * positional is the component name; no flags are supported in this story.
+ */
+export function parseComponentArgs(args: readonly string[]): {
+  name?: string;
+  unknown: string[];
+} {
+  let name: string | undefined;
+  const unknown: string[] = [];
+  for (const arg of args) {
+    if (arg === "--help" || arg === "-h") {
+      unknown.push(arg);
+      continue;
+    }
+    if (arg.startsWith("--") || arg.startsWith("-")) {
+      unknown.push(arg);
+      continue;
+    }
+    if (name === undefined) {
+      name = arg;
+    } else {
+      unknown.push(arg);
+    }
+  }
+  return name !== undefined ? { name, unknown } : { unknown };
+}
+
+/**
  * Pure routing core extracted from `main()` for testability. Returns an
  * exit code instead of calling `process.exit`, and accepts an explicit
  * `argv` slice (already stripped of `node` + script path) so tests can
@@ -184,6 +217,39 @@ export async function runCli(args: readonly string[]): Promise<number> {
       const addExit = process.exitCode;
       process.exitCode = undefined;
       return typeof addExit === "number" ? addExit : 0;
+    }
+    case "component": {
+      const parsed = parseComponentArgs(args.slice(1));
+      if (parsed.unknown.length > 0) {
+        p.intro("◆  quieto-tokens");
+        p.log.error(
+          `Unknown argument(s) for component: ${parsed.unknown.join(", ")}`,
+        );
+        p.note(HELP_TEXT.trim(), "Usage");
+        p.outro("Fix the options and re-run.");
+        return 1;
+      }
+      if (!parsed.name) {
+        p.intro("◆  quieto-tokens");
+        p.log.error("A component name is required.");
+        p.note(HELP_TEXT.trim(), "Usage");
+        p.outro(
+          'Run `quieto-tokens component <name>` (e.g., "quieto-tokens component button").',
+        );
+        return 1;
+      }
+      const nameError = validateComponentName(parsed.name);
+      if (nameError) {
+        p.intro("◆  quieto-tokens");
+        p.log.error(nameError);
+        p.note(HELP_TEXT.trim(), "Usage");
+        p.outro("Fix the component name and re-run.");
+        return 1;
+      }
+      await componentCommand({ name: parsed.name });
+      const componentExit = process.exitCode;
+      process.exitCode = undefined;
+      return typeof componentExit === "number" ? componentExit : 0;
     }
     default:
       p.intro("◆  quieto-tokens");

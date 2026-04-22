@@ -138,6 +138,7 @@ export async function runConfigGeneration(
       '  • Run "quieto-tokens add shadow" to add shadow elevation tokens',
       '  • Run "quieto-tokens add border" to add border widths + radii',
       '  • Run "quieto-tokens add animation" to add durations + easing',
+      '  • Run "quieto-tokens component button" (or any component name) to author component tokens',
     ].join("\n"),
   );
 

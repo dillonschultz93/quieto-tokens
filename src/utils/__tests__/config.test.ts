@@ -837,3 +837,338 @@ describe("categoryConfigs validator + round-trip", () => {
     });
   });
 });
+
+describe("validateConfigShape — components block", () => {
+  function makeValidConfig(components: unknown): Record<string, unknown> {
+    return {
+      version: "0.1.0",
+      generated: "2026-01-01T00:00:00.000Z",
+      inputs: {
+        brandColor: "#5B21B6",
+        spacingBase: 8,
+        typeScale: "balanced",
+        darkMode: false,
+      },
+      overrides: {},
+      output: { tokensDir: "tokens", buildDir: "build", prefix: "quieto" },
+      categories: ["color", "spacing", "typography"],
+      components,
+    };
+  }
+
+  it("accepts a config without components (undefined)", () => {
+    const errors = validateConfigShape(makeValidConfig(undefined));
+    // Remove the `components` key entirely
+    const obj = { ...makeValidConfig(undefined) };
+    delete obj.components;
+    expect(validateConfigShape(obj)).toEqual([]);
+  });
+
+  it("accepts a valid components block", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "color-background",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it("rejects a non-object components", () => {
+    const errors = validateConfigShape(makeValidConfig("not-object"));
+    expect(errors).toContain("components");
+  });
+
+  it("rejects missing variants", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: { cells: [] },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.variants"),
+    );
+  });
+
+  it("rejects empty variants array", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: { variants: [], cells: [] },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.variants"),
+    );
+  });
+
+  it("rejects unknown property in a cell", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "not-a-property",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.cells[0].property"),
+    );
+  });
+
+  it("rejects cell states without a default state", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "color-background",
+              states: [
+                { state: "hover", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("must include a default state"),
+    );
+  });
+
+  it("rejects duplicate states", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "color-background",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("duplicate state"),
+    );
+  });
+
+  it("rejects paddingShape on a non-padding cell", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "color-background",
+              paddingShape: "single",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("only valid for spacing-padding"),
+    );
+  });
+
+  it("rejects invalid DTCG ref string in value", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "color-background",
+              states: [
+                { state: "default", value: "not-a-ref" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.cells[0].states[0].value"),
+    );
+  });
+
+  it("rejects a cell whose variant is not in the variants list", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "nonexistent",
+              property: "color-background",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.cells[0].variant"),
+    );
+  });
+
+  it("rejects a reserved component name as a key", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        component: {
+          variants: ["primary"],
+          cells: [],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.component"),
+    );
+  });
+
+  it("accepts four-sides padding with object value", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: ["primary"],
+          cells: [
+            {
+              variant: "primary",
+              property: "spacing-padding",
+              paddingShape: "four-sides",
+              states: [
+                {
+                  state: "default",
+                  value: {
+                    top: "{spacing.md}",
+                    right: "{spacing.sm}",
+                    bottom: "{spacing.md}",
+                    left: "{spacing.sm}",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it("round-trips components through buildConfig → writeConfig → loadConfig", async () => {
+    const { buildConfig, writeConfig } = await import(
+      "../../output/config-writer.js"
+    );
+
+    const components = {
+      button: {
+        variants: ["primary"],
+        cells: [
+          {
+            variant: "primary",
+            property: "color-background" as const,
+            states: [
+              {
+                state: "default" as const,
+                value: "{color.background.primary}",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const built = buildConfig({
+      options: {
+        brandColor: "#5B21B6",
+        spacingBase: 8,
+        typeScale: "balanced",
+        generateThemes: false,
+      },
+      overrides: new Map(),
+      version: "0.1.0",
+      components,
+    });
+
+    expect(built.components).toEqual(components);
+
+    const dir = mkdtempSync(join(tmpdir(), "quieto-comp-rt-"));
+    try {
+      await writeConfig(built, dir);
+      const result = loadConfig(dir);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok") return;
+      expect(result.config.components).toEqual(components);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a variant string with leading/trailing whitespace", () => {
+    const errors = validateConfigShape(
+      makeValidConfig({
+        button: {
+          variants: [" primary "],
+          cells: [
+            {
+              variant: " primary ",
+              property: "color-background",
+              states: [
+                { state: "default", value: "{color.background.primary}" },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.variants[0]"),
+    );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.cells[0].variant"),
+    );
+  });
+
+  it("does not pollute Object.prototype via __proto__ in components", () => {
+    const components = Object.create(null);
+    Object.defineProperty(components, "__proto__", {
+      value: { variants: ["primary"], cells: [] },
+      enumerable: true,
+    });
+    const errors = validateConfigShape(makeValidConfig(components));
+    expect(errors.some((e) => e.includes("components.__proto__"))).toBe(true);
+  });
+});

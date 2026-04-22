@@ -86,20 +86,50 @@ describe("tokensToDtcgTree", () => {
     ).toThrow(/Duplicate token path/);
   });
 
-  it("throws when a path segment would replace an existing leaf with a group", () => {
+  it("allows a DTCG node to be both a token and a group (mixed leaf+group)", () => {
+    const tree = tokensToDtcgTree([
+      {
+        tier: "primitive",
+        category: "color",
+        name: "color.blue",
+        $type: "color",
+        $value: "#3B82F6",
+        path: ["color", "blue"],
+      },
+      makeColorPrimitive("blue", 500, "#2563EB"),
+    ]);
+    expect(tree.color).toBeDefined();
+    const blue = tree.color as Record<string, unknown>;
+    expect((blue.blue as Record<string, unknown>).$value).toBe("#3B82F6");
+    expect((blue.blue as Record<string, unknown>).$type).toBe("color");
+    expect(((blue.blue as Record<string, unknown>)["500"] as Record<string, unknown>).$value).toBe("#2563EB");
+  });
+
+  it("throws on duplicate token paths after a prior group→leaf merge", () => {
+    // Token at ["color", "blue"] is merged into an existing group (children
+    // placed first via the longer path). A second token with the same path
+    // must throw rather than silently overwrite the stored $type/$value.
     expect(() =>
       tokensToDtcgTree([
+        makeColorPrimitive("blue", 500, "#2563EB"),
         {
-          tier: "primitive",
+          tier: "primitive" as const,
           category: "color",
           name: "color.blue",
           $type: "color",
           $value: "#3B82F6",
           path: ["color", "blue"],
         },
-        makeColorPrimitive("blue", 500, "#2563EB"),
+        {
+          tier: "primitive" as const,
+          category: "color",
+          name: "color.blue",
+          $type: "color",
+          $value: "#0ea5e9",
+          path: ["color", "blue"],
+        },
       ]),
-    ).toThrow(/Token path collision/);
+    ).toThrow(/Duplicate token path/);
   });
 });
 
@@ -679,5 +709,120 @@ describe("writeTokensToJson — WriteScope filtering", () => {
         scope: { categories: [] },
       }),
     ).rejects.toThrow(/scope.categories must be non-empty/);
+  });
+});
+
+describe("writeComponentTokens", () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-comp-writer-"));
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  function makeComponentToken(
+    componentName: string,
+    path: string[],
+    $type: string,
+    $value: string,
+  ): import("../../types/tokens.js").ComponentToken {
+    return {
+      tier: "component",
+      category: "component",
+      componentName,
+      name: path.join("."),
+      $type,
+      $value,
+      path,
+    };
+  }
+
+  it("writes tokens/component/<name>.json with correct DTCG tree structure", async () => {
+    const tokens = [
+      makeComponentToken("button", ["button", "primary", "color", "background", "default"], "color", "{color.background.primary}"),
+      makeComponentToken("button", ["button", "primary", "color", "background", "hover"], "color", "{color.background.secondary}"),
+    ];
+
+    const { writeComponentTokens } = await import("../json-writer.js");
+    const files = await writeComponentTokens(tokens, tempDir);
+
+    expect(files).toHaveLength(1);
+    const filePath = join(tempDir, "tokens", "component", "button.json");
+    expect(existsSync(filePath)).toBe(true);
+
+    const parsed = JSON.parse(readFileSync(filePath, "utf-8"));
+    expect(parsed.button.primary.color.background.default.$value).toBe("{color.background.primary}");
+    expect(parsed.button.primary.color.background.hover.$value).toBe("{color.background.secondary}");
+  });
+
+  it("injects $metadata banner at the top of the file", async () => {
+    const tokens = [
+      makeComponentToken("modal", ["modal", "default", "color", "background"], "color", "{color.background.primary}"),
+    ];
+
+    const { writeComponentTokens } = await import("../json-writer.js");
+    await writeComponentTokens(tokens, tempDir, {
+      generatedAt: "2026-04-21T00:00:00.000Z",
+    });
+
+    const filePath = join(tempDir, "tokens", "component", "modal.json");
+    const parsed = JSON.parse(readFileSync(filePath, "utf-8"));
+    expect(parsed.$metadata).toEqual({
+      generatedBy: "quieto-tokens",
+      doNotEdit: true,
+      generatedAt: "2026-04-21T00:00:00.000Z",
+      notice: expect.stringContaining("tool-generated"),
+    });
+
+    const raw = readFileSync(filePath, "utf-8");
+    expect(raw).toMatch(/^{\s*"\$metadata":/);
+  });
+
+  it("groups tokens by componentName into separate files", async () => {
+    const tokens = [
+      makeComponentToken("button", ["button", "primary", "color", "background"], "color", "{color.background.primary}"),
+      makeComponentToken("modal", ["modal", "default", "color", "background"], "color", "{color.background.primary}"),
+    ];
+
+    const { writeComponentTokens } = await import("../json-writer.js");
+    const files = await writeComponentTokens(tokens, tempDir);
+
+    expect(files).toHaveLength(2);
+    expect(existsSync(join(tempDir, "tokens", "component", "button.json"))).toBe(true);
+    expect(existsSync(join(tempDir, "tokens", "component", "modal.json"))).toBe(true);
+  });
+
+  it("is also invoked via writeTokensToJson when collection.components is set", async () => {
+    const tokens = [
+      makeComponentToken("button", ["button", "primary", "color", "background"], "color", "{color.background.primary}"),
+    ];
+    const collection: ThemeCollection = {
+      primitives: [makeColorPrimitive("blue", 500, "#3B82F6")],
+      themes: [
+        {
+          name: "default",
+          semanticTokens: [
+            makeColorSemantic("background", "primary", "{color.blue.500}"),
+          ],
+        },
+      ],
+      components: tokens,
+    };
+
+    const files = await writeTokensToJson(collection, tempDir);
+    const componentFile = join(tempDir, "tokens", "component", "button.json");
+    expect(files).toContain(componentFile);
+    expect(existsSync(componentFile)).toBe(true);
+  });
+
+  it("does not write component files when collection.components is undefined", async () => {
+    const collection = sampleCollection(["default"]);
+    await writeTokensToJson(collection, tempDir);
+    expect(existsSync(join(tempDir, "tokens", "component"))).toBe(false);
   });
 });

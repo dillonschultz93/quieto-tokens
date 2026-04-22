@@ -4,7 +4,11 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { writeTokensToJson } from "../json-writer.js";
 import { buildCss } from "../style-dictionary.js";
-import { sampleCollection } from "../../types/__fixtures__/tokens.js";
+import {
+  sampleCollection,
+  makeColorSemantic,
+} from "../../types/__fixtures__/tokens.js";
+import type { ComponentToken, ThemeCollection } from "../../types/tokens.js";
 
 describe("buildCss (Style Dictionary v5)", () => {
   let tempDir: string;
@@ -118,5 +122,140 @@ describe("buildCss (Style Dictionary v5)", () => {
     const lightCss = readFileSync(join(tempDir, "build", "light.css"), "utf-8");
     expect(lightCss).toMatch(/--quieto-semantic-/);
     expect(lightCss).not.toMatch(/--quieto-color-blue-500:\s*#/);
+  });
+});
+
+describe("buildCss — component token integration", () => {
+  let tempDir: string;
+
+  function makeComponentToken(
+    componentName: string,
+    path: string[],
+    $type: string,
+    $value: string,
+  ): ComponentToken {
+    return {
+      tier: "component",
+      category: "component",
+      componentName,
+      name: path.join("."),
+      $type,
+      $value,
+      path,
+    };
+  }
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-sd-comp-"));
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("emits --quieto-component-* vars in single-theme CSS", async () => {
+    const base = sampleCollection(["default"]);
+    const collection: ThemeCollection = {
+      ...base,
+      components: [
+        makeComponentToken(
+          "button",
+          ["button", "primary", "color", "background", "default"],
+          "color",
+          "{color.background.primary}",
+        ),
+      ],
+    };
+
+    await writeTokensToJson(collection, tempDir);
+    await buildCss(collection, tempDir);
+
+    const css = readFileSync(join(tempDir, "build", "tokens.css"), "utf-8");
+    expect(css).toContain("--quieto-component-button-primary-color-background");
+  });
+
+  it("omits the 'default' state segment from CSS variable names", async () => {
+    const base = sampleCollection(["default"]);
+    const collection: ThemeCollection = {
+      ...base,
+      components: [
+        makeComponentToken(
+          "button",
+          ["button", "primary", "color", "background", "default"],
+          "color",
+          "{color.background.primary}",
+        ),
+        makeComponentToken(
+          "button",
+          ["button", "primary", "color", "content", "default"],
+          "color",
+          "{color.content.default}",
+        ),
+        makeComponentToken(
+          "button",
+          ["button", "primary", "color", "content", "hover"],
+          "color",
+          "{color.background.primary}",
+        ),
+      ],
+    };
+
+    await writeTokensToJson(collection, tempDir);
+    await buildCss(collection, tempDir);
+
+    const css = readFileSync(join(tempDir, "build", "tokens.css"), "utf-8");
+    expect(css).toContain("--quieto-component-button-primary-color-background:");
+    expect(css).toContain("--quieto-component-button-primary-color-content-hover:");
+    expect(css).not.toMatch(/--quieto-component-[^:]*-default/);
+    expect(css).toContain("--quieto-component-button-primary-color-content:");
+  });
+
+  it("includes component tokens in both light.css and dark.css for multi-theme", async () => {
+    const base = sampleCollection(["light", "dark"]);
+    const collection: ThemeCollection = {
+      ...base,
+      components: [
+        makeComponentToken(
+          "button",
+          ["button", "primary", "color", "background", "default"],
+          "color",
+          "{color.background.primary}",
+        ),
+      ],
+    };
+
+    await writeTokensToJson(collection, tempDir);
+    await buildCss(collection, tempDir);
+
+    const lightCss = readFileSync(join(tempDir, "build", "light.css"), "utf-8");
+    const darkCss = readFileSync(join(tempDir, "build", "dark.css"), "utf-8");
+
+    expect(lightCss).toContain("--quieto-component-button-primary-color-background");
+    expect(darkCss).toContain("--quieto-component-button-primary-color-background");
+  });
+
+  it("component token references resolve to var() in CSS output", async () => {
+    const base = sampleCollection(["default"]);
+    const collection: ThemeCollection = {
+      ...base,
+      components: [
+        makeComponentToken(
+          "button",
+          ["button", "primary", "color", "background", "default"],
+          "color",
+          "{color.background.primary}",
+        ),
+      ],
+    };
+
+    await writeTokensToJson(collection, tempDir);
+    await buildCss(collection, tempDir);
+
+    const css = readFileSync(join(tempDir, "build", "tokens.css"), "utf-8");
+    expect(css).toMatch(
+      /--quieto-component-button-primary-color-background:\s*var\(--quieto-semantic-color-background-primary\)/,
+    );
   });
 });

@@ -1,6 +1,7 @@
 export { initCommand } from "./commands/init.js";
 export type { QuickStartOptions } from "./types.js";
 export type {
+  ComponentToken,
   PrimitiveToken,
   SemanticToken,
   SemanticMapping,
@@ -58,7 +59,11 @@ export {
   previewAndConfirm,
 } from "./ui/preview.js";
 export type { OverrideResult, PreviewResult } from "./ui/preview.js";
-export { writeTokensToJson } from "./output/json-writer.js";
+export { writeTokensToJson, writeComponentTokens } from "./output/json-writer.js";
+export { generateComponentTokens } from "./generators/component.js";
+export { componentCommand } from "./commands/component.js";
+export type { ComponentCommandOptions } from "./commands/component.js";
+export { validateComponentName } from "./utils/validation.js";
 export { buildCss } from "./output/style-dictionary.js";
 export { runOutputGeneration } from "./pipeline/output.js";
 export type { OutputResult } from "./pipeline/output.js";
@@ -74,6 +79,11 @@ export type {
   AnimationCategoryConfig,
   BorderCategoryConfig,
   CategoryConfigs,
+  ComponentCell,
+  ComponentCellState,
+  ComponentProperty,
+  ComponentState,
+  ComponentTokenConfig,
   QuietoConfig,
   ShadowCategoryConfig,
 } from "./types/config.js";

@@ -84,11 +84,42 @@ Categories are written to disk in a canonical order (`color → spacing → typo
 
 Like `init`, every `add`-generated file carries the `$metadata.doNotEdit` banner — edit `quieto.config.json` and re-run instead of hand-modifying the tokens.
 
+### Component tokens
+
+Once you have a semantic token system in place, use `component` to create tier-3 tokens that reference your semantics:
+
+```bash
+quieto-tokens component button
+quieto-tokens component modal
+quieto-tokens component text-field
+```
+
+Each invocation walks you through:
+1. **Variants** — e.g., `primary`, `secondary`, `tertiary` (or a single `default` variant)
+2. **Properties** — which of `color-background`, `color-content`, `color-border`, `spacing-padding`, `border-radius`, `typography` each variant needs
+3. **States** — `default`, `hover`, `active`, `focus`, `disabled` per property
+4. **Values** — pick from your available semantic tokens, or supply a custom DTCG reference
+
+Output lands in `tokens/component/<name>.json` and CSS is rebuilt to include the new tokens:
+
+```css
+/* Example usage */
+.btn-primary {
+  background: var(--quieto-component-button-primary-color-background);
+  color: var(--quieto-component-button-primary-color-content);
+}
+.btn-primary:hover {
+  background: var(--quieto-component-button-primary-color-background-hover);
+}
+```
+
+Component tokens are theme-agnostic at the JSON level — theming is delegated to the CSS cascade via the semantic token references they point at. Re-running `component button` prompts for confirmation before replacing the existing tokens.
+
 ### Token Tiers
 
 - **Primitive** — Core values: color ramps, spacing scales, type scales. Obfuscation layer over raw values. _(shipped)_
 - **Semantic** — UI-meaningful assignments: `color.background.primary`, `spacing.md`, `typography.body`. References primitives. _(shipped)_
-- **Component** — Component-specific decisions: `button.primary.color.background.hover`. References semantics. _(planned — Epic 2)_
+- **Component** — Component-specific decisions: `button.primary.color.background.hover`. References semantics. _(shipped)_
 
 ### Color Ramps
 

@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import * as p from "@clack/prompts";
 import type { QuietoConfig } from "../types/config.js";
 import { DEFAULT_CATEGORIES } from "../types/config.js";
+import { validateComponentName } from "./validation.js";
 import {
   SHADOW_MAX_LEVELS,
   SHADOW_MIN_LEVELS,
@@ -239,6 +240,10 @@ export function validateConfigShape(parsed: unknown): string[] {
     validateCategoryConfigs(root.categoryConfigs, errors);
   }
 
+  if (root.components !== undefined) {
+    validateComponents(root.components, errors);
+  }
+
   return errors;
 }
 
@@ -435,6 +440,167 @@ function validateAnimationCategoryConfig(
   }
 }
 
+const VALID_COMPONENT_PROPERTIES: ReadonlySet<string> = new Set([
+  "color-background",
+  "color-content",
+  "color-border",
+  "spacing-padding",
+  "border-radius",
+  "typography",
+]);
+
+const VALID_COMPONENT_STATES: ReadonlySet<string> = new Set([
+  "default",
+  "hover",
+  "active",
+  "focus",
+  "disabled",
+]);
+
+const DTCG_REF_RE = /^\{[a-z][a-z0-9.-]*\}$/;
+
+function isDtcgRef(value: unknown): boolean {
+  return typeof value === "string" && DTCG_REF_RE.test(value);
+}
+
+function validateComponents(value: unknown, errors: string[]): void {
+  if (!isPlainObject(value)) {
+    errors.push("components");
+    return;
+  }
+
+  for (const [name, entry] of Object.entries(value)) {
+    const nameError = validateComponentName(name);
+    if (nameError) {
+      errors.push(`components.${name}: invalid component name`);
+    }
+    if (!isPlainObject(entry)) {
+      errors.push(`components.${name}`);
+      continue;
+    }
+
+    const prefix = `components.${name}`;
+
+    if (!Array.isArray(entry.variants) || entry.variants.length === 0) {
+      errors.push(`${prefix}.variants`);
+    } else {
+      for (let i = 0; i < entry.variants.length; i++) {
+        const v = entry.variants[i];
+        if (typeof v !== "string") {
+          errors.push(`${prefix}.variants[${i}]`);
+        } else if (v !== v.trim()) {
+          // Whitespace-padded variant strings are invalid in config files — enforce
+          // pre-trimmed values so the variants Set matches cell.variant exactly.
+          errors.push(`${prefix}.variants[${i}]`);
+        } else {
+          const vErr = validateComponentName(v);
+          if (vErr && v !== "default") {
+            errors.push(`${prefix}.variants[${i}]`);
+          }
+        }
+      }
+    }
+
+    if (!Array.isArray(entry.cells)) {
+      errors.push(`${prefix}.cells`);
+      continue;
+    }
+
+    const variants = Array.isArray(entry.variants)
+      ? new Set(entry.variants as unknown[])
+      : new Set<unknown>();
+
+    for (let ci = 0; ci < entry.cells.length; ci++) {
+      const cell = entry.cells[ci];
+      const cp = `${prefix}.cells[${ci}]`;
+
+      if (!isPlainObject(cell)) {
+        errors.push(cp);
+        continue;
+      }
+
+      if (
+        typeof cell.variant !== "string" ||
+        cell.variant !== cell.variant.trim() ||
+        !variants.has(cell.variant)
+      ) {
+        errors.push(`${cp}.variant`);
+      }
+
+      if (
+        typeof cell.property !== "string" ||
+        !VALID_COMPONENT_PROPERTIES.has(cell.property)
+      ) {
+        errors.push(`${cp}.property`);
+      }
+
+      if (
+        cell.paddingShape !== undefined &&
+        cell.paddingShape !== "single" &&
+        cell.paddingShape !== "four-sides"
+      ) {
+        errors.push(`${cp}.paddingShape`);
+      }
+
+      if (
+        cell.paddingShape !== undefined &&
+        cell.property !== "spacing-padding"
+      ) {
+        errors.push(`${cp}.paddingShape: only valid for spacing-padding`);
+      }
+
+      if (!Array.isArray(cell.states) || cell.states.length === 0) {
+        errors.push(`${cp}.states`);
+        continue;
+      }
+
+      const seenStates = new Set<string>();
+      let hasDefault = false;
+      for (let si = 0; si < cell.states.length; si++) {
+        const stateEntry = cell.states[si];
+        const sp = `${cp}.states[${si}]`;
+
+        if (!isPlainObject(stateEntry)) {
+          errors.push(sp);
+          continue;
+        }
+
+        if (
+          typeof stateEntry.state !== "string" ||
+          !VALID_COMPONENT_STATES.has(stateEntry.state)
+        ) {
+          errors.push(`${sp}.state`);
+        } else {
+          if (stateEntry.state === "default") hasDefault = true;
+          if (seenStates.has(stateEntry.state as string)) {
+            errors.push(`${sp}.state: duplicate state`);
+          }
+          seenStates.add(stateEntry.state as string);
+        }
+
+        const val = stateEntry.value;
+        if (typeof val === "string") {
+          if (!isDtcgRef(val)) {
+            errors.push(`${sp}.value`);
+          }
+        } else if (isPlainObject(val)) {
+          for (const side of ["top", "right", "bottom", "left"] as const) {
+            if (!isDtcgRef(val[side])) {
+              errors.push(`${sp}.value.${side}`);
+            }
+          }
+        } else {
+          errors.push(`${sp}.value`);
+        }
+      }
+
+      if (!hasDefault) {
+        errors.push(`${cp}.states: must include a default state`);
+      }
+    }
+  }
+}
+
 /**
  * Read, parse, and validate an existing `quieto.config.json` from the given
  * directory. Returns a {@link LoadConfigResult} discriminating between the
@@ -523,12 +689,14 @@ export function loadConfig(
     ) as QuietoConfig["advanced"];
   }
   if (root.categoryConfigs !== undefined) {
-    // Same prototype-pollution guard as `advanced` — never spread the
-    // parsed tree directly. Round-trip the already-validated sub-block
-    // into a fresh prototype-free shape.
     config.categoryConfigs = JSON.parse(
       JSON.stringify(root.categoryConfigs),
     ) as QuietoConfig["categoryConfigs"];
+  }
+  if (root.components !== undefined) {
+    config.components = JSON.parse(
+      JSON.stringify(root.components),
+    ) as QuietoConfig["components"];
   }
 
   const logger = options.logger ?? DEFAULT_LOGGER;
