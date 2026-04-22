@@ -31,9 +31,11 @@ const HELP_TEXT = `
     --advanced        (init) Enter advanced mode: customize individual tokens
                       per category instead of taking the quick-start defaults.
                       Also accepts --advanced=true / --advanced=false.
+    --dry-run         Run the full pipeline without writing any files.
+                      Must be passed after the command word.
+                      Also accepts --dry-run=true / --dry-run=false.
 
   Global options:
-    --dry-run         Run the full pipeline without writing any files
     --help, -h        Show this help message
     --version         Show version number
 `;
@@ -270,7 +272,13 @@ export async function runCli(args: readonly string[]): Promise<number> {
         p.outro("Fix the options and re-run.");
         return 1;
       }
-      await addCommand({ category: parsed.category, dryRun: parsed.dryRun });
+      const addOpts: { dryRun: boolean; category?: typeof parsed.category } = {
+        dryRun: parsed.dryRun,
+      };
+      if (parsed.category !== undefined) {
+        addOpts.category = parsed.category;
+      }
+      await addCommand(addOpts);
       const addExit = process.exitCode;
       process.exitCode = undefined;
       return typeof addExit === "number" ? addExit : 0;

@@ -145,8 +145,8 @@ export async function initCommand(
               p.outro(
                 "Fix the file (or delete it and re-run `quieto-tokens init`) to continue.",
               );
-              process.exitCode = 1;
             }
+            process.exitCode = 1;
             return;
           }
           if (recovery === "abort") {
