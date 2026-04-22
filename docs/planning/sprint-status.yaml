@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-22 (story 2-5 review — fix animation ease path collision)
+# last_updated: 2026-04-22 (stories 3-3 + 3-4 created — dry run + changelog)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-16
-last_updated: 2026-04-22
+last_updated: 2026-04-22 (stories 3-3 + 3-4 created)
 project: Quieto Tokens CLI
 # NOTE: Story 1.10 is a post-retrospective defect fix. Epic 1 temporarily reopened to accommodate.
 project_key: QUIETO
@@ -71,11 +71,11 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Token System Evolution
-  epic-3: backlog
-  3-1-re-entrant-editing: backlog
-  3-2-token-diff-display: backlog
-  3-3-dry-run-mode: backlog
-  3-4-design-system-changelog: backlog
+  epic-3: in-progress
+  3-1-re-entrant-editing: review
+  3-2-token-diff-display: ready-for-dev
+  3-3-dry-run-mode: ready-for-dev
+  3-4-design-system-changelog: ready-for-dev
   epic-3-retrospective: optional
 
   # Epic 4: Multi-Platform Output

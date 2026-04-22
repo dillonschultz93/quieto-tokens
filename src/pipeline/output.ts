@@ -24,6 +24,11 @@ export interface RunOutputOptions {
    * categories always makes it into the `build/*.css` output.
    */
   scope?: WriteScope;
+  /**
+   * Passed through to {@link writeTokensToJson}. Story 3.1 `update` sets
+   * this so tier-3 component JSON mtimes stay stable.
+   */
+  skipComponents?: boolean;
 }
 
 /**
@@ -62,6 +67,7 @@ export async function runOutputGeneration(
   try {
     jsonFiles = await writeTokensToJson(collection, outputDir, {
       scope: options.scope,
+      skipComponents: options.skipComponents,
     });
   } catch (error) {
     const message =

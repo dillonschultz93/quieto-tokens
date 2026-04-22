@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { initCommand } from "./commands/init.js";
 import { addCommand } from "./commands/add.js";
 import { componentCommand } from "./commands/component.js";
+import { updateCommand } from "./commands/update.js";
 import {
   ADDABLE_CATEGORIES,
   isAddableCategory,
@@ -19,6 +20,7 @@ const HELP_TEXT = `
 
   Commands:
     init              Create a new design token system (or modify an existing one)
+    update            Modify specific token categories without regenerating everything
     add <category>    Add a new token category (shadow, border, animation) to an
                       existing token system. Omit the category to pick from a menu.
     component <name>  Generate tier-3 component tokens (e.g., button, modal) that
@@ -115,6 +117,20 @@ export function parseAddArgs(args: readonly string[]): {
  * Parse the argv slice after the `component` command word. The first
  * positional is the component name; no flags are supported in this story.
  */
+/**
+ * Parse argv after `update`. No flags in Story 3.1 — reject anything that
+ * looks like an option or stray positional.
+ */
+export function parseUpdateArgs(args: readonly string[]): {
+  unknown: string[];
+} {
+  const unknown: string[] = [];
+  for (const arg of args) {
+    unknown.push(arg);
+  }
+  return { unknown };
+}
+
 export function parseComponentArgs(args: readonly string[]): {
   name?: string;
   unknown: string[];
@@ -217,6 +233,20 @@ export async function runCli(args: readonly string[]): Promise<number> {
       const addExit = process.exitCode;
       process.exitCode = undefined;
       return typeof addExit === "number" ? addExit : 0;
+    }
+    case "update": {
+      const { unknown } = parseUpdateArgs(args.slice(1));
+      if (unknown.length > 0) {
+        p.intro("◆  quieto-tokens");
+        p.log.error(`Unknown argument(s) for update: ${unknown.join(", ")}`);
+        p.note(HELP_TEXT.trim(), "Usage");
+        p.outro("The update command does not accept flags or extra arguments yet.");
+        return 1;
+      }
+      await updateCommand();
+      const updateExit = process.exitCode;
+      process.exitCode = undefined;
+      return typeof updateExit === "number" ? updateExit : 0;
     }
     case "component": {
       const parsed = parseComponentArgs(args.slice(1));
