@@ -85,11 +85,21 @@ export interface AddPipelineResult {
  *   5. Prune orphan files (categories the user removed from `categories`
  *      between runs, and inactive theme directories) — best-effort.
  */
+export interface RunAddOptions {
+  /**
+   * When true, run prompts and generation but skip JSON/CSS writes and
+   * prune (Story 3.3).
+   */
+  dryRun?: boolean;
+}
+
 export async function runAdd(
   category: AddableCategory,
   config: QuietoConfig,
   cwd: string,
+  options: RunAddOptions = {},
 ): Promise<AddPipelineOutcome> {
+  const { dryRun = false } = options;
   const priorCategoryConfig = config.categoryConfigs?.[category];
 
   // --- Step 1: rebuild core primitives from the saved inputs ---
@@ -214,18 +224,11 @@ export async function runAdd(
   // primitive + semantic JSON files on disk keep their mtimes. CSS is
   // rebuilt by sourcing the full on-disk tree in `buildCss`, so the
   // union of old + new categories still lands in `build/*.css`.
-  const output = await runOutputGeneration(collection, cwd, {
-    scope: { categories: [category] },
-  });
-  if (!output) return { status: "error", message: "output generation failed" };
+  const mergedCategoryConfigs: CategoryConfigs = {
+    ...(config.categoryConfigs ?? {}),
+    [category]: newConfigBlock,
+  };
 
-  // --- Step 5: prune orphan files ---
-  // Whitelist against `CANONICAL_CATEGORY_ORDER` before passing to
-  // `prune` — otherwise a hand-edited typo like `"shadows"` in
-  // `config.categories` would be treated as canonical and the real
-  // `tokens/primitive/shadow.json` would become an orphan that never
-  // gets swept. Unknown names are dropped silently with a warning so
-  // the user notices.
   const mergedCategories = sortCategoriesCanonical([
     ...new Set([...config.categories, category]),
   ]);
@@ -240,13 +243,34 @@ export async function runAdd(
   const canonicalCategories = mergedCategories.filter((c) =>
     CANONICAL_CATEGORY_ORDER.includes(c),
   );
+
+  if (dryRun) {
+    p.log.info("Dry run — skipping file writes.");
+    return {
+      status: "ok",
+      result: {
+        categories: canonicalCategories,
+        categoryConfigs: mergedCategoryConfigs,
+        output: { jsonFiles: [], cssFiles: [] },
+        newFiles: [],
+      },
+    };
+  }
+
+  const output = await runOutputGeneration(collection, cwd, {
+    scope: { categories: [category] },
+  });
+  if (!output) return { status: "error", message: "output generation failed" };
+
+  // --- Step 5: prune orphan files ---
+  // Whitelist against `CANONICAL_CATEGORY_ORDER` before passing to
+  // `prune` — otherwise a hand-edited typo like `"shadows"` in
+  // `config.categories` would be treated as canonical and the real
+  // `tokens/primitive/shadow.json` would become an orphan that never
+  // gets swept. Unknown names are dropped silently with a warning so
+  // the user notices.
   const themeNames = collection.themes.map((t: Theme) => t.name);
   await prune(cwd, canonicalCategories, themeNames);
-
-  const mergedCategoryConfigs: CategoryConfigs = {
-    ...(config.categoryConfigs ?? {}),
-    [category]: newConfigBlock,
-  };
 
   // Identify the files that are *new* to this run. They are the
   // subset of `output` paths whose basename is `<category>.json` or

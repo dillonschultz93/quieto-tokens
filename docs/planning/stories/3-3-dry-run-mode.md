@@ -1,6 +1,6 @@
 # Story 3.3: Dry Run Mode
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -65,40 +65,40 @@ This story adds a `--dry-run` flag that works across all four commands (`init`, 
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add `--dry-run` to all arg parsers (AC: #1, #2, #3)**
-  - [ ] 1.1: In `src/cli.ts`, update `parseInitArgs` to accept `--dry-run` / `--dry-run=true` / `--dry-run=false`. Return `dryRun: boolean` (default `false`).
-  - [ ] 1.2: Update `parseUpdateArgs` to accept `--dry-run` (same pattern).
-  - [ ] 1.3: Update `parseAddArgs` to accept `--dry-run` (same pattern).
-  - [ ] 1.4: Update `parseComponentArgs` to accept `--dry-run` (same pattern).
-  - [ ] 1.5: Update `HELP_TEXT` to document `--dry-run` as a global option: `"--dry-run         Run the full pipeline without writing any files"`.
+- [x] **Task 1: Add `--dry-run` to all arg parsers (AC: #1, #2, #3)**
+  - [x] 1.1: In `src/cli.ts`, update `parseInitArgs` to accept `--dry-run` / `--dry-run=true` / `--dry-run=false`. Return `dryRun: boolean` (default `false`).
+  - [x] 1.2: Update `parseUpdateArgs` to accept `--dry-run` (same pattern).
+  - [x] 1.3: Update `parseAddArgs` to accept `--dry-run` (same pattern).
+  - [x] 1.4: Update `parseComponentArgs` to accept `--dry-run` (same pattern).
+  - [x] 1.5: Update `HELP_TEXT` to document `--dry-run` as a global option: `"--dry-run         Run the full pipeline without writing any files"`.
 
-- [ ] **Task 2: Thread `dryRun` through command orchestrators (AC: #4, #5, #6, #7, #9, #10, #11)**
-  - [ ] 2.1: Add `dryRun?: boolean` to `InitCommandOptions`. In `initCommand`, when `dryRun` is true, skip the calls to `runOutputGeneration` and `runConfigGeneration`. Still run the preview via `previewAndConfirm`.
-  - [ ] 2.2: Add `dryRun?: boolean` to the `updateCommand` signature (or its internal options). When `dryRun` is true, skip `runOutputGeneration` and `runConfigGeneration` after the diff/preview step.
-  - [ ] 2.3: Add `dryRun?: boolean` to `AddCommandOptions`. In `addCommand`, when `dryRun` is true, skip `runOutputGeneration`, `writeConfig`, and `prune`.
-  - [ ] 2.4: Add `dryRun?: boolean` to `ComponentCommandOptions`. In `componentCommand`, when `dryRun` is true, skip `writeComponentTokens`, `buildCss`, `writeConfig`, and `prune`.
+- [x] **Task 2: Thread `dryRun` through command orchestrators (AC: #4, #5, #6, #7, #9, #10, #11)**
+  - [x] 2.1: Add `dryRun?: boolean` to `InitCommandOptions`. In `initCommand`, when `dryRun` is true, skip the calls to `runOutputGeneration` and `runConfigGeneration`. Still run the preview via `previewAndConfirm`.
+  - [x] 2.2: Add `dryRun?: boolean` to the `updateCommand` signature (or its internal options). When `dryRun` is true, skip `runOutputGeneration` and `runConfigGeneration` after the diff/preview step.
+  - [x] 2.3: Add `dryRun?: boolean` to `AddCommandOptions`. In `addCommand`, when `dryRun` is true, skip `runOutputGeneration`, `writeConfig`, and `prune`.
+  - [x] 2.4: Add `dryRun?: boolean` to `ComponentCommandOptions`. In `componentCommand`, when `dryRun` is true, skip `writeComponentTokens`, `buildCss`, `writeConfig`, and `prune`.
 
-- [ ] **Task 3: Wire `--dry-run` into CLI routing (AC: #1, #2, #3)**
-  - [ ] 3.1: In `src/cli.ts`, pass `dryRun` from each parser's result into the corresponding command function:
+- [x] **Task 3: Wire `--dry-run` into CLI routing (AC: #1, #2, #3)**
+  - [x] 3.1: In `src/cli.ts`, pass `dryRun` from each parser's result into the corresponding command function:
     - `init` case: `await initCommand({ advanced, dryRun })`.
     - `update` case: `await updateCommand({ dryRun })`.
     - `add` case: `await addCommand({ category, dryRun })`.
     - `component` case: `await componentCommand({ name, dryRun })`.
 
-- [ ] **Task 4: Dry-run messaging (AC: #12, #13, #14, #16)**
-  - [ ] 4.1: In each command, when `dryRun` is true and the pipeline reaches the write step, emit `p.log.info("Dry run — skipping file writes.")` instead of "Writing DTCG JSON source files…" / "Building CSS…" / "Saving config…".
-  - [ ] 4.2: At the end of each command, when `dryRun` is true, emit `p.outro("Dry run complete — no files were written.")` instead of the normal success outro.
-  - [ ] 4.3: On cancel during dry-run, emit `p.cancel("Dry run cancelled.")`.
-  - [ ] 4.4: When `dryRun` is true and the command is `init`, show a leading indicator: `p.log.info("🔍 Dry run mode — no files will be written.")` immediately after `p.intro`.
+- [x] **Task 4: Dry-run messaging (AC: #12, #13, #14, #16)**
+  - [x] 4.1: In each command, when `dryRun` is true and the pipeline reaches the write step, emit `p.log.info("Dry run — skipping file writes.")` instead of "Writing DTCG JSON source files…" / "Building CSS…" / "Saving config…".
+  - [x] 4.2: At the end of each command, when `dryRun` is true, emit `p.outro("Dry run complete — no files were written.")` instead of the normal success outro.
+  - [x] 4.3: On cancel during dry-run, emit `p.cancel("Dry run cancelled.")`.
+  - [x] 4.4: When `dryRun` is true and the command is `init`, show a leading indicator: `p.log.info("🔍 Dry run mode — no files will be written.")` immediately after `p.intro`.
 
-- [ ] **Task 5: update --dry-run post-diff prompt adjustment (AC: #8, #15)**
-  - [ ] 5.1: In `src/commands/update.ts`, when the post-diff `p.select` runs during a dry run, replace the "Accept changes and write" option with `{ value: "end", label: "End dry run", hint: "Exit — no files will be written" }`.
-  - [ ] 5.2: When `"end"` is selected, emit the dry-run outro and return.
-  - [ ] 5.3: "Review full token preview" and "Go back and modify further" still function normally in dry-run mode — only the write path is suppressed.
-  - [ ] 5.4: The no-changes early-exit (`diff.isEmpty`) still activates during dry-run — emit "No changes to apply" and return.
+- [x] **Task 5: update --dry-run post-diff prompt adjustment (AC: #8, #15)**
+  - [x] 5.1: In `src/commands/update.ts`, when the post-diff `p.select` runs during a dry run, replace the "Accept changes and write" option with `{ value: "end", label: "End dry run", hint: "Exit — no files will be written" }`.
+  - [x] 5.2: When `"end"` is selected, emit the dry-run outro and return.
+  - [x] 5.3: "Review full token preview" and "Go back and modify further" still function normally in dry-run mode — only the write path is suppressed.
+  - [x] 5.4: The no-changes early-exit (`diff.isEmpty`) still activates during dry-run — emit "No changes to apply" and return.
 
-- [ ] **Task 6: Tests (AC: all)**
-  - [ ] 6.1: `src/__tests__/cli.test.ts` — extend with `--dry-run` parsing for each command:
+- [x] **Task 6: Tests (AC: all)**
+  - [x] 6.1: `src/__tests__/cli.test.ts` — extend with `--dry-run` parsing for each command:
     - `init --dry-run` → `dryRun: true`.
     - `init --advanced --dry-run` → `advanced: true, dryRun: true`.
     - `init --dry-run=false` → `dryRun: false`.
@@ -107,25 +107,25 @@ This story adds a `--dry-run` flag that works across all four commands (`init`, 
     - `add --dry-run` → `dryRun: true` (no category).
     - `component button --dry-run` → `name: "button", dryRun: true`.
     - Unknown flag `--dry-runs` still rejected.
-  - [ ] 6.2: `src/commands/__tests__/init.test.ts` (or new file) — init with `dryRun: true`:
+  - [x] 6.2: `src/commands/__tests__/init.test.ts` (or new file) — init with `dryRun: true`:
     - Full pipeline runs (mock prompts, assert generation functions called).
     - `runOutputGeneration` NOT called.
     - `runConfigGeneration` NOT called.
     - Dry-run outro message emitted.
-  - [ ] 6.3: `src/commands/__tests__/update.test.ts` — extend with:
+  - [x] 6.3: `src/commands/__tests__/update.test.ts` — extend with:
     - `dryRun: true`: pipeline runs, diff renders, "End dry run" in post-diff select.
     - No `runOutputGeneration` or `runConfigGeneration` calls.
-  - [ ] 6.4: `src/commands/__tests__/add.test.ts` (or extend existing) — add with `dryRun: true`:
+  - [x] 6.4: `src/commands/__tests__/add.test.ts` (or extend existing) — add with `dryRun: true`:
     - Prompts run, tokens generated, preview displayed.
     - No file writes, no CSS rebuild, no config update.
-  - [ ] 6.5: `src/commands/__tests__/component.test.ts` — extend with `dryRun: true`:
+  - [x] 6.5: `src/commands/__tests__/component.test.ts` — extend with `dryRun: true`:
     - Walkthrough completes, tokens generated.
     - No writes.
-  - [ ] 6.6: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+  - [x] 6.6: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 7: Close-out**
-  - [ ] 7.1: Update README.md to document `--dry-run` as a global option available on all commands.
-  - [ ] 7.2: Move this story to `review`, then to `done` after code review.
+- [x] **Task 7: Close-out**
+  - [x] 7.1: Update README.md to document `--dry-run` as a global option available on all commands.
+  - [x] 7.2: Move this story to `review`, then to `done` after code review. Code review: GitHub Copilot on PR; status set to `done` after review passed.
 
 ## Dev Notes
 
@@ -222,8 +222,44 @@ src/
 
 ### Agent Model Used
 
+Composer (Cursor)
+
 ### Debug Log References
+
+(none)
+
+### Implementation Plan (brief)
+
+- Parse `--dry-run` / `=true` / `=false` in all four arg parsers; route `dryRun` from `runCli` into each command.
+- For `add` and `component`, add optional 4th-arg options to `runAdd` / `runComponent` to skip the write stack while keeping generation.
+- `update` dry-run: swap post-diff "Accept" for "End dry run", pass `dryRun` into `previewAndConfirm` for cancel copy; preview path continues the loop after preview without `finalizeWrite`.
+- `init` and `add` / `component`: dry-run cancels and preview cancel use context-specific `p.cancel` / `p.outro` from AC 4 and 16.
 
 ### Completion Notes List
 
+- `update` does not use `runConfigGeneration` (it uses `finalizeWrite` with `writeConfig`); the dry-run test asserts `runOutputGeneration` and `writeConfig` are not invoked.
+- Story task 6.3 wording references `runConfigGeneration` for update; implementation matches actual update close-out (output + `writeConfig` in `finalizeWrite`).
+
 ### File List
+
+- `src/cli.ts`
+- `src/commands/add.ts`
+- `src/commands/component.ts`
+- `src/commands/init.ts`
+- `src/commands/update.ts`
+- `src/pipeline/add.ts`
+- `src/pipeline/component.ts`
+- `src/ui/preview.ts`
+- `src/__tests__/cli.test.ts`
+- `src/commands/__tests__/add.test.ts`
+- `src/commands/__tests__/component.test.ts`
+- `src/commands/__tests__/init-dry-run.test.ts`
+- `src/commands/__tests__/update.test.ts`
+- `README.md`
+- `docs/planning/sprint-status.yaml`
+- `docs/planning/stories/3-3-dry-run-mode.md`
+
+### Change Log
+
+- 2026-04-22: Story 3.3 — `--dry-run` on all commands, orchestrator-level write suppression, update post-diff "End dry run" option, README and tests. Status → `review`.
+- 2026-04-22: Code review (GitHub Copilot). Status → `done` (story + sprint).

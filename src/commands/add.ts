@@ -13,6 +13,10 @@ import type { QuickStartOptions } from "../types.js";
 
 export interface AddCommandOptions {
   category?: AddableCategory;
+  /**
+   * When true, run prompts and generation but skip all writes (Story 3.3).
+   */
+  dryRun?: boolean;
 }
 
 const ADD_CATEGORY_LABEL: Record<AddableCategory, string> = {
@@ -24,6 +28,7 @@ const ADD_CATEGORY_LABEL: Record<AddableCategory, string> = {
 export async function addCommand(
   options: AddCommandOptions = {},
 ): Promise<void> {
+  const { dryRun = false } = options;
   p.intro("◆  quieto-tokens — Add a new token category.");
 
   try {
@@ -49,7 +54,7 @@ export async function addCommand(
         ],
       });
       if (p.isCancel(selected) || selected === "__cancel__") {
-        p.cancel("Operation cancelled.");
+        p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
         return;
       }
       category = selected as AddableCategory;
@@ -109,7 +114,7 @@ export async function addCommand(
       // cancel so the user gets consistent messaging and the next
       // recovery prompt (if any) doesn't silently swallow the intent.
       if (p.isCancel(recovery)) {
-        p.cancel("Operation cancelled.");
+        p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
         process.exitCode = 1;
         return;
       }
@@ -138,7 +143,7 @@ export async function addCommand(
       }
     }
 
-    const outcome = await runAdd(category, config, cwd);
+    const outcome = await runAdd(category, config, cwd, { dryRun });
     if (outcome.status === "cancelled") {
       // Graceful cancel inside the pipeline (a prompt, not a
       // programming error) — the pipeline already printed `Operation
@@ -150,6 +155,11 @@ export async function addCommand(
       return;
     }
     const result = outcome.result;
+
+    if (dryRun) {
+      p.outro("Dry run complete — no files were written.");
+      return;
+    }
 
     // --- Persist config ---
     let newVersion: string;

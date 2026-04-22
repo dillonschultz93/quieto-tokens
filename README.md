@@ -54,6 +54,10 @@ quieto.config.json        # Your answers, so you can re-run to modify
 
 Running `quieto-tokens init` again on a project that already has `quieto.config.json` routes through a "Modify existing system" flow with your prior answers pre-filled — you only adjust what's changing.
 
+### Dry run
+
+Add **`--dry-run`** to any command (`init`, `update`, `add`, `component`) to run the full pipeline — prompts, generation, diff (for `update`), and the token preview with the override editor — without writing DTCG JSON, built CSS, or `quieto.config.json`. The tool also accepts `--dry-run=true` and `--dry-run=false` for scripts. In dry run, when the pipeline would otherwise save files, it logs that writes are skipped and ends with a confirmation that nothing was written.
+
 ### Updating your token system
 
 Use **`quieto-tokens update`** when you only want to change one area (for example spacing or an add-on category) without re-running the full `init` pipeline for every category. The command loads `quieto.config.json`, lets you pick which categories to edit, and regenerates **only** those categories’ primitives (and rebuilds semantics from the merged primitive set). It then **shows a terminal diff** of what changed (primitives and semantics, grouped, with color swatches when the terminal supports them) plus a short cascade summary, and asks what to do next: write the change, open the full preview with the override loop, go back to pick more categories, or cancel. When you write, it updates JSON for the categories you changed and rebuilds CSS from the full on-disk tree. Unchanged category files keep their previous mtimes. If nothing actually changed from what is already on disk, it reports that and exits without writing.

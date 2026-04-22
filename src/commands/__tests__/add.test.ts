@@ -264,4 +264,42 @@ describe("addCommand", () => {
       expect(runAdd).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("dry run (Story 3.3)", () => {
+    it("does not call writeConfig and passes dryRun into runAdd", async () => {
+      vi.mocked(configExists).mockReturnValue(true);
+      vi.mocked(loadConfig).mockReturnValue({
+        status: "ok",
+        config: validConfig(),
+      });
+      vi.mocked(runAdd).mockResolvedValueOnce({
+        status: "ok",
+        result: {
+          categories: ["color", "spacing", "typography", "shadow"],
+          categoryConfigs: {
+            shadow: {
+              levels: 3,
+              profile: "hard",
+              colorRef: "{color.neutral.900}",
+            },
+          },
+          output: { jsonFiles: [], cssFiles: [] },
+          newFiles: [],
+        },
+      });
+
+      await addCommand({ category: "shadow", dryRun: true });
+
+      expect(vi.mocked(runAdd)).toHaveBeenCalledWith(
+        "shadow",
+        expect.anything(),
+        expect.any(String),
+        { dryRun: true },
+      );
+      expect(writeConfig).not.toHaveBeenCalled();
+      expect(vi.mocked(p.outro)).toHaveBeenCalledWith(
+        "Dry run complete — no files were written.",
+      );
+    });
+  });
 });

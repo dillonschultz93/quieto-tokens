@@ -32,13 +32,22 @@ export interface InitCommandOptions {
    * prompt — modify-flow IS advanced-flow with the prior config pre-loaded.
    */
   advanced?: boolean;
+  /**
+   * When true, run the full init pipeline (including preview) but skip
+   * writing JSON, CSS, and config (Story 3.3).
+   */
+  dryRun?: boolean;
 }
 
 export async function initCommand(
   initOptions: InitCommandOptions = {},
 ): Promise<void> {
-  let { advanced = false } = initOptions;
+  let { advanced = false, dryRun = false } = initOptions;
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
+
+  if (dryRun) {
+    p.log.info("🔍 Dry run mode — no files will be written.");
+  }
 
   if (advanced) {
     p.log.info(
@@ -74,7 +83,7 @@ export async function initCommand(
       });
 
       if (p.isCancel(action)) {
-        p.cancel("Operation cancelled.");
+        p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
         return;
       }
 
@@ -129,7 +138,18 @@ export async function initCommand(
             ],
           });
 
-          if (p.isCancel(recovery) || recovery === "abort") {
+          if (p.isCancel(recovery)) {
+            if (dryRun) {
+              p.cancel("Dry run cancelled.");
+            } else {
+              p.outro(
+                "Fix the file (or delete it and re-run `quieto-tokens init`) to continue.",
+              );
+            }
+            process.exitCode = 1;
+            return;
+          }
+          if (recovery === "abort") {
             p.outro(
               "Fix the file (or delete it and re-run `quieto-tokens init`) to continue.",
             );
@@ -176,7 +196,7 @@ export async function initCommand(
         ],
       });
       if (p.isCancel(mode)) {
-        p.cancel("Operation cancelled.");
+        p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
         return;
       }
       if (mode === "advanced") {
@@ -277,9 +297,16 @@ export async function initCommand(
 
     const previewResult = await previewAndConfirm(themeCollection, {
       initialOverrides: new Map(Object.entries(priorOverrides)),
+      dryRun,
     });
 
     if (!previewResult) {
+      return;
+    }
+
+    if (dryRun) {
+      p.log.info("Dry run — skipping file writes.");
+      p.outro("Dry run complete — no files were written.");
       return;
     }
 

@@ -45,6 +45,7 @@ import {
 } from "../../pipeline/spacing-typography.js";
 import * as p from "@clack/prompts";
 import * as configWriter from "../../output/config-writer.js";
+import * as outputPipeline from "../../pipeline/output.js";
 import { updateCommand } from "../update.js";
 
 /** Seeds `tokens/` (and friends) so `update` can load unmodified categories from disk. */
@@ -179,6 +180,49 @@ describe("updateCommand", () => {
 
     expect(vi.mocked(configWriter.writeConfig)).not.toHaveBeenCalled();
     expect(vi.mocked(p.cancel)).toHaveBeenCalled();
+  });
+
+  it("does not call runOutputGeneration or writeConfig when dryRun and user ends after diff", async () => {
+    const cfg = minimalValidQuietoConfig();
+    writeQuietoConfig(cfg);
+    await seedTokenOutputs(tmpDir, cfg);
+
+    const outSpy = vi.spyOn(outputPipeline, "runOutputGeneration");
+
+    vi.mocked(p.select).mockImplementation(async (args?: any) => {
+      const options = Array.isArray(args?.options) ? args.options : [];
+
+      if (String(args?.message ?? "").includes("What would you like to do")) {
+        return "end";
+      }
+
+      const findOption = (pattern: RegExp) =>
+        options.find((option: any) => {
+          const label = String(option?.label ?? "");
+          const value = String(option?.value ?? "");
+          return pattern.test(label) || pattern.test(value);
+        });
+
+      return (
+        findOption(/^(?!.*(save|write|finish|done|exit|quit)).*$/i)?.value ??
+        options[0]?.value
+      );
+    });
+    vi.mocked(p.text).mockResolvedValue("#00FF88");
+    vi.mocked(p.confirm)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValue(true);
+
+    await updateCommand({ dryRun: true });
+
+    expect(outSpy).not.toHaveBeenCalled();
+    expect(vi.mocked(configWriter.writeConfig)).not.toHaveBeenCalled();
+    expect(p.outro).toHaveBeenCalledWith(
+      "Dry run complete — no files were written.",
+    );
+
+    outSpy.mockRestore();
   });
 
 });
