@@ -1,6 +1,6 @@
 # Story 3.4: Design System Changelog
 
-Status: review
+Status: done
 
 ## Story
 
@@ -365,3 +365,4 @@ Composer (Cursor agent)
 ### Change Log
 
 - 2026-04-22: Story 3.4 — automatic `TOKENS_CHANGELOG.md`, integration in init/update/add/component, tests, README and pipeline outro. Status → `review`.
+- 2026-04-22: GitHub Copilot code review passed. Status → `done`.
