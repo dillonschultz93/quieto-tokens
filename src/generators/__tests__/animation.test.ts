@@ -26,7 +26,7 @@ describe("generateAnimationPrimitives", () => {
         durations: [100],
         easing,
       });
-      const eases = tokens.filter((t) => t.path[1] === "ease");
+      const eases = tokens.filter((t) => t.path[1] === "easing");
       expect(eases.map((t) => t.path[2]).sort()).toEqual([
         "default",
         "enter",
@@ -48,7 +48,7 @@ describe("generateAnimationPrimitives", () => {
       durations: [100],
       easing: "emphasized",
     });
-    const enter = tokens.find((t) => t.name === "animation.ease.enter")!;
+    const enter = tokens.find((t) => t.name === "animation.easing.enter")!;
     const parsed = JSON.parse(enter.$value) as number[];
     expect(parsed).toEqual(ANIMATION_EASING_PRESETS.emphasized.enter);
   });

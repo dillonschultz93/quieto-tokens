@@ -491,10 +491,10 @@ function makeEase(name: string): PrimitiveToken {
   return {
     tier: "primitive",
     category: "animation",
-    name: `animation.ease.${name}`,
+    name: `animation.easing.${name}`,
     $type: "cubicBezier",
     $value: JSON.stringify([0, 0, 0, 0]),
-    path: ["animation", "ease", name],
+    path: ["animation", "easing", name],
   };
 }
 
@@ -531,13 +531,13 @@ describe("mapAnimationSemantics", () => {
     const result = mapAnimationSemantics(prims);
     const byName = Object.fromEntries(result.map((t) => [t.name, t]));
     expect(byName["animation.ease.default"]!.$value).toBe(
-      "{animation.ease.default}",
+      "{animation.easing.default}",
     );
     expect(byName["animation.ease.enter"]!.$value).toBe(
-      "{animation.ease.enter}",
+      "{animation.easing.enter}",
     );
     expect(byName["animation.ease.exit"]!.$value).toBe(
-      "{animation.ease.exit}",
+      "{animation.easing.exit}",
     );
   });
 

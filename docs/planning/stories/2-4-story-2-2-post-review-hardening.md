@@ -93,6 +93,7 @@ The items below map 1:1 to the unchecked `[Review][Patch]` entries in `docs/plan
 - 2026-04-17: Drafted as a follow-up to Story 2.2 code review (2026-04-17). Carries forward 10 unchecked `[Review][Patch]` items so Story 2.2 can close out.
 - 2026-04-19: Code review run (3-layer adversarial: Blind Hunter + Edge Case Hunter + Acceptance Auditor). 26 findings after dedup (from ~38 raw): 3 decisions, 14 patches, 6 deferred, 3 dismissed. See Review Findings below.
 - 2026-04-19: Post-review remediation — user decisions D1/D2/D3 implemented; patches applied (see Review Findings status).
+- 2026-04-21: Collision fixed in Story 2.5; Task 8 pruner integration test re-pointed back to `add animation` (was `add shadow` as a workaround).
 
 ## Review Findings
 

@@ -54,10 +54,10 @@ export function generateAnimationPrimitives(
     tokens.push({
       tier: "primitive",
       category: "animation",
-      name: `animation.ease.${name}`,
+      name: `animation.easing.${name}`,
       $type: "cubicBezier",
       $value: JSON.stringify(bezier),
-      path: ["animation", "ease", name],
+      path: ["animation", "easing", name],
     });
   }
 
