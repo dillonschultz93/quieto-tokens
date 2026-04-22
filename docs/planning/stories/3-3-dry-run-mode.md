@@ -1,6 +1,6 @@
 # Story 3.3: Dry Run Mode
 
-Status: review
+Status: done
 
 ## Story
 
@@ -125,7 +125,7 @@ This story adds a `--dry-run` flag that works across all four commands (`init`, 
 
 - [x] **Task 7: Close-out**
   - [x] 7.1: Update README.md to document `--dry-run` as a global option available on all commands.
-  - [x] 7.2: Move this story to `review`, then to `done` after code review. *(→ `review` done; set `done` in story + sprint after human code review.)*
+  - [x] 7.2: Move this story to `review`, then to `done` after code review. Code review: GitHub Copilot on PR; status set to `done` after review passed.
 
 ## Dev Notes
 
@@ -262,3 +262,4 @@ Composer (Cursor)
 ### Change Log
 
 - 2026-04-22: Story 3.3 — `--dry-run` on all commands, orchestrator-level write suppression, update post-diff "End dry run" option, README and tests. Status → `review`.
+- 2026-04-22: Code review (GitHub Copilot). Status → `done` (story + sprint).
