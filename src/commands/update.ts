@@ -21,7 +21,18 @@ import {
   renderCascadeSummary,
   renderTokenDiff,
 } from "../ui/diff.js";
-export async function updateCommand(): Promise<void> {
+
+export interface UpdateCommandOptions {
+  /**
+   * When true, the diff and preview run but no files are written (Story 3.3).
+   */
+  dryRun?: boolean;
+}
+
+export async function updateCommand(
+  options: UpdateCommandOptions = {},
+): Promise<void> {
+  const { dryRun = false } = options;
   p.intro(
     "◆  quieto-tokens — Update specific categories (with a change diff before you write).",
   );
@@ -184,31 +195,59 @@ export async function updateCommand(): Promise<void> {
       for (;;) {
         const action = await p.select({
           message: "What would you like to do?",
-          options: [
-            {
-              value: "accept" as const,
-              label: "Accept changes and write",
-              hint: "Write modified token files and rebuild CSS",
-            },
-            {
-              value: "preview" as const,
-              label: "Review full token preview",
-              hint: "See all tokens (not just changes) with the override editor",
-            },
-            {
-              value: "back" as const,
-              label: "Go back and modify further",
-              hint: "Return to category picker",
-            },
-            {
-              value: "cancel" as const,
-              label: "Cancel",
-              hint: "Exit without writing",
-            },
-          ],
+          options: dryRun
+            ? [
+                {
+                  value: "end" as const,
+                  label: "End dry run",
+                  hint: "Exit — no files will be written",
+                },
+                {
+                  value: "preview" as const,
+                  label: "Review full token preview",
+                  hint: "See all tokens (not just changes) with the override editor",
+                },
+                {
+                  value: "back" as const,
+                  label: "Go back and modify further",
+                  hint: "Return to category picker",
+                },
+                {
+                  value: "cancel" as const,
+                  label: "Cancel",
+                  hint: "Exit without writing",
+                },
+              ]
+            : [
+                {
+                  value: "accept" as const,
+                  label: "Accept changes and write",
+                  hint: "Write modified token files and rebuild CSS",
+                },
+                {
+                  value: "preview" as const,
+                  label: "Review full token preview",
+                  hint: "See all tokens (not just changes) with the override editor",
+                },
+                {
+                  value: "back" as const,
+                  label: "Go back and modify further",
+                  hint: "Return to category picker",
+                },
+                {
+                  value: "cancel" as const,
+                  label: "Cancel",
+                  hint: "Exit without writing",
+                },
+              ],
         });
         if (p.isCancel(action) || action === "cancel") {
-          p.cancel("No changes written.");
+          p.cancel(dryRun ? "Dry run cancelled." : "No changes written.");
+          return;
+        }
+        if (action === "end" && dryRun) {
+          p.log.info("Dry run — skipping file writes.");
+          p.outro("Dry run complete — no files were written.");
           return;
         }
         if (action === "back") {
@@ -224,8 +263,13 @@ export async function updateCommand(): Promise<void> {
           const toPreview = structuredClone(pipeline.collection);
           const previewResult = await previewAndConfirm(toPreview, {
             initialOverrides: new Map(Object.entries(cleanedOverrides)),
+            dryRun,
           });
           if (!previewResult) {
+            continue;
+          }
+          if (dryRun) {
+            p.log.info("Dry run — skipping file writes.");
             continue;
           }
           const scopedCategories = [

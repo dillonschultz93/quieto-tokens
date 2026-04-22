@@ -33,6 +33,7 @@ const HELP_TEXT = `
                       Also accepts --advanced=true / --advanced=false.
 
   Global options:
+    --dry-run         Run the full pipeline without writing any files
     --help, -h        Show this help message
     --version         Show version number
 `;
@@ -52,12 +53,16 @@ const HELP_TEXT = `
  * The `key=value` form is required for explicit-value usage; `--advanced
  * false` (space-separated) is NOT accepted because that creates ambiguity
  * with positional args. Fail closed — users will see the error immediately.
+ *
+ * `--dry-run` variants: `--dry-run`, `--dry-run=true`, `--dry-run=false`.
  */
 export function parseInitArgs(args: readonly string[]): {
   advanced: boolean;
+  dryRun: boolean;
   unknown: string[];
 } {
   let advanced = false;
+  let dryRun = false;
   const unknown: string[] = [];
   for (const arg of args) {
     if (arg === "--advanced") {
@@ -66,11 +71,15 @@ export function parseInitArgs(args: readonly string[]): {
       advanced = true;
     } else if (arg === "--advanced=false") {
       advanced = false;
+    } else if (arg === "--dry-run" || arg === "--dry-run=true") {
+      dryRun = true;
+    } else if (arg === "--dry-run=false") {
+      dryRun = false;
     } else {
       unknown.push(arg);
     }
   }
-  return { advanced, unknown };
+  return { advanced, dryRun, unknown };
 }
 
 /**
@@ -84,14 +93,24 @@ export function parseInitArgs(args: readonly string[]): {
 export function parseAddArgs(args: readonly string[]): {
   category?: AddableCategory;
   help?: boolean;
+  dryRun: boolean;
   unknown: string[];
 } {
   let category: AddableCategory | undefined;
   let help = false;
+  let dryRun = false;
   const unknown: string[] = [];
   for (const arg of args) {
     if (arg === "--help" || arg === "-h") {
       help = true;
+      continue;
+    }
+    if (arg === "--dry-run" || arg === "--dry-run=true") {
+      dryRun = true;
+      continue;
+    }
+    if (arg === "--dry-run=false") {
+      dryRun = false;
       continue;
     }
     if (arg.startsWith("--") || arg.startsWith("-")) {
@@ -108,38 +127,60 @@ export function parseAddArgs(args: readonly string[]): {
       unknown.push(arg);
     }
   }
-  const base: { help?: boolean; unknown: string[] } = { unknown };
+  const base: { help?: boolean; dryRun: boolean; unknown: string[] } = {
+    dryRun,
+    unknown,
+  };
   if (help) base.help = true;
   return category !== undefined ? { ...base, category } : base;
 }
 
 /**
- * Parse argv after `update`. No flags in Story 3.1 — reject anything that
- * looks like an option or stray positional.
+ * Parse argv after `update`. Only `--dry-run` and its `=true` / `=false`
+ * forms are allowed; any other token is unknown.
  */
 export function parseUpdateArgs(args: readonly string[]): {
+  dryRun: boolean;
   unknown: string[];
 } {
+  let dryRun = false;
   const unknown: string[] = [];
   for (const arg of args) {
-    unknown.push(arg);
+    if (arg === "--dry-run" || arg === "--dry-run=true") {
+      dryRun = true;
+    } else if (arg === "--dry-run=false") {
+      dryRun = false;
+    } else {
+      unknown.push(arg);
+    }
   }
-  return { unknown };
+  return { dryRun, unknown };
 }
 
 /**
  * Parse the argv slice after the `component` command word. The first
- * positional is the component name; no flags are supported in this story.
+ * positional is the component name. `--dry-run` is allowed in any order
+ * with the name.
  */
 export function parseComponentArgs(args: readonly string[]): {
   name?: string;
+  dryRun: boolean;
   unknown: string[];
 } {
   let name: string | undefined;
+  let dryRun = false;
   const unknown: string[] = [];
   for (const arg of args) {
     if (arg === "--help" || arg === "-h") {
       unknown.push(arg);
+      continue;
+    }
+    if (arg === "--dry-run" || arg === "--dry-run=true") {
+      dryRun = true;
+      continue;
+    }
+    if (arg === "--dry-run=false") {
+      dryRun = false;
       continue;
     }
     if (arg.startsWith("--") || arg.startsWith("-")) {
@@ -152,7 +193,7 @@ export function parseComponentArgs(args: readonly string[]): {
       unknown.push(arg);
     }
   }
-  return name !== undefined ? { name, unknown } : { unknown };
+  return name !== undefined ? { name, dryRun, unknown } : { dryRun, unknown };
 }
 
 /**
@@ -194,7 +235,7 @@ export async function runCli(args: readonly string[]): Promise<number> {
 
   switch (command) {
     case "init": {
-      const { advanced, unknown } = parseInitArgs(args.slice(1));
+      const { advanced, dryRun, unknown } = parseInitArgs(args.slice(1));
       if (unknown.length > 0) {
         p.intro("◆  quieto-tokens");
         p.log.error(`Unknown option(s) for init: ${unknown.join(", ")}`);
@@ -202,7 +243,7 @@ export async function runCli(args: readonly string[]): Promise<number> {
         p.outro("Fix the options and re-run.");
         return 1;
       }
-      await initCommand({ advanced });
+      await initCommand({ advanced, dryRun });
       const initExit = process.exitCode;
       process.exitCode = undefined;
       return typeof initExit === "number" ? initExit : 0;
@@ -229,21 +270,21 @@ export async function runCli(args: readonly string[]): Promise<number> {
         p.outro("Fix the options and re-run.");
         return 1;
       }
-      await addCommand({ category: parsed.category });
+      await addCommand({ category: parsed.category, dryRun: parsed.dryRun });
       const addExit = process.exitCode;
       process.exitCode = undefined;
       return typeof addExit === "number" ? addExit : 0;
     }
     case "update": {
-      const { unknown } = parseUpdateArgs(args.slice(1));
+      const { dryRun, unknown } = parseUpdateArgs(args.slice(1));
       if (unknown.length > 0) {
         p.intro("◆  quieto-tokens");
         p.log.error(`Unknown argument(s) for update: ${unknown.join(", ")}`);
         p.note(HELP_TEXT.trim(), "Usage");
-        p.outro("The update command does not accept flags or extra arguments yet.");
+        p.outro("Only `--dry-run` (and optional `=true` / `=false`) is valid besides bare `update`.");
         return 1;
       }
-      await updateCommand();
+      await updateCommand({ dryRun });
       const updateExit = process.exitCode;
       process.exitCode = undefined;
       return typeof updateExit === "number" ? updateExit : 0;
@@ -276,7 +317,7 @@ export async function runCli(args: readonly string[]): Promise<number> {
         p.outro("Fix the component name and re-run.");
         return 1;
       }
-      await componentCommand({ name: parsed.name });
+      await componentCommand({ name: parsed.name, dryRun: parsed.dryRun });
       const componentExit = process.exitCode;
       process.exitCode = undefined;
       return typeof componentExit === "number" ? componentExit : 0;

@@ -12,11 +12,17 @@ import { validateComponentName } from "../utils/validation.js";
 
 export interface ComponentCommandOptions {
   name: string;
+  /**
+   * When true, run the walkthrough and generation but skip all writes
+   * (Story 3.3).
+   */
+  dryRun?: boolean;
 }
 
 export async function componentCommand(
   options: ComponentCommandOptions,
 ): Promise<void> {
+  const { dryRun = false } = options;
   const cwd = process.cwd();
   p.intro("◆  quieto-tokens — Component token generation.");
 
@@ -95,11 +101,17 @@ export async function componentCommand(
       }
     }
 
-    const outcome = await runComponent(config, options.name, cwd);
+    const outcome = await runComponent(config, options.name, cwd, {
+      dryRun,
+    });
 
     switch (outcome.status) {
       case "cancelled":
-        p.outro("Nothing changed.");
+        if (dryRun) {
+          p.cancel("Dry run cancelled.");
+        } else {
+          p.outro("Nothing changed.");
+        }
         return;
 
       case "error":
@@ -113,6 +125,14 @@ export async function componentCommand(
     }
 
     const { result } = outcome;
+
+    if (dryRun) {
+      p.log.info(
+        `Generated ${result.tokenCount} component tokens (not written — dry run).`,
+      );
+      p.outro("Dry run complete — no files were written.");
+      return;
+    }
 
     let version: string;
     try {

@@ -48,11 +48,21 @@ export type ComponentPipelineOutcome =
   | { status: "cancelled" }
   | { status: "error"; message: string };
 
+export interface RunComponentOptions {
+  /**
+   * When true, run prompts and token generation but skip component JSON,
+   * CSS rebuild, and prune (Story 3.3).
+   */
+  dryRun?: boolean;
+}
+
 export async function runComponent(
   config: QuietoConfig,
   name: string,
   cwd: string,
+  options: RunComponentOptions = {},
 ): Promise<ComponentPipelineOutcome> {
+  const { dryRun = false } = options;
   try {
     p.log.step("Rebuilding token system…");
     const collection = await rebuildCollectionFromConfig(config);
@@ -85,6 +95,19 @@ export async function runComponent(
     }
 
     collection.components = componentTokens;
+
+    if (dryRun) {
+      p.log.info("Dry run — skipping file writes.");
+      return {
+        status: "ok",
+        result: {
+          componentConfig,
+          tokenCount: componentTokens.length,
+          jsonFiles: [],
+          cssFiles: [],
+        },
+      };
+    }
 
     p.log.step("Writing component tokens…");
     const jsonFiles = await writeComponentTokens(componentTokens, cwd);

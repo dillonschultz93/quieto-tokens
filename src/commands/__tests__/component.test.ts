@@ -128,6 +128,12 @@ describe("componentCommand", () => {
     });
 
     await componentCommand({ name: "button" });
+    expect(runComponent).toHaveBeenCalledWith(
+      expect.anything(),
+      "button",
+      expect.any(String),
+      { dryRun: false },
+    );
     expect(runComponent).toHaveBeenCalledTimes(1);
     expect(vi.mocked(p.log.success)).toHaveBeenCalledWith(
       expect.stringContaining("5 component tokens"),
@@ -157,5 +163,31 @@ describe("componentCommand", () => {
     await componentCommand({ name: "button" });
     expect(process.exitCode).toBe(1);
     expect(vi.mocked(p.log.error)).toHaveBeenCalledWith("Something went wrong");
+  });
+
+  it("skips writeConfig in dry run", async () => {
+    writeMinimalConfig();
+    vi.mocked(runComponent).mockResolvedValueOnce({
+      status: "ok",
+      result: {
+        componentConfig: { variants: ["primary"], cells: [] },
+        tokenCount: 3,
+        jsonFiles: [],
+        cssFiles: [],
+      },
+    });
+
+    await componentCommand({ name: "button", dryRun: true });
+
+    expect(runComponent).toHaveBeenCalledWith(
+      expect.anything(),
+      "button",
+      expect.any(String),
+      { dryRun: true },
+    );
+    expect(writeConfig).not.toHaveBeenCalled();
+    expect(vi.mocked(p.outro)).toHaveBeenCalledWith(
+      "Dry run complete — no files were written.",
+    );
   });
 });

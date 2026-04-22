@@ -245,6 +245,11 @@ export interface OverrideFlowOptions {
    * if the user accepts without changing anything.
    */
   initialOverrides?: Map<string, string>;
+  /**
+   * When `true`, a cancelled override flow uses `p.cancel("Dry run cancelled.")`
+   * (Story 3.3) instead of `Preview cancelled.`
+   */
+  dryRun?: boolean;
 }
 
 export async function runOverrideFlow(
@@ -348,7 +353,9 @@ export async function previewAndConfirm(
   const result = await runOverrideFlow(collection, options);
 
   if (result.cancelled) {
-    p.cancel("Preview cancelled.");
+    p.cancel(
+      options.dryRun ? "Dry run cancelled." : "Preview cancelled.",
+    );
     return null;
   }
 
