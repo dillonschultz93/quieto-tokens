@@ -56,7 +56,7 @@ Running `quieto-tokens init` again on a project that already has `quieto.config.
 
 ### Updating your token system
 
-Use **`quieto-tokens update`** when you only want to change one area (for example spacing or an add-on category) without re-running the full `init` pipeline for every category. The command loads `quieto.config.json`, lets you pick which categories to edit, regenerates **only** those categories’ primitives (and rebuilds semantics from the merged primitive set), then writes JSON for the categories you changed and rebuilds CSS from the full on-disk tree. Unchanged category files keep their previous mtimes.
+Use **`quieto-tokens update`** when you only want to change one area (for example spacing or an add-on category) without re-running the full `init` pipeline for every category. The command loads `quieto.config.json`, lets you pick which categories to edit, and regenerates **only** those categories’ primitives (and rebuilds semantics from the merged primitive set). It then **shows a terminal diff** of what changed (primitives and semantics, grouped, with color swatches when the terminal supports them) plus a short cascade summary, and asks what to do next: write the change, open the full preview with the override loop, go back to pick more categories, or cancel. When you write, it updates JSON for the categories you changed and rebuilds CSS from the full on-disk tree. Unchanged category files keep their previous mtimes. If nothing actually changed from what is already on disk, it reports that and exits without writing.
 
 By contrast, **`quieto-tokens init` → Modify existing system** remains the path for a full regeneration of all core categories in one pass.
 
@@ -72,7 +72,7 @@ or, when you run `quieto-tokens init` on a fresh project, choose "Advanced" at t
 
 Each category (color → spacing → typography) is an independently skippable step; skipping keeps the quick-start defaults for that category. All choices are persisted into `quieto.config.json` under `advanced.<category>` so you can re-run and refine without starting over.
 
-> **Don't hand-edit `tokens/*.json` or `build/*.css`.** They're tool-generated (note the `$metadata.doNotEdit` banner at the top of every file). Edit `quieto.config.json` and re-run `quieto-tokens init` instead.
+> **Don't hand-edit `tokens/*.json` or `build/*.css`.** They're tool-generated (note the `$metadata.doNotEdit` banner at the top of every file). Edit `quieto.config.json` and re-run **`quieto-tokens update`** for targeted changes, or **`quieto-tokens init`** for a full pass.
 
 ### Adding categories over time
 
@@ -154,7 +154,8 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 - **Accessible by default** — All color tokens are WCAG AA compliant, enforced by `@quieto/engine`
 - **No framework lock-in** — Platform-native output that works with any framework
 - **Light/dark themes** — Generated from a single yes/no question using the same primitive palette
-- **Re-entrant editing** — Modify your token system without starting over
+- **Selective updates** — `quieto-tokens update` re-runs only the categories you change, then shows a **terminal diff** (with cascade context) before you write
+- **Dry-run mode** — See planned changes without writing (planned)
 - **Design system changelog** — Automatic tracking of what changed and why (planned)
 - **DTCG-aligned** — Interoperable with the growing design token tool ecosystem
 
@@ -166,7 +167,7 @@ This project is in active development. Progress by epic:
 |---|---|---|
 | 1 — Quick-Start Token Generation (MVP) | CLI scaffold, quick-start flow, primitives, semantics, theming, preview, DTCG + CSS output, config | **Done** |
 | 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | **Done** |
-| 3 — Token System Evolution | Re-entrant editing, diff display, dry-run, design-system changelog | Backlog |
+| 3 — Token System Evolution | `update` (re-entrant editing, selective regen), token diff in the terminal, dry-run, design-system changelog | **In progress** (diff + `update` shipped; dry-run & changelog next) |
 | 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | Backlog |
 | 5 — Design System Intelligence | `inspect` command, `migrate` command | Backlog |
 
