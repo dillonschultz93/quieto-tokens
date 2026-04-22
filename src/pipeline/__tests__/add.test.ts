@@ -315,17 +315,12 @@ describe("runAdd — pipeline E2E", () => {
    *   1. `add border` → border files land on disk + `config.categories`
    *      lists `border`.
    *   2. User hand-edits `config.categories` on disk to remove `border`.
-   *   3. `add shadow` → the pruner sees `border.json` is orphaned
+   *   3. `add animation` → the pruner sees `border.json` is orphaned
    *      (not in the active `categories` list) and deletes every
    *      `tokens/primitive/border.json` + `tokens/semantic/<theme>/border.json`.
    *
-   * (The story phrased this as `add animation` at step 3, but animation
-   * has a separate pre-existing semantic-vs-primitive path collision on
-   * `animation.ease.<role>` that Style Dictionary can't resolve. That
-   * is out of scope for this post-review hardening story; swapping to
-   * `add shadow` exercises the exact same pruner contract — "orphan
-   * the previous category, add a new one" — without being gated on an
-   * unrelated bug.)
+   * Re-pointed from `add shadow` to `add animation` in Story 2.5 after
+   * the animation.ease primitive/semantic path collision was fixed.
    */
   it("prunes manually-removed categories on the next add run (AC #11)", async () => {
     const initialConfig = baseConfig();
@@ -356,15 +351,13 @@ describe("runAdd — pipeline E2E", () => {
       categories: ["color", "spacing", "typography"],
     });
 
-    // Step 3: add shadow. The pruner should notice `border.json`
+    // Step 3: add animation. The pruner should notice `border.json`
     // is no longer referenced by `config.categories` and sweep it.
-    vi.mocked(p.text).mockResolvedValueOnce("3");
-    vi.mocked(p.select)
-      .mockResolvedValueOnce("soft")
-      .mockResolvedValueOnce("{color.neutral.900}");
+    vi.mocked(p.text).mockResolvedValueOnce("100,200,400");
+    vi.mocked(p.select).mockResolvedValueOnce("standard");
 
-    const shadowOutcome = await runAdd("shadow", postEditConfig, tempDir);
-    expect(shadowOutcome.status).toBe("ok");
+    const animationOutcome = await runAdd("animation", postEditConfig, tempDir);
+    expect(animationOutcome.status).toBe("ok");
 
     // Border files must be gone — across primitives and every theme.
     expect(
@@ -377,13 +370,13 @@ describe("runAdd — pipeline E2E", () => {
       existsSync(join(tempDir, "tokens", "semantic", "dark", "border.json")),
     ).toBe(false);
 
-    // Shadow files must be present (sanity — the add didn't regress
+    // Animation files must be present (sanity — the add didn't regress
     // the new category write while pruning the old one).
     expect(
-      existsSync(join(tempDir, "tokens", "primitive", "shadow.json")),
+      existsSync(join(tempDir, "tokens", "primitive", "animation.json")),
     ).toBe(true);
     expect(
-      existsSync(join(tempDir, "tokens", "semantic", "light", "shadow.json")),
+      existsSync(join(tempDir, "tokens", "semantic", "light", "animation.json")),
     ).toBe(true);
 
     // Core files must also survive the pruning pass — the pruner is
@@ -394,5 +387,68 @@ describe("runAdd — pipeline E2E", () => {
     expect(
       existsSync(join(tempDir, "tokens", "primitive", "spacing.json")),
     ).toBe(true);
+  });
+
+  /**
+   * Full add-animation E2E — Story 2.5 AC #1, #4.
+   *
+   * Drives `runAdd("animation", …)` against a fresh tmp dir and asserts:
+   *   - `status === "ok"` (no Style Dictionary reference errors)
+   *   - CSS contains resolved cubic-bezier values for semantic ease
+   *     custom properties (no self-references or unresolved strings)
+   *   - On-disk semantic file has no self-referencing `$value` entries
+   */
+  it("add animation resolves cleanly — no self-references or SD errors (AC #1, #4)", async () => {
+    const config = baseConfig();
+    await seedInitState(tempDir, config);
+
+    vi.mocked(p.text).mockResolvedValueOnce("100,200,400");
+    vi.mocked(p.select).mockResolvedValueOnce("standard");
+
+    const outcome = await runAdd("animation", config, tempDir);
+    expect(outcome.status).toBe("ok");
+    if (outcome.status !== "ok") return;
+
+    expect(
+      existsSync(join(tempDir, "tokens", "primitive", "animation.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "semantic", "light", "animation.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(tempDir, "tokens", "semantic", "dark", "animation.json")),
+    ).toBe(true);
+
+    // CSS must contain resolved cubic-bezier values, not unresolved refs.
+    const lightCss = readFileSync(
+      join(tempDir, "build", "light.css"),
+      "utf-8",
+    );
+    expect(lightCss).toMatch(/--quieto-semantic-animation-ease-default/);
+    expect(lightCss).not.toMatch(/\{animation\.ease\./);
+    expect(lightCss).not.toMatch(/\{animation\.easing\./);
+
+    const primCss = readFileSync(
+      join(tempDir, "build", "primitives.css"),
+      "utf-8",
+    );
+    expect(primCss).toMatch(/--quieto-animation-easing-default/);
+    expect(primCss).toMatch(/--quieto-animation-duration-/);
+
+    // On-disk semantic file must not self-reference.
+    const semanticJson = JSON.parse(
+      readFileSync(
+        join(tempDir, "tokens", "semantic", "light", "animation.json"),
+        "utf-8",
+      ),
+    );
+    const easeNode = semanticJson.animation?.ease;
+    if (easeNode) {
+      for (const [role, entry] of Object.entries(easeNode) as [string, any][]) {
+        const ref = entry.$value as string;
+        expect(ref).not.toBe(`{animation.ease.${role}}`);
+        expect(ref).toMatch(/^\{animation\.easing\./);
+      }
+    }
   });
 });

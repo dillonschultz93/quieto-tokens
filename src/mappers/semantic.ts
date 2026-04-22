@@ -318,7 +318,7 @@ export function mapAnimationSemantics(
   animationPrimitives: PrimitiveToken[],
 ): SemanticToken[] {
   const durations = animationPrimitives.filter((t) => t.path[1] === "duration");
-  const eases = animationPrimitives.filter((t) => t.path[1] === "ease");
+  const eases = animationPrimitives.filter((t) => t.path[1] === "easing");
 
   const sortedDurations = [...durations].sort(sortByNumericTail);
 
@@ -356,7 +356,7 @@ export function mapAnimationSemantics(
       category: "animation",
       name: `animation.ease.${role}`,
       $type: "cubicBezier",
-      $value: `{animation.ease.${prim.path[2]}}`,
+      $value: `{animation.easing.${prim.path[2]}}`,
       path: ["animation", "ease", role],
     });
   }

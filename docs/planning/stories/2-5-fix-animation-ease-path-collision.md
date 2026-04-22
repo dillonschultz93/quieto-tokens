@@ -1,6 +1,6 @@
 # Story 2.5: Fix Animation Ease Primitive/Semantic Path Collision
 
-Status: ready-for-dev
+Status: review
 
 <!-- Post-Story-2.4 defect fix. Surfaced while writing the Task 8 pruner integration test for Story 2.4 (AC #11) — a full `add animation` pipeline run fails Style Dictionary reference resolution because primitive and semantic animation-ease tokens share identical paths. No new user-facing feature work is introduced. -->
 
@@ -50,49 +50,49 @@ The bug is scoped *entirely* to `animation.ease.<role>`. Durations use `animatio
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Pick a renaming strategy and document it (AC: #2, #3)**
-  - [ ] 1.1: Read `src/generators/animation.ts` and `src/mappers/semantic.ts` → `mapAnimationSemantics` to confirm the exact collision and the preset → bezier mapping. Read Story 2.4 Task 8 note for the context in which this bug was discovered.
-  - [ ] 1.2: Choose ONE of the following rename strategies and record the choice + rationale in Completion Notes:
+- [x] **Task 1: Pick a renaming strategy and document it (AC: #2, #3)**
+  - [x] 1.1: Read `src/generators/animation.ts` and `src/mappers/semantic.ts` → `mapAnimationSemantics` to confirm the exact collision and the preset → bezier mapping. Read Story 2.4 Task 8 note for the context in which this bug was discovered.
+  - [x] 1.2: Choose ONE of the following rename strategies and record the choice + rationale in Completion Notes:
     - **Option A — rename the primitive side (recommended).** Move primitive ease tokens under a new path segment that doesn't collide with the semantic role namespace. Suggested: `animation.easing.<preset-name>` (e.g. `animation.easing.standard-default`, `animation.easing.emphasized-enter`) or the simpler `animation.ease-primitive.<name>`. The semantic layer keeps its role-facing names (`animation.ease.default`, `.enter`, `.exit`) — the public contract for consumers is preserved.
     - **Option B — drop the semantic ease layer.** The current semantic ease tokens are 1:1 passthroughs of the primitives (literally `{animation.ease.default}` → `animation.ease.default`). If the abstraction is load-bearing only because "consistency with other semantic categories", flattening it to primitive-only is a legitimate simplification. Downside: breaks the "three-tier contract" consumers may rely on.
     - **Option C — rename the semantic side.** Pick role names that can't collide (e.g. `animation.ease.on-enter`, `animation.ease.on-exit`, `animation.ease.movement`). Downside: breaks any consumer already wiring `--animation-ease-default`.
-  - [ ] 1.3: The assumption baked into Tasks 2-5 below is **Option A**. If you pick B or C, rewrite those tasks before starting the code changes and note the divergence in Completion Notes.
+  - [x] 1.3: The assumption baked into Tasks 2-5 below is **Option A**. If you pick B or C, rewrite those tasks before starting the code changes and note the divergence in Completion Notes.
 
-- [ ] **Task 2: Implement the rename in `src/generators/animation.ts` (AC: #2, #5)**
-  - [ ] 2.1: Update the ease-token loop (currently `src/generators/animation.ts:52-62`) to emit paths under the chosen non-colliding namespace. Preserve the `$type: "cubicBezier"` and the JSON-stringified four-number bezier `$value` exactly — `json-writer.ts` already handles the stringified-composite → native-array decode.
-  - [ ] 2.2: If Option A is chosen with a per-preset naming scheme (e.g. `animation.easing.standard-default`), either (a) include the preset name in the path so different preset choices produce distinct primitives, or (b) keep the three canonical role names and rely on `input.easing` to pick which of the three presets' curves is embedded. Pick (b) for minimum consumer churn; document the choice.
-  - [ ] 2.3: If AC #5 is satisfied by the rewrite path, ensure the writer's overwrite semantics already handle stale tokens — `runAdd` re-emits the full animation primitive file on every `add animation` call, so the old collision paths will naturally be replaced. Add a `p.log.info` line noting the rename happened. If you pick the detection-only path, write the warn logic here.
+- [x] **Task 2: Implement the rename in `src/generators/animation.ts` (AC: #2, #5)**
+  - [x] 2.1: Update the ease-token loop (currently `src/generators/animation.ts:52-62`) to emit paths under the chosen non-colliding namespace. Preserve the `$type: "cubicBezier"` and the JSON-stringified four-number bezier `$value` exactly — `json-writer.ts` already handles the stringified-composite → native-array decode.
+  - [x] 2.2: If Option A is chosen with a per-preset naming scheme (e.g. `animation.easing.standard-default`), either (a) include the preset name in the path so different preset choices produce distinct primitives, or (b) keep the three canonical role names and rely on `input.easing` to pick which of the three presets' curves is embedded. Pick (b) for minimum consumer churn; document the choice.
+  - [x] 2.3: If AC #5 is satisfied by the rewrite path, ensure the writer's overwrite semantics already handle stale tokens — `runAdd` re-emits the full animation primitive file on every `add animation` call, so the old collision paths will naturally be replaced. Add a `p.log.info` line noting the rename happened. If you pick the detection-only path, write the warn logic here.
 
-- [ ] **Task 3: Update `src/mappers/semantic.ts` → `mapAnimationSemantics` (AC: #3)**
-  - [ ] 3.1: Update the `findEase` lookup path and the `$value: "{animation.ease.<primitive-path>}"` reference template to point at the new primitive namespace chosen in Task 2. Keep the semantic output paths (`animation.ease.default`, `.enter`, `.exit`) if you went with Option A.
-  - [ ] 3.2: Verify the reference template matches Style Dictionary's DTCG reference syntax exactly — curly-brace, dot-separated, no leading/trailing whitespace, no `$value` suffix.
+- [x] **Task 3: Update `src/mappers/semantic.ts` → `mapAnimationSemantics` (AC: #3)**
+  - [x] 3.1: Update the `findEase` lookup path and the `$value: "{animation.ease.<primitive-path>}"` reference template to point at the new primitive namespace chosen in Task 2. Keep the semantic output paths (`animation.ease.default`, `.enter`, `.exit`) if you went with Option A.
+  - [x] 3.2: Verify the reference template matches Style Dictionary's DTCG reference syntax exactly — curly-brace, dot-separated, no leading/trailing whitespace, no `$value` suffix.
 
-- [ ] **Task 4: Regenerate + update unit tests (AC: #7)**
-  - [ ] 4.1: `src/generators/__tests__/animation.test.ts` — update primitive-path assertions to the new namespace; leave preset-math assertions (the actual four-number bezier values) untouched since those don't change.
-  - [ ] 4.2: `src/mappers/__tests__/semantic.test.ts` — update the `mapAnimationSemantics` cases' expected `$value` reference strings to the new namespace.
-  - [ ] 4.3: `src/commands/__tests__/add-animation.test.ts` — check for any path-level assertions; collector tests are mostly prompt-flow so likely unaffected, but verify.
-  - [ ] 4.4: `src/output/__tests__/json-writer.test.ts` — check for any animation-specific path assertions.
-  - [ ] 4.5: Grep the repo once for the old primitive path format (`animation.ease.default`, `.enter`, `.exit` as primitives) and update every hit.
+- [x] **Task 4: Regenerate + update unit tests (AC: #7)**
+  - [x] 4.1: `src/generators/__tests__/animation.test.ts` — update primitive-path assertions to the new namespace; leave preset-math assertions (the actual four-number bezier values) untouched since those don't change.
+  - [x] 4.2: `src/mappers/__tests__/semantic.test.ts` — update the `mapAnimationSemantics` cases' expected `$value` reference strings to the new namespace.
+  - [x] 4.3: `src/commands/__tests__/add-animation.test.ts` — check for any path-level assertions; collector tests are mostly prompt-flow so likely unaffected, but verify.
+  - [x] 4.4: `src/output/__tests__/json-writer.test.ts` — check for any animation-specific path assertions.
+  - [x] 4.5: Grep the repo once for the old primitive path format (`animation.ease.default`, `.enter`, `.exit` as primitives) and update every hit.
 
-- [ ] **Task 5: Re-point Story 2.4's pruner integration test to `add animation` (AC: #6)**
-  - [ ] 5.1: In `src/pipeline/__tests__/add.test.ts` → "prunes manually-removed categories on the next add run (AC #11)", swap step-3's `add shadow` call back to `add animation` (this was the story's original intent before Story 2.4 hit the collision). Update the assertions (`shadow.json` presence → `animation.json` presence; shadow prompt mocks → animation prompt mocks — `p.text("100,200,400")` + `p.select("standard")`).
-  - [ ] 5.2: Run the test in isolation to confirm it passes; this is the regression guard per AC #6.
+- [x] **Task 5: Re-point Story 2.4's pruner integration test to `add animation` (AC: #6)**
+  - [x] 5.1: In `src/pipeline/__tests__/add.test.ts` → "prunes manually-removed categories on the next add run (AC #11)", swap step-3's `add shadow` call back to `add animation` (this was the story's original intent before Story 2.4 hit the collision). Update the assertions (`shadow.json` presence → `animation.json` presence; shadow prompt mocks → animation prompt mocks — `p.text("100,200,400")` + `p.select("standard")`).
+  - [x] 5.2: Run the test in isolation to confirm it passes; this is the regression guard per AC #6.
 
-- [ ] **Task 6: Pipeline E2E regression guard for `add animation` (AC: #1, #4)**
-  - [ ] 6.1: Add a dedicated `describe` block in `src/pipeline/__tests__/add.test.ts` that drives `runAdd("animation", …)` against a fresh tmp dir with mocked prompts; assert `status === "ok"` and inspect `build/tokens.css` for a known semantic ease custom property (e.g. `--animation-ease-default: cubic-bezier(...)`). Any literal `{animation.ease.*}` string in the CSS is a test failure.
-  - [ ] 6.2: Assert no self-reference patterns in the on-disk semantic file: parse `tokens/semantic/<theme>/animation.json`, walk `animation.ease.*.$value` strings, and check `$value !== "{" + tokenPath + "}"` for each.
+- [x] **Task 6: Pipeline E2E regression guard for `add animation` (AC: #1, #4)**
+  - [x] 6.1: Add a dedicated `describe` block in `src/pipeline/__tests__/add.test.ts` that drives `runAdd("animation", …)` against a fresh tmp dir with mocked prompts; assert `status === "ok"` and inspect `build/tokens.css` for a known semantic ease custom property (e.g. `--animation-ease-default: cubic-bezier(...)`). Any literal `{animation.ease.*}` string in the CSS is a test failure.
+  - [x] 6.2: Assert no self-reference patterns in the on-disk semantic file: parse `tokens/semantic/<theme>/animation.json`, walk `animation.ease.*.$value` strings, and check `$value !== "{" + tokenPath + "}"` for each.
 
-- [ ] **Task 7: Regenerate any committed animation fixtures (AC: #8)**
-  - [ ] 7.1: `git ls-files tokens/ | grep animation` to enumerate committed animation fixtures. If any exist, run `quieto-tokens add animation` against a scratch copy of the repo to regenerate them, then commit the regenerated files in the same commit as the code fix.
-  - [ ] 7.2: If no animation fixtures are committed, note "no committed fixtures to regenerate" in Completion Notes.
+- [x] **Task 7: Regenerate any committed animation fixtures (AC: #8)**
+  - [x] 7.1: `git ls-files tokens/ | grep animation` to enumerate committed animation fixtures. If any exist, run `quieto-tokens add animation` against a scratch copy of the repo to regenerate them, then commit the regenerated files in the same commit as the code fix.
+  - [x] 7.2: If no animation fixtures are committed, note "no committed fixtures to regenerate" in Completion Notes.
 
-- [ ] **Task 8: Update Story 2.4 cross-reference (AC: #9)**
-  - [ ] 8.1: In `docs/planning/stories/2-4-story-2-2-post-review-hardening.md` → Task 8 bullet (the one with the `add shadow` swap note) and the Change Log, add a line noting "Collision fixed in Story 2.5; Task 8 test re-pointed back to `add animation`."
-  - [ ] 8.2: In `docs/planning/stories/2-2-add-subcommand-for-new-token-categories.md` → Review Findings, append a single `[Followup]` line under the "Missing: manual-category-removal prune integration test" entry noting the fix landed in Story 2.5.
+- [x] **Task 8: Update Story 2.4 cross-reference (AC: #9)**
+  - [x] 8.1: In `docs/planning/stories/2-4-story-2-2-post-review-hardening.md` → Task 8 bullet (the one with the `add shadow` swap note) and the Change Log, add a line noting "Collision fixed in Story 2.5; Task 8 test re-pointed back to `add animation`."
+  - [x] 8.2: In `docs/planning/stories/2-2-add-subcommand-for-new-token-categories.md` → Review Findings, append a single `[Followup]` line under the "Missing: manual-category-removal prune integration test" entry noting the fix landed in Story 2.5.
 
-- [ ] **Task 9: Close-out**
-  - [ ] 9.1: Run `npm test`, `npm run type-check`, `npm run validate:sprint`. All clean.
-  - [ ] 9.2: Move this story to `review`, then to `done` after code review.
+- [x] **Task 9: Close-out**
+  - [x] 9.1: Run `npm test`, `npm run type-check`, `npm run validate:sprint`. All clean.
+  - [x] 9.2: Move this story to `review`, then to `done` after code review.
 
 ## Dev Notes
 
@@ -108,6 +108,40 @@ The bug is scoped *entirely* to `animation.ease.<role>`. Durations use `animatio
   - `src/mappers/semantic.ts:351-362` — the semantic emit loop.
   - `src/output/json-writer.ts` → `decodeCompositeValue` — the Story 2.4 helper that ensures stringified cubic-bezier arrays decode to native JSON arrays so Style Dictionary can resolve nested references. This helper stays; the collision fix is orthogonal to it.
 
+## Dev Agent Record
+
+### Implementation Plan
+
+- **Strategy chosen: Option A** — rename primitive ease tokens from `animation.ease.<role>` to `animation.easing.<role>`. Semantic output paths (`animation.ease.default`, `.enter`, `.exit`) preserved — the CSS custom property contract for consumers is unchanged.
+- **Sub-option (b)** — kept the three canonical role names (`default`, `enter`, `exit`) under the new `easing` namespace rather than embedding preset names. Minimizes consumer churn and keeps the naming pattern consistent with durations.
+- **AC #5 (backwards compatibility):** satisfied by the rewrite path — `runAdd` re-emits the full animation primitive file on every `add animation` call, so old collision paths are naturally replaced by the new `animation.easing.*` paths. No explicit migration warning needed.
+- **AC #8 (committed fixtures):** `git ls-files tokens/ | grep animation` returned nothing — no committed animation fixtures to regenerate.
+- **Task 9.1 note:** `npm run validate:sprint` reports pre-existing drift on story 2.3 (`file=review` vs `yaml=done`). This is not related to Story 2.5 changes.
+
+### Completion Notes
+
+- Renamed primitive ease token paths from `animation.ease.<role>` to `animation.easing.<role>` in `src/generators/animation.ts`.
+- Updated `mapAnimationSemantics` in `src/mappers/semantic.ts` to filter on `path[1] === "easing"` and emit `$value` references as `{animation.easing.<role>}` while preserving semantic output paths at `animation.ease.<role>`.
+- Updated all test files: generator tests, semantic mapper tests. Verified add-animation collector tests and json-writer tests had no animation-path assertions to update.
+- Re-pointed Story 2.4's pruner integration test from `add shadow` back to `add animation` — passes cleanly.
+- Added dedicated E2E test for `add animation` pipeline: asserts `status === "ok"`, CSS contains resolved cubic-bezier values, no self-references in on-disk semantic JSON.
+- No committed animation fixtures to regenerate.
+- Updated Story 2.4 Change Log and Story 2.2 Review Findings with cross-reference notes.
+- All 557 tests pass, type-check clean.
+
+## File List
+
+- `src/generators/animation.ts` — modified (primitive path `ease` → `easing`)
+- `src/mappers/semantic.ts` — modified (easing filter + reference template)
+- `src/generators/__tests__/animation.test.ts` — modified (path assertions)
+- `src/mappers/__tests__/semantic.test.ts` — modified (`makeEase` helper + reference assertions)
+- `src/pipeline/__tests__/add.test.ts` — modified (pruner test re-pointed + new E2E test)
+- `docs/planning/stories/2-4-story-2-2-post-review-hardening.md` — modified (Change Log cross-reference)
+- `docs/planning/stories/2-2-add-subcommand-for-new-token-categories.md` — modified (Review Findings followup note)
+- `docs/planning/stories/2-5-fix-animation-ease-path-collision.md` — modified (tasks, status, dev agent record)
+- `docs/planning/sprint-status.yaml` — modified (story status)
+
 ## Change Log
 
 - 2026-04-19: Drafted as a follow-up to Story 2.4. The primitive/semantic `animation.ease.<role>` path collision was discovered while writing Story 2.4's Task 8 pruner integration test (AC #11); Story 2.4 worked around it by swapping `add animation` to `add shadow` in that test so the rest of the post-review hardening scope could land. This story fixes the root cause so the Task 8 test can be re-pointed to its original form.
+- 2026-04-21: Implemented. Renamed primitive ease paths from `animation.ease.<role>` to `animation.easing.<role>` (Option A). All 557 tests pass, type-check clean. Pruner integration test re-pointed to `add animation`; dedicated E2E regression guard added.
