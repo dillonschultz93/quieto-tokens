@@ -129,7 +129,7 @@ This is the **first story of Epic 3 (Token System Evolution)** and the foundatio
 
 - [x] **Task 6: Override conflict detection + resolution (AC: #12, #13, #14)**
   - [x] 6.1: Create `src/utils/override-conflicts.ts` exporting `detectOverrideConflicts(overrides: Record<string, string>, collection: ThemeCollection): OverrideConflict[]`.
-  - [x] 6.2: For each override, check if the referenced primitive (the `$value` target) still exists in `collection.themes[0].semanticTokens` (or the primitives array if it's a direct primitive ref). An override conflict occurs when the target token path no longer exists in the regenerated collection.
+  - [x] 6.2: For each override, check whether the referenced `$value` target still exists in the regenerated collection: validate primitive token paths against `collection.primitives`, and validate semantic token paths against `collection.themes[0].semanticTokens` only if semantic-to-semantic overrides are supported. An override conflict occurs when the target token path no longer exists in the appropriate collection.
   - [x] 6.3: Export `resolveOverrideConflicts(conflicts: OverrideConflict[], collection: ThemeCollection): Promise<Record<string, string>>` — presents a `p.select` for each conflict:
     - "Remap to default" → remove the override (let the mapper's default apply).
     - "Choose new value" → open a `p.select` of available primitive tokens for that semantic role.
