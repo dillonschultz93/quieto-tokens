@@ -62,12 +62,12 @@ development_status:
   # Epic 2: Advanced Token Authoring
   # NOTE: Story 2.4 is a post-review hardening story carrying forward 10 unchecked review items from Story 2.2.
   # NOTE: Story 2.5 is a post-Story-2.4 defect fix (animation.ease primitive/semantic path collision surfaced by Story 2.4's D5 on-disk CSS sourcing refactor).
-  epic-2: in-progress
+  epic-2: done
   2-1-advanced-mode-for-core-categories: done
   2-2-add-subcommand-for-new-token-categories: done
   2-3-guided-component-token-generation: done
   2-4-story-2-2-post-review-hardening: done
-  2-5-fix-animation-ease-path-collision: review
+  2-5-fix-animation-ease-path-collision: done
   epic-2-retrospective: optional
 
   # Epic 3: Token System Evolution

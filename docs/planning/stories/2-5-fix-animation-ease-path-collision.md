@@ -1,6 +1,6 @@
 # Story 2.5: Fix Animation Ease Primitive/Semantic Path Collision
 
-Status: review
+Status: done
 
 <!-- Post-Story-2.4 defect fix. Surfaced while writing the Task 8 pruner integration test for Story 2.4 (AC #11) — a full `add animation` pipeline run fails Style Dictionary reference resolution because primitive and semantic animation-ease tokens share identical paths. No new user-facing feature work is introduced. -->
 
