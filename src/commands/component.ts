@@ -6,6 +6,8 @@ import {
   readToolVersion,
   writeConfig,
 } from "../output/config-writer.js";
+import { appendChangelog } from "../output/changelog-writer.js";
+import { buildComponentSummary } from "../output/changelog-summary.js";
 import type { QuietoConfig } from "../types/config.js";
 import { runComponent } from "../pipeline/component.js";
 import { validateComponentName } from "../utils/validation.js";
@@ -91,7 +93,8 @@ export async function componentCommand(
     const config: QuietoConfig = loadResult.config;
 
     const componentFile = join(cwd, "tokens", "component", `${options.name}.json`);
-    if (existsSync(componentFile)) {
+    const hadComponentFile = existsSync(componentFile);
+    if (hadComponentFile) {
       const reauthor = await p.confirm({
         message: `Re-author "${options.name}"? Existing tokens will be replaced.`,
       });
@@ -164,6 +167,26 @@ export async function componentCommand(
       );
       process.exitCode = 1;
       return;
+    }
+
+    const changelogRes = await appendChangelog(
+      {
+        timestamp: new Date().toISOString(),
+        toolVersion: version,
+        command: `component ${options.name}`,
+        categoriesAffected: ["component"],
+        summary: buildComponentSummary(
+          options.name,
+          result.tokenCount,
+          hadComponentFile,
+        ),
+      },
+      cwd,
+    );
+    if ("error" in changelogRes) {
+      p.log.warn(
+        `Could not update TOKENS_CHANGELOG.md: ${changelogRes.error}`,
+      );
     }
 
     const filePath = join("tokens", "component", `${options.name}.json`);

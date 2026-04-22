@@ -6,6 +6,8 @@ import {
   buildConfig,
   writeConfig,
 } from "../output/config-writer.js";
+import { appendChangelog } from "../output/changelog-writer.js";
+import { buildAddSummary } from "../output/changelog-summary.js";
 import type { AddableCategory } from "../utils/categories.js";
 import type { QuietoConfig } from "../types/config.js";
 import { runAdd, rollbackNewFiles } from "../pipeline/add.js";
@@ -199,6 +201,22 @@ export async function addCommand(
       );
       process.exitCode = 1;
       return;
+    }
+
+    const changelogRes = await appendChangelog(
+      {
+        timestamp: new Date().toISOString(),
+        toolVersion: newVersion,
+        command: `add ${category}`,
+        categoriesAffected: [category],
+        summary: buildAddSummary(category, result.collection),
+      },
+      cwd,
+    );
+    if ("error" in changelogRes) {
+      p.log.warn(
+        `Could not update TOKENS_CHANGELOG.md: ${changelogRes.error}`,
+      );
     }
 
     const allFiles = [...result.output.jsonFiles, ...result.output.cssFiles];

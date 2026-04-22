@@ -1,6 +1,6 @@
 # Story 3.4: Design System Changelog
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -70,8 +70,8 @@ This is the **final story of Epic 3** and builds directly on Story 3.2's diff en
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Changelog writer module (AC: #1, #2, #3, #8, #9, #10, #17, #18)**
-  - [ ] 1.1: Create `src/output/changelog-writer.ts` exporting:
+- [x] **Task 1: Changelog writer module (AC: #1, #2, #3, #8, #9, #10, #17, #18)**
+  - [x] 1.1: Create `src/output/changelog-writer.ts` exporting:
     ```typescript
     export interface ChangelogEntry {
       timestamp: string;       // ISO 8601
@@ -84,7 +84,7 @@ This is the **final story of Epic 3** and builds directly on Story 3.2's diff en
     export function formatChangelogEntry(entry: ChangelogEntry): string;
     export async function appendChangelog(entry: ChangelogEntry, cwd?: string): Promise<string>;
     ```
-  - [ ] 1.2: `formatChangelogEntry` renders a single entry as markdown:
+  - [x] 1.2: `formatChangelogEntry` renders a single entry as markdown:
     ```markdown
     ## [2026-04-22T15:30:00.000Z]
 
@@ -102,90 +102,90 @@ This is the **final story of Epic 3** and builds directly on Story 3.2's diff en
 
     ---
     ```
-  - [ ] 1.3: `appendChangelog` reads `TOKENS_CHANGELOG.md` from `cwd`. If it doesn't exist, creates it with the `# Design System Changelog\n\n` title. Prepends the new entry after the title line (newest-first). Writes back atomically (tmp + rename, matching `writeConfig` pattern). Returns the absolute path.
-  - [ ] 1.4: Handle edge cases: empty file (re-add title), read failure (create fresh), write failure (catch, return error — caller surfaces via `p.log.warn`).
+  - [x] 1.3: `appendChangelog` reads `TOKENS_CHANGELOG.md` from `cwd`. If it doesn't exist, creates it with the `# Design System Changelog\n\n` title. Prepends the new entry after the title line (newest-first). Writes back atomically (tmp + rename, matching `writeConfig` pattern). Returns the absolute path.
+  - [x] 1.4: Handle edge cases: empty file (re-add title), read failure (create fresh), write failure (catch, return error — caller surfaces via `p.log.warn`).
 
-- [ ] **Task 2: Summary builders per command type (AC: #4, #5, #6, #7)**
-  - [ ] 2.1: Create `src/output/changelog-summary.ts` exporting summary builder functions:
+- [x] **Task 2: Summary builders per command type (AC: #4, #5, #6, #7)**
+  - [x] 2.1: Create `src/output/changelog-summary.ts` exporting summary builder functions:
     ```typescript
     export function buildInitSummary(collection: ThemeCollection): string;
     export function buildUpdateSummary(diff: TokenDiff, configDelta?: ConfigDelta): string;
     export function buildAddSummary(category: string, collection: ThemeCollection): string;
     export function buildComponentSummary(componentName: string, tokenCount: number, isReauthor: boolean): string;
     ```
-  - [ ] 2.2: `buildInitSummary` produces: "Initial token system generated.\n\n- Created N primitives, M semantic tokens across K themes."
-  - [ ] 2.3: `buildUpdateSummary` uses the `TokenDiff` from Story 3.2 to produce:
+  - [x] 2.2: `buildInitSummary` produces: "Initial token system generated.\n\n- Created N primitives, M semantic tokens across K themes."
+  - [x] 2.3: `buildUpdateSummary` uses the `TokenDiff` from Story 3.2 to produce:
     - Per-tier counts: "Primitives: N modified, M added, R removed"
     - "Semantics: N remapped across K themes"
     - Cascade line: "Changing N <category> primitives affected M semantic tokens"
     - Config delta line (if provided): "Brand color changed from X to Y" / "Spacing base changed from X to Y"
-  - [ ] 2.4: `buildAddSummary` produces: "Added <category> category.\n\n- Created N primitive tokens, M semantic tokens."
-  - [ ] 2.5: `buildComponentSummary` produces: "Added component tokens for <name>." or "Re-authored component tokens for <name>." followed by "- Created N component tokens."
+  - [x] 2.4: `buildAddSummary` produces: "Added <category> category.\n\n- Created N primitive tokens, M semantic tokens."
+  - [x] 2.5: `buildComponentSummary` produces: "Added component tokens for <name>." or "Re-authored component tokens for <name>." followed by "- Created N component tokens."
 
-- [ ] **Task 3: Config delta detection (AC: #5)**
-  - [ ] 3.1: In `src/output/changelog-summary.ts`, export:
+- [x] **Task 3: Config delta detection (AC: #5)**
+  - [x] 3.1: In `src/output/changelog-summary.ts`, export:
     ```typescript
     export interface ConfigDelta {
       changes: string[]; // human-readable lines
     }
     export function detectConfigDelta(prior: QuietoConfig, current: Partial<QuickStartOptions>): ConfigDelta;
     ```
-  - [ ] 3.2: Compare `prior.inputs.brandColor` vs `current.brandColor`, `prior.inputs.spacingBase` vs `current.spacingBase`, `prior.inputs.typeScale` vs `current.typeScale`, `prior.inputs.darkMode` vs `current.generateThemes`. For each difference, produce a line: "Brand color changed from #2563eb to #1d4ed8".
-  - [ ] 3.3: Only used by `update` — `init` (first run) has no prior config to compare against.
+  - [x] 3.2: Compare `prior.inputs.brandColor` vs `current.brandColor`, `prior.inputs.spacingBase` vs `current.spacingBase`, `prior.inputs.typeScale` vs `current.typeScale`, `prior.inputs.darkMode` vs `current.generateThemes`. For each difference, produce a line: "Brand color changed from #2563eb to #1d4ed8".
+  - [x] 3.3: Only used by `update` — `init` (first run) has no prior config to compare against.
 
-- [ ] **Task 4: Wire changelog into `init` (AC: #1, #4, #11, #15, #16)**
-  - [ ] 4.1: In `src/commands/init.ts`, after `runConfigGeneration` succeeds and before the outro:
+- [x] **Task 4: Wire changelog into `init` (AC: #1, #4, #11, #15, #16)**
+  - [x] 4.1: In `src/commands/init.ts`, after `runConfigGeneration` succeeds and before the outro:
     - Build entry via `buildInitSummary(collection)` for first-run, or `buildUpdateSummary(diff, configDelta)` for modify-flow (though modify-flow doesn't have a diff — use a simplified "Full regeneration" summary for modify-flow: "Regenerated token system via init modify-flow. Created N primitives, M semantic tokens.").
     - Call `appendChangelog(entry, cwd)`.
     - On failure → `p.log.warn("Could not update TOKENS_CHANGELOG.md: <error>")`.
-  - [ ] 4.2: Skip changelog write when `dryRun` is true (Story 3.3).
+  - [x] 4.2: Skip changelog write when `dryRun` is true (Story 3.3).
 
-- [ ] **Task 5: Wire changelog into `update` (AC: #2, #5, #12, #15, #16)**
-  - [ ] 5.1: In `src/commands/update.ts`, after the write step succeeds:
+- [x] **Task 5: Wire changelog into `update` (AC: #2, #5, #12, #15, #16)**
+  - [x] 5.1: In `src/commands/update.ts`, after the write step succeeds:
     - The `TokenDiff` from Story 3.2 is already computed. Pass it to `buildUpdateSummary(diff, configDelta)`.
     - Detect config delta by comparing the prior config (loaded at the start of `updateCommand`) against the new inputs from `updateResult`.
     - Call `appendChangelog(entry, cwd)`.
     - On failure → `p.log.warn`.
-  - [ ] 5.2: Skip when `dryRun` is true.
+  - [x] 5.2: Skip when `dryRun` is true.
 
-- [ ] **Task 6: Wire changelog into `add` (AC: #6, #13, #15, #16)**
-  - [ ] 6.1: In `src/commands/add.ts`, after config write succeeds:
+- [x] **Task 6: Wire changelog into `add` (AC: #6, #13, #15, #16)**
+  - [x] 6.1: In `src/commands/add.ts`, after config write succeeds:
     - Build entry via `buildAddSummary(category, collection)`.
     - Call `appendChangelog(entry, cwd)`.
     - On failure → `p.log.warn`.
-  - [ ] 6.2: Skip when `dryRun` is true.
+  - [x] 6.2: Skip when `dryRun` is true.
 
-- [ ] **Task 7: Wire changelog into `component` (AC: #7, #14, #15, #16)**
-  - [ ] 7.1: In `src/commands/component.ts`, after config write succeeds:
+- [x] **Task 7: Wire changelog into `component` (AC: #7, #14, #15, #16)**
+  - [x] 7.1: In `src/commands/component.ts`, after config write succeeds:
     - Build entry via `buildComponentSummary(name, tokenCount, isReauthor)`.
     - Call `appendChangelog(entry, cwd)`.
     - On failure → `p.log.warn`.
-  - [ ] 7.2: Skip when `dryRun` is true.
+  - [x] 7.2: Skip when `dryRun` is true.
 
-- [ ] **Task 8: Tests (AC: all)**
-  - [ ] 8.1: `src/output/__tests__/changelog-writer.test.ts` — changelog writer unit tests:
+- [x] **Task 8: Tests (AC: all)**
+  - [x] 8.1: `src/output/__tests__/changelog-writer.test.ts` — changelog writer unit tests:
     - `formatChangelogEntry` produces expected markdown.
     - `appendChangelog` creates new file with title + entry.
     - `appendChangelog` prepends to existing file (newest-first).
     - Empty file → title re-added.
     - Write failure → error returned (not thrown).
-  - [ ] 8.2: `src/output/__tests__/changelog-summary.test.ts` — summary builder tests:
+  - [x] 8.2: `src/output/__tests__/changelog-summary.test.ts` — summary builder tests:
     - `buildInitSummary` with various token counts.
     - `buildUpdateSummary` with added/modified/removed/cascade.
     - `buildAddSummary` for each category.
     - `buildComponentSummary` for new + re-author.
     - `detectConfigDelta` with changed/unchanged fields.
-  - [ ] 8.3: `src/commands/__tests__/init.test.ts` (or extend) — verify `appendChangelog` called after successful writes, NOT called on failure, NOT called when `dryRun`.
-  - [ ] 8.4: `src/commands/__tests__/update.test.ts` — verify `appendChangelog` called with `TokenDiff`-based summary, NOT called on dry-run or cancel.
-  - [ ] 8.5: `src/commands/__tests__/add.test.ts` — verify `appendChangelog` called with add summary.
-  - [ ] 8.6: `src/commands/__tests__/component.test.ts` — verify `appendChangelog` called with component summary.
-  - [ ] 8.7: Pipeline E2E: full `init` in a tmp dir → `TOKENS_CHANGELOG.md` exists, has title + one entry. Run `update` (mocked prompts) → file has two entries, newest first.
-  - [ ] 8.8: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+  - [x] 8.3: `src/commands/__tests__/init.test.ts` (or extend) — verify `appendChangelog` called after successful writes, NOT called on failure, NOT called when `dryRun`.
+  - [x] 8.4: `src/commands/__tests__/update.test.ts` — verify `appendChangelog` called with `TokenDiff`-based summary, NOT called on dry-run or cancel.
+  - [x] 8.5: `src/commands/__tests__/add.test.ts` — verify `appendChangelog` called with add summary.
+  - [x] 8.6: `src/commands/__tests__/component.test.ts` — verify `appendChangelog` called with component summary.
+  - [x] 8.7: Pipeline E2E: full `init` in a tmp dir → `TOKENS_CHANGELOG.md` exists, has title + one entry. Run `update` (mocked prompts) → file has two entries, newest first.
+  - [x] 8.8: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 9: Close-out**
-  - [ ] 9.1: Update README.md to document the automatic changelog behavior under a new "Design System Changelog" section.
-  - [ ] 9.2: Update `src/pipeline/config.ts` "What's next" to mention the changelog.
-  - [ ] 9.3: Move this story to `review`, then to `done` after code review.
+- [x] **Task 9: Close-out**
+  - [x] 9.1: Update README.md to document the automatic changelog behavior under a new "Design System Changelog" section.
+  - [x] 9.2: Update `src/pipeline/config.ts` "What's next" to mention the changelog.
+  - [x] 9.3: Move this story to `review`, then to `done` after code review.
 
 ## Dev Notes
 
@@ -330,8 +330,39 @@ src/
 
 ### Agent Model Used
 
+Composer (Cursor agent)
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `TOKENS_CHANGELOG.md` writer (atomic tmp + rename) and summary builders for `init` (initial / regenerate / modify flows), `update` (TokenDiff + `detectConfigDelta`), `add`, and `component`.
+- Wired all four commands after successful config/tokens writes; dry-run and failed writes skip the changelog; changelog errors are non-fatal (`p.log.warn`).
+- Extended `AddPipelineResult` with `collection` for add-summary counts; documented behavior in README and `runConfigGeneration` “What’s next”.
+- `appendChangelog` returns `{ path } | { error }` (not `Promise<string>`) so callers can warn without throwing; aligns with task 1.4 / 8.1.
+
 ### File List
+
+- `src/output/changelog-writer.ts`
+- `src/output/changelog-summary.ts`
+- `src/output/__tests__/changelog-writer.test.ts`
+- `src/output/__tests__/changelog-summary.test.ts`
+- `src/commands/init.ts`
+- `src/commands/update.ts`
+- `src/commands/add.ts`
+- `src/commands/component.ts`
+- `src/pipeline/add.ts`
+- `src/pipeline/config.ts`
+- `src/pipeline/__tests__/config.test.ts`
+- `src/commands/__tests__/init-dry-run.test.ts`
+- `src/commands/__tests__/update.test.ts`
+- `src/commands/__tests__/add.test.ts`
+- `src/commands/__tests__/component.test.ts`
+- `README.md`
+- `docs/planning/sprint-status.yaml`
+- `docs/planning/stories/3-4-design-system-changelog.md`
+
+### Change Log
+
+- 2026-04-22: Story 3.4 — automatic `TOKENS_CHANGELOG.md`, integration in init/update/add/component, tests, README and pipeline outro. Status → `review`.
+- 2026-04-22: GitHub Copilot code review passed. Status → `done`.

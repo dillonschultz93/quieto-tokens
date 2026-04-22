@@ -3,6 +3,7 @@ import * as p from "@clack/prompts";
 import { initCommand } from "../init.js";
 import { runOutputGeneration } from "../../pipeline/output.js";
 import { runConfigGeneration } from "../../pipeline/config.js";
+import { appendChangelog } from "../../output/changelog-writer.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -85,6 +86,12 @@ vi.mock("../../pipeline/config.js", () => ({
   runConfigGeneration: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock("../../output/changelog-writer.js", () => ({
+  appendChangelog: vi
+    .fn()
+    .mockResolvedValue({ path: "/tmp/TOKENS_CHANGELOG.md" }),
+}));
+
 describe("initCommand — dry run (Story 3.3)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -96,6 +103,7 @@ describe("initCommand — dry run (Story 3.3)", () => {
 
     expect(runOutputGeneration).not.toHaveBeenCalled();
     expect(runConfigGeneration).not.toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).not.toHaveBeenCalled();
     expect(p.outro).toHaveBeenCalledWith(
       "Dry run complete — no files were written.",
     );
@@ -107,5 +115,6 @@ describe("initCommand — dry run (Story 3.3)", () => {
 
     expect(runOutputGeneration).toHaveBeenCalled();
     expect(runConfigGeneration).toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).toHaveBeenCalled();
   });
 });

@@ -1,6 +1,12 @@
 import * as p from "@clack/prompts";
 import { configExists, loadConfig } from "../utils/config.js";
 import { readToolVersion } from "../output/config-writer.js";
+import { appendChangelog } from "../output/changelog-writer.js";
+import {
+  buildInitSummary,
+  type InitChangelogContext,
+} from "../output/changelog-summary.js";
+import { sortCategoriesCanonical } from "../utils/categories.js";
 import { quickStartFlow } from "./quick-start.js";
 import {
   buildPriorContext,
@@ -328,6 +334,34 @@ export async function initCommand(
     if (!configOk) {
       process.exitCode = 1;
       return;
+    }
+
+    const initChangelogContext: InitChangelogContext = priorContext
+      ? "modify"
+      : hasConfig
+        ? "regenerate"
+        : "initial";
+    const toolVersion = await readToolVersion();
+    const catForLog = new Set(
+      previewResult.collection.primitives.map((t) => t.category),
+    );
+    const changelogRes = await appendChangelog(
+      {
+        timestamp: new Date().toISOString(),
+        toolVersion,
+        command: "init",
+        categoriesAffected: sortCategoriesCanonical([...catForLog]),
+        summary: buildInitSummary(
+          previewResult.collection,
+          initChangelogContext,
+        ),
+      },
+      process.cwd(),
+    );
+    if ("error" in changelogRes) {
+      p.log.warn(
+        `Could not update TOKENS_CHANGELOG.md: ${changelogRes.error}`,
+      );
     }
   } catch (error) {
     if (error instanceof Error && error.message === "cancelled") {

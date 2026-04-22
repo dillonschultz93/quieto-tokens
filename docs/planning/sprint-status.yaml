@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-22 (3-3 done)
+# last_updated: 2026-04-22
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -71,22 +71,23 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Token System Evolution
-  epic-3: in-progress
+  # All stories in Epic 3 complete as of 2026-04-22 (3-4 design system changelog merged after Copilot code review).
+  epic-3: done
   3-1-re-entrant-editing: done
   3-2-token-diff-display: done
   3-3-dry-run-mode: done
-  3-4-design-system-changelog: ready-for-dev
+  3-4-design-system-changelog: done
   epic-3-retrospective: optional
 
   # Epic 4: Multi-Platform Output
-  epic-4: backlog
-  4-1-json-output-for-figma-variables-and-tokens-studio: backlog
-  4-2-ios-swift-output: backlog
-  4-3-android-output: backlog
+  epic-4: in-progress
+  4-1-json-output-for-figma-variables-and-tokens-studio: ready-for-dev
+  4-2-ios-swift-output: ready-for-dev
+  4-3-android-output: ready-for-dev
   epic-4-retrospective: optional
 
   # Epic 5: Design System Intelligence
-  epic-5: backlog
-  5-1-inspect-command-for-design-system-health: backlog
-  5-2-migrate-command-for-token-adoption: backlog
+  epic-5: in-progress
+  5-1-inspect-command-for-design-system-health: ready-for-dev
+  5-2-migrate-command-for-token-adoption: ready-for-dev
   epic-5-retrospective: optional

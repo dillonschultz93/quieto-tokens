@@ -20,7 +20,13 @@ import {
   computeTokenDiff,
   renderCascadeSummary,
   renderTokenDiff,
+  type TokenDiff,
 } from "../ui/diff.js";
+import { appendChangelog } from "../output/changelog-writer.js";
+import {
+  buildUpdateSummary,
+  detectConfigDelta,
+} from "../output/changelog-summary.js";
 
 export interface UpdateCommandOptions {
   /**
@@ -289,6 +295,7 @@ export async function updateCommand(
             previewResult.overrides,
             scopedCategories,
             config.components,
+            diff,
           );
           return;
         }
@@ -313,6 +320,7 @@ export async function updateCommand(
             finalOverrides,
             scopedCategories,
             config.components,
+            diff,
           );
           return;
         }
@@ -392,6 +400,7 @@ async function finalizeWrite(
   overrides: Map<string, string>,
   scopedCategories: string[],
   components: QuietoConfig["components"],
+  diff: TokenDiff,
 ): Promise<void> {
   const outputResult = await runOutputGeneration(collection, cwd, {
     scope: { categories: scopedCategories },
@@ -455,6 +464,22 @@ async function finalizeWrite(
     .map((file) => `  ${formatPath(file, cwd)}`)
     .join("\n");
   p.log.success(`Update complete!\n\nFiles written:\n${fileListLines}`);
+  const configDelta = detectConfigDelta(config, updateResult.nextOptions);
+  const changelogRes = await appendChangelog(
+    {
+      timestamp: new Date().toISOString(),
+      toolVersion: version,
+      command: "update",
+      categoriesAffected: sortCategoriesCanonical(scopedCategories),
+      summary: buildUpdateSummary(diff, collection, configDelta),
+    },
+    cwd,
+  );
+  if ("error" in changelogRes) {
+    p.log.warn(
+      `Could not update TOKENS_CHANGELOG.md: ${changelogRes.error}`,
+    );
+  }
   p.log.info(
     [
       "What's next:",

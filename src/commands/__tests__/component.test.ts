@@ -32,10 +32,15 @@ vi.mock("../../output/config-writer.js", () => ({
   writeConfig: vi.fn().mockResolvedValue("/fake/quieto.config.json"),
 }));
 
+vi.mock("../../output/changelog-writer.js", () => ({
+  appendChangelog: vi.fn().mockResolvedValue({ path: "/tmp/TOKENS_CHANGELOG.md" }),
+}));
+
 import * as p from "@clack/prompts";
 import { componentCommand } from "../component.js";
 import { runComponent } from "../../pipeline/component.js";
 import { writeConfig } from "../../output/config-writer.js";
+import { appendChangelog } from "../../output/changelog-writer.js";
 
 describe("componentCommand", () => {
   let tmpDir: string;
@@ -142,6 +147,7 @@ describe("componentCommand", () => {
       "Component saved — you can re-run to modify this component anytime.",
     );
     expect(writeConfig).toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).toHaveBeenCalled();
   });
 
   it("handles cancelled pipeline gracefully", async () => {
@@ -186,6 +192,7 @@ describe("componentCommand", () => {
       { dryRun: true },
     );
     expect(writeConfig).not.toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).not.toHaveBeenCalled();
     expect(vi.mocked(p.outro)).toHaveBeenCalledWith(
       "Dry run complete — no files were written.",
     );
