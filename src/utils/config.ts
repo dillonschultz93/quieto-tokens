@@ -521,7 +521,8 @@ function validateComponents(value: unknown, errors: string[]): void {
 
       if (
         typeof cell.variant !== "string" ||
-        !variants.has(cell.variant.trim())
+        cell.variant !== cell.variant.trim() ||
+        !variants.has(cell.variant)
       ) {
         errors.push(`${cp}.variant`);
       }

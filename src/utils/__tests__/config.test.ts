@@ -1157,6 +1157,9 @@ describe("validateConfigShape — components block", () => {
     expect(errors).toContainEqual(
       expect.stringContaining("components.button.variants[0]"),
     );
+    expect(errors).toContainEqual(
+      expect.stringContaining("components.button.cells[0].variant"),
+    );
   });
 
   it("does not pollute Object.prototype via __proto__ in components", () => {
