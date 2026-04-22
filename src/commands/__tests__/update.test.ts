@@ -34,6 +34,10 @@ vi.mock("../../output/config-writer.js", async (importOriginal) => {
   };
 });
 
+vi.mock("../../output/changelog-writer.js", () => ({
+  appendChangelog: vi.fn().mockResolvedValue({ path: "/tmp/TOKENS_CHANGELOG.md" }),
+}));
+
 import type { QuietoConfig } from "../../types/config.js";
 import { generateSemanticTokens } from "../../mappers/semantic.js";
 import { generateThemes } from "../../generators/themes.js";
@@ -47,6 +51,7 @@ import * as p from "@clack/prompts";
 import * as configWriter from "../../output/config-writer.js";
 import * as outputPipeline from "../../pipeline/output.js";
 import { updateCommand } from "../update.js";
+import { appendChangelog } from "../../output/changelog-writer.js";
 
 /** Seeds `tokens/` (and friends) so `update` can load unmodified categories from disk. */
 async function seedTokenOutputs(
@@ -167,6 +172,7 @@ describe("updateCommand", () => {
     expect(process.exitCode).toBeUndefined();
     expect(vi.mocked(configWriter.buildConfig)).toHaveBeenCalled();
     expect(vi.mocked(configWriter.writeConfig)).toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).toHaveBeenCalled();
   });
 
   it("cancels without writing when the prompt flow is aborted", async () => {
@@ -179,6 +185,7 @@ describe("updateCommand", () => {
     await updateCommand();
 
     expect(vi.mocked(configWriter.writeConfig)).not.toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).not.toHaveBeenCalled();
     expect(vi.mocked(p.cancel)).toHaveBeenCalled();
   });
 
@@ -218,6 +225,7 @@ describe("updateCommand", () => {
 
     expect(outSpy).not.toHaveBeenCalled();
     expect(vi.mocked(configWriter.writeConfig)).not.toHaveBeenCalled();
+    expect(vi.mocked(appendChangelog)).not.toHaveBeenCalled();
     expect(p.outro).toHaveBeenCalledWith(
       "Dry run complete — no files were written.",
     );

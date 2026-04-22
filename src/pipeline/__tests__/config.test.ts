@@ -129,6 +129,7 @@ describe("runConfigGeneration", () => {
       .map((c: unknown[]) => c[0])
       .join("\n");
     expect(infoCalls).toMatch(/What's next:/);
+    expect(infoCalls).toMatch(/TOKENS_CHANGELOG\.md/);
     expect(infoCalls).toMatch(/Import build\/light\.css/);
     expect(infoCalls).toMatch(/--quieto-\* custom properties/);
     expect(infoCalls).toMatch(/Re-run "quieto-tokens init"/);

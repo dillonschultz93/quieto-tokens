@@ -133,6 +133,7 @@ export async function runConfigGeneration(
       "What's next:",
       "  • Import build/light.css into your project for CSS variables",
       "  • Use --quieto-* custom properties in your styles",
+      "  • Review TOKENS_CHANGELOG.md for a running history of what this tool last wrote to disk",
       '  • Run "quieto-tokens update" to modify specific categories without regenerating everything',
       '  • Re-run "quieto-tokens init" to modify your system (full regeneration)',
       '  • Run "quieto-tokens init --advanced" for per-category customization',

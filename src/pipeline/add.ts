@@ -11,6 +11,7 @@ import type {
   PrimitiveToken,
   SemanticToken,
   Theme,
+  ThemeCollection,
 } from "../types/tokens.js";
 import type { AddableCategory } from "../utils/categories.js";
 import {
@@ -60,6 +61,11 @@ export interface AddPipelineResult {
   categories: string[];
   categoryConfigs: CategoryConfigs;
   output: OutputResult;
+  /**
+   * Post-merge in-memory collection after the new category is integrated
+   * (used for summaries such as the design-system changelog).
+   */
+  collection: ThemeCollection;
   /**
    * Token files written specifically for the category that was just
    * added. On a `writeConfig` failure the caller uses this list to
@@ -252,6 +258,7 @@ export async function runAdd(
         categories: canonicalCategories,
         categoryConfigs: mergedCategoryConfigs,
         output: { jsonFiles: [], cssFiles: [] },
+        collection,
         newFiles: [],
       },
     };
@@ -284,6 +291,7 @@ export async function runAdd(
       categories: canonicalCategories,
       categoryConfigs: mergedCategoryConfigs,
       output,
+      collection,
       newFiles,
     },
   };

@@ -57,10 +57,15 @@ vi.mock("../../pipeline/add.js", () => ({
   rollbackNewFiles: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../output/changelog-writer.js", () => ({
+  appendChangelog: vi.fn().mockResolvedValue({ path: "/tmp/TOKENS_CHANGELOG.md" }),
+}));
+
 import * as p from "@clack/prompts";
 import { addCommand } from "../add.js";
 import { configExists, loadConfig } from "../../utils/config.js";
 import { writeConfig } from "../../output/config-writer.js";
+import { appendChangelog } from "../../output/changelog-writer.js";
 import { runAdd, rollbackNewFiles } from "../../pipeline/add.js";
 import type { QuietoConfig } from "../../types/config.js";
 
@@ -195,6 +200,7 @@ describe("addCommand", () => {
             },
           },
           output: { jsonFiles: [], cssFiles: [] },
+          collection: { primitives: [], themes: [] },
           newFiles: [],
         },
       });
@@ -210,6 +216,7 @@ describe("addCommand", () => {
       );
       expect(runAdd).toHaveBeenCalledTimes(1);
       expect(writeConfig).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(appendChangelog)).toHaveBeenCalled();
       expect(process.exitCode).toBeUndefined();
     });
 
@@ -254,6 +261,7 @@ describe("addCommand", () => {
             },
           },
           output: { jsonFiles: [], cssFiles: [] },
+          collection: { primitives: [], themes: [] },
           newFiles: [],
         },
       });
@@ -284,6 +292,7 @@ describe("addCommand", () => {
             },
           },
           output: { jsonFiles: [], cssFiles: [] },
+          collection: { primitives: [], themes: [] },
           newFiles: [],
         },
       });
@@ -297,6 +306,7 @@ describe("addCommand", () => {
         { dryRun: true },
       );
       expect(writeConfig).not.toHaveBeenCalled();
+      expect(vi.mocked(appendChangelog)).not.toHaveBeenCalled();
       expect(vi.mocked(p.outro)).toHaveBeenCalledWith(
         "Dry run complete — no files were written.",
       );

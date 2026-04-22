@@ -52,6 +52,12 @@ build/
 quieto.config.json        # Your answers, so you can re-run to modify
 ```
 
+### Design System Changelog
+
+After every successful write, the CLI also creates or updates **`TOKENS_CHANGELOG.md`** in the same directory as `quieto.config.json` (the project root). The file is ordinary Markdown with a fixed structure: a title line (`# Design System Changelog`), then entries in **newest-first** order, each under a `## [ISO-8601 timestamp]` heading, with `**Tool version:**`, `**Command:**`, `**Categories affected:**`, and a `### Summary` body. The summary captures what changed in human-readable form (token counts, cascade highlights, and, for `update` runs, relevant input changes such as a brand color swap).
+
+`init`, `update`, `add`, and `component` all append a changelog entry when they persist tokens and config. **Dry run** and failed writes do not modify the file. A changelog write that fails (for example read-only media) is reported with a warning and does not roll back a successful token generation; you can commit `TOKENS_CHANGELOG.md` with your token changes to share a tool-level history alongside Git.
+
 Running `quieto-tokens init` again on a project that already has `quieto.config.json` routes through a "Modify existing system" flow with your prior answers pre-filled — you only adjust what's changing.
 
 ### Dry run
