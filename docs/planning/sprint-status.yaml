@@ -1,5 +1,5 @@
 # generated: 2026-04-16
-# last_updated: 2026-04-22 (epic 3 moved to in-progress; story 3-1 moved to review)
+# last_updated: 2026-04-22 (3-2 done)
 # project: Quieto Tokens CLI
 # project_key: QUIETO
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-16
-last_updated: 2026-04-22 (epic 3 moved to in-progress; story 3-1 moved to review)
+last_updated: 2026-04-22
 project: Quieto Tokens CLI
 # NOTE: Story 1.10 is a post-retrospective defect fix. Epic 1 temporarily reopened to accommodate.
 project_key: QUIETO
@@ -72,8 +72,8 @@ development_status:
 
   # Epic 3: Token System Evolution
   epic-3: in-progress
-  3-1-re-entrant-editing: review
-  3-2-token-diff-display: ready-for-dev
+  3-1-re-entrant-editing: done
+  3-2-token-diff-display: done
   3-3-dry-run-mode: ready-for-dev
   3-4-design-system-changelog: ready-for-dev
   epic-3-retrospective: optional

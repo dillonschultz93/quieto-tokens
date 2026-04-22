@@ -6,15 +6,25 @@ import { prune } from "../output/pruner.js";
 import { sortCategoriesCanonical } from "../utils/categories.js";
 import { previewAndConfirm } from "../ui/preview.js";
 import { runOutputGeneration } from "../pipeline/output.js";
+import { loadPriorCollection } from "../pipeline/diff-loader.js";
 import { applyPriorOverrides } from "../utils/overrides.js";
 import {
   detectOverrideConflicts,
   resolveOverrideConflicts,
 } from "../utils/override-conflicts.js";
-import { collectUpdateInputs } from "./update-flow.js";
+import { collectUpdateInputs, type UpdateResult } from "./update-flow.js";
 import { runUpdate } from "../pipeline/update.js";
+import type { QuietoConfig } from "../types/config.js";
+import type { ThemeCollection } from "../types/tokens.js";
+import {
+  computeTokenDiff,
+  renderCascadeSummary,
+  renderTokenDiff,
+} from "../ui/diff.js";
 export async function updateCommand(): Promise<void> {
-  p.intro("◆  quieto-tokens — Update specific categories.");
+  p.intro(
+    "◆  quieto-tokens — Update specific categories (with a change diff before you write).",
+  );
 
   try {
     const cwd = process.cwd();
@@ -102,151 +112,168 @@ export async function updateCommand(): Promise<void> {
       ].join("\n"),
     );
 
-    const updateResult = await collectUpdateInputs(config);
+    let lastUpdateResult = await collectUpdateInputs(config);
 
-    if (updateResult.modifiedCategories.length === 0) {
+    if (lastUpdateResult.modifiedCategories.length === 0) {
       p.log.info("No changes to apply.");
       p.outro("Nothing was modified.");
       return;
     }
 
-    const pipeline = await runUpdate(config, updateResult, cwd, {
-      warn: (m) => p.log.warn(m),
-    });
-    if (!pipeline) {
-      process.exitCode = 1;
-      return;
-    }
+    for (;;) {
+      const updateResult = lastUpdateResult;
+      const pipeline = await runUpdate(config, updateResult, cwd, {
+        warn: (m) => p.log.warn(m),
+      });
+      if (!pipeline) {
+        process.exitCode = 1;
+        return;
+      }
 
-    const priorOverrides = config.overrides ?? {};
-    const conflicts = detectOverrideConflicts(
-      priorOverrides,
-      pipeline.collection,
-    );
-    const cleanedOverrides =
-      conflicts.length > 0
-        ? await resolveOverrideConflicts(
-            conflicts,
-            priorOverrides,
-            pipeline.collection,
-          )
-        : { ...priorOverrides };
-
-    if (Object.keys(cleanedOverrides).length > 0) {
-      applyPriorOverrides(pipeline.collection, cleanedOverrides);
-    }
-
-    const previewResult = await previewAndConfirm(pipeline.collection, {
-      initialOverrides: new Map(Object.entries(cleanedOverrides)),
-    });
-
-    if (!previewResult) {
-      return;
-    }
-
-    const scopedCategories = [
-      ...new Set([
-        ...pipeline.modifiedCategories,
-        ...getChangedOverrideCategories(
-          cleanedOverrides,
-          previewResult.overrides,
-        ),
-      ]),
-    ];
-
-    const outputResult = await runOutputGeneration(
-      previewResult.collection,
-      cwd,
-      {
-        scope: { categories: scopedCategories },
-        skipComponents: true,
-      },
-    );
-
-    if (!outputResult) {
-      process.exitCode = 1;
-      return;
-    }
-
-    if (
-      previewResult.collection.components &&
-      previewResult.collection.components.length > 0
-    ) {
-      p.log.info(
-        "Component tokens reference semantic tokens — they'll pick up your changes automatically via the CSS cascade.",
+      const priorOverrides = config.overrides ?? {};
+      const conflicts = detectOverrideConflicts(
+        priorOverrides,
+        pipeline.collection,
       );
+      const cleanedOverrides: Record<string, string> =
+        conflicts.length > 0
+          ? await resolveOverrideConflicts(
+              conflicts,
+              priorOverrides,
+              pipeline.collection,
+            )
+          : { ...priorOverrides };
+
+      if (Object.keys(cleanedOverrides).length > 0) {
+        applyPriorOverrides(pipeline.collection, cleanedOverrides);
+      }
+
+      const priorCollection = await loadPriorCollection(
+        config,
+        cwd,
+        { warn: () => {} },
+      );
+      const diff = computeTokenDiff(
+        priorCollection,
+        pipeline.collection,
+      );
+      if (diff.isEmpty) {
+        p.log.info(
+          "No changes to apply — your token system is up to date.",
+        );
+        p.outro("No files were written.");
+        return;
+      }
+
+      const modifiedScope = new Set<string>(updateResult.modifiedCategories);
+      renderTokenDiff(
+        diff,
+        pipeline.collection.primitives,
+        { modifiedCategories: modifiedScope },
+      );
+      renderCascadeSummary(diff, pipeline.collection);
+      if (
+        pipeline.collection.components &&
+        pipeline.collection.components.length > 0
+      ) {
+        p.log.info(
+          "Component tokens are unchanged — they reference semantic tokens and will inherit your changes via the CSS cascade.",
+        );
+      }
+
+      for (;;) {
+        const action = await p.select({
+          message: "What would you like to do?",
+          options: [
+            {
+              value: "accept" as const,
+              label: "Accept changes and write",
+              hint: "Write modified token files and rebuild CSS",
+            },
+            {
+              value: "preview" as const,
+              label: "Review full token preview",
+              hint: "See all tokens (not just changes) with the override editor",
+            },
+            {
+              value: "back" as const,
+              label: "Go back and modify further",
+              hint: "Return to category picker",
+            },
+            {
+              value: "cancel" as const,
+              label: "Cancel",
+              hint: "Exit without writing",
+            },
+          ],
+        });
+        if (p.isCancel(action) || action === "cancel") {
+          p.cancel("No changes written.");
+          return;
+        }
+        if (action === "back") {
+          lastUpdateResult = await collectUpdateInputs(config);
+          if (lastUpdateResult.modifiedCategories.length === 0) {
+            p.log.info("No changes to apply.");
+            p.outro("Nothing was modified.");
+            return;
+          }
+          break;
+        }
+        if (action === "preview") {
+          const toPreview = structuredClone(pipeline.collection);
+          const previewResult = await previewAndConfirm(toPreview, {
+            initialOverrides: new Map(Object.entries(cleanedOverrides)),
+          });
+          if (!previewResult) {
+            continue;
+          }
+          const scopedCategories = [
+            ...new Set([
+              ...pipeline.modifiedCategories,
+              ...getChangedOverrideCategories(
+                cleanedOverrides,
+                previewResult.overrides,
+              ),
+            ]),
+          ];
+          await finalizeWrite(
+            config,
+            cwd,
+            updateResult,
+            previewResult.collection,
+            previewResult.overrides,
+            scopedCategories,
+            config.components,
+          );
+          return;
+        }
+        if (action === "accept") {
+          const finalOverrides = new Map<string, string>(
+            Object.entries(cleanedOverrides) as [string, string][],
+          );
+          const scopedCategories = [
+            ...new Set([
+              ...pipeline.modifiedCategories,
+              ...getChangedOverrideCategories(
+                cleanedOverrides,
+                finalOverrides,
+              ),
+            ]),
+          ];
+          await finalizeWrite(
+            config,
+            cwd,
+            updateResult,
+            pipeline.collection,
+            finalOverrides,
+            scopedCategories,
+            config.components,
+          );
+          return;
+        }
+      }
     }
-
-    const version = await readToolVersion();
-    const mergedCategoryConfigs: Record<string, unknown> = {
-      ...(config.categoryConfigs ?? {}),
-      ...updateResult.nextCategoryConfigs,
-    };
-    const categoryConfigs =
-      Object.keys(mergedCategoryConfigs).length > 0
-        ? (mergedCategoryConfigs as typeof config.categoryConfigs)
-        : undefined;
-
-    const built = buildConfig({
-      options: updateResult.nextOptions,
-      overrides: previewResult.overrides,
-      version,
-      advanced: updateResult.nextAdvanced,
-      categories: sortCategoriesCanonical(config.categories),
-      categoryConfigs,
-      components: config.components,
-    });
-    built.output = { ...config.output };
-    if (config.$schema) {
-      built.$schema = config.$schema;
-    }
-
-    p.log.step("Saving config…");
-    let configPath: string;
-    try {
-      configPath = await writeConfig(built, cwd);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      p.log.error(`Failed to write quieto.config.json: ${message}`);
-      p.outro("Tokens were written, but config save failed — fix permissions and re-run.");
-      process.exitCode = 1;
-      return;
-    }
-
-    const themeNames = previewResult.collection.themes.map((t) => t.name);
-    const knownComponents = config.components
-      ? Object.keys(config.components)
-      : undefined;
-    await prune(
-      cwd,
-      sortCategoriesCanonical(built.categories),
-      themeNames,
-      knownComponents,
-    );
-
-    const allFiles = [
-      ...outputResult.jsonFiles,
-      ...outputResult.cssFiles,
-      configPath,
-    ];
-    const fileListLines = allFiles
-      .map((file) => `  ${formatPath(file, cwd)}`)
-      .join("\n");
-
-    p.log.success(
-      `Update complete!\n\nFiles written:\n${fileListLines}`,
-    );
-
-    p.log.info(
-      [
-        "What's next:",
-        "  • Import your built CSS as before",
-        '  • Run "quieto-tokens update" again to tweak another category',
-        '  • Run "quieto-tokens init" for a full regeneration pass',
-      ].join("\n"),
-    );
-
-    p.outro("Config saved — your selective updates are on disk.");
   } catch (error) {
     if (error instanceof Error && error.message === "cancelled") {
       return;
@@ -311,4 +338,86 @@ function getChangedOverrideCategories(
 function formatPath(absolutePath: string, cwd: string): string {
   const rel = relative(cwd, absolutePath);
   return rel.length > 0 && !rel.startsWith("..") ? rel : absolutePath;
+}
+
+async function finalizeWrite(
+  config: QuietoConfig,
+  cwd: string,
+  updateResult: UpdateResult,
+  collection: ThemeCollection,
+  overrides: Map<string, string>,
+  scopedCategories: string[],
+  components: QuietoConfig["components"],
+): Promise<void> {
+  const outputResult = await runOutputGeneration(collection, cwd, {
+    scope: { categories: scopedCategories },
+    skipComponents: true,
+  });
+  if (!outputResult) {
+    process.exitCode = 1;
+    return;
+  }
+  const version = await readToolVersion();
+  const mergedCategoryConfigs: Record<string, unknown> = {
+    ...(config.categoryConfigs ?? {}),
+    ...updateResult.nextCategoryConfigs,
+  };
+  const categoryConfigs =
+    Object.keys(mergedCategoryConfigs).length > 0
+      ? (mergedCategoryConfigs as typeof config.categoryConfigs)
+      : undefined;
+  const built = buildConfig({
+    options: updateResult.nextOptions,
+    overrides,
+    version,
+    advanced: updateResult.nextAdvanced,
+    categories: sortCategoriesCanonical(config.categories),
+    categoryConfigs,
+    components: config.components,
+  });
+  built.output = { ...config.output };
+  if (config.$schema) {
+    built.$schema = config.$schema;
+  }
+  p.log.step("Saving config…");
+  let configPath: string;
+  try {
+    configPath = await writeConfig(built, cwd);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    p.log.error(`Failed to write quieto.config.json: ${message}`);
+    p.outro(
+      "Tokens were written, but config save failed — fix permissions and re-run.",
+    );
+    process.exitCode = 1;
+    return;
+  }
+  const themeNames = collection.themes.map((t) => t.name);
+  const knownComponents = components
+    ? Object.keys(components)
+    : undefined;
+  await prune(
+    cwd,
+    sortCategoriesCanonical(built.categories),
+    themeNames,
+    knownComponents,
+  );
+  const allFiles = [
+    ...outputResult.jsonFiles,
+    ...outputResult.cssFiles,
+    configPath,
+  ];
+  const fileListLines = allFiles
+    .map((file) => `  ${formatPath(file, cwd)}`)
+    .join("\n");
+  p.log.success(`Update complete!\n\nFiles written:\n${fileListLines}`);
+  p.log.info(
+    [
+      "What's next:",
+      "  • Import your built CSS as before",
+      '  • Run "quieto-tokens update" again to tweak another category',
+      '  • Run "quieto-tokens init" for a full regeneration pass',
+    ].join("\n"),
+  );
+  p.outro("Config saved — your selective updates are on disk.");
 }

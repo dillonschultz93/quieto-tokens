@@ -180,4 +180,5 @@ describe("updateCommand", () => {
     expect(vi.mocked(configWriter.writeConfig)).not.toHaveBeenCalled();
     expect(vi.mocked(p.cancel)).toHaveBeenCalled();
   });
+
 });

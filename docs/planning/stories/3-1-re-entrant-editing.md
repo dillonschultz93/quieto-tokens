@@ -1,6 +1,6 @@
 # Story 3.1: Re-Entrant Editing
 
-Status: review
+Status: done
 
 ## Story
 
