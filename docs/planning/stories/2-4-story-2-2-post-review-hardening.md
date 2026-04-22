@@ -1,6 +1,6 @@
 # Story 2.4: Story 2.2 Post-Review Hardening
 
-Status: review
+Status: done
 
 <!-- Carries forward the 10 unchecked `[Review][Patch]` items from Story 2.2's code-review findings (2026-04-17). See `docs/planning/stories/2-2-add-subcommand-for-new-token-categories.md` → Review Findings for full context per item. -->
 

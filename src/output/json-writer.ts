@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type {
+  ComponentToken,
   PrimitiveToken,
   SemanticToken,
   ThemeCollection,
@@ -126,7 +127,7 @@ export function buildDtcgMetadata(
  */
 type DtcgDocument = Record<string, unknown>;
 
-type AnyToken = PrimitiveToken | SemanticToken;
+type AnyToken = PrimitiveToken | SemanticToken | ComponentToken;
 
 export function tokensToDtcgTree(tokens: AnyToken[]): DtcgTree {
   const root: DtcgTree = {};
@@ -143,29 +144,41 @@ export function tokensToDtcgTree(tokens: AnyToken[]): DtcgTree {
         cursor[segment] = branch;
         cursor = branch;
       } else if (isLeaf(next)) {
-        throw new Error(
-          `Token path collision: "${token.path.slice(0, i + 1).join(".")}" is already a leaf but token "${token.path.join(".")}" requires it as a group.`,
-        );
+        // DTCG allows a node to be both a token ($type/$value) and a group
+        // with child tokens — e.g. component default state at `button.primary.color.background`
+        // alongside hover state at `button.primary.color.background.hover`.
+        cursor = next as unknown as DtcgTree;
       } else {
         cursor = next;
       }
     }
 
     const leafKey = token.path[token.path.length - 1]!;
-    if (cursor[leafKey] !== undefined) {
-      throw new Error(
-        `Duplicate token path: "${token.path.join(".")}" is defined more than once.`,
-      );
+    const existing = cursor[leafKey];
+    if (existing !== undefined) {
+      if (isLeaf(existing)) {
+        throw new Error(
+          `Duplicate token path: "${token.path.join(".")}" is defined more than once.`,
+        );
+      }
+      // Node already exists as a group (children placed first); merge token
+      // definition into it — valid DTCG (a group that is also a token).
+      const group = existing as Record<string, unknown>;
+      group.$type = token.$type;
+      group.$value = decodeCompositeValue(token.$value, token.$type);
+      if (token.description !== undefined && token.description.length > 0) {
+        group.$description = token.description;
+      }
+    } else {
+      const leaf: DtcgLeaf = {
+        $type: token.$type,
+        $value: decodeCompositeValue(token.$value, token.$type),
+      };
+      if (token.description !== undefined && token.description.length > 0) {
+        leaf.$description = token.description;
+      }
+      cursor[leafKey] = leaf;
     }
-
-    const leaf: DtcgLeaf = {
-      $type: token.$type,
-      $value: decodeCompositeValue(token.$value, token.$type),
-    };
-    if (token.description !== undefined && token.description.length > 0) {
-      leaf.$description = token.description;
-    }
-    cursor[leafKey] = leaf;
   }
 
   return root;
@@ -338,6 +351,53 @@ export async function writeTokensToJson(
         );
       }
     }
+  }
+
+  if (collection.components?.length) {
+    const componentFiles = await writeComponentTokens(
+      collection.components,
+      outputDir,
+      { generatedAt: options.generatedAt },
+    );
+    written.push(...componentFiles);
+  }
+
+  return written;
+}
+
+export async function writeComponentTokens(
+  tokens: ComponentToken[],
+  outputDir: string,
+  options: { generatedAt?: string } = {},
+): Promise<string[]> {
+  const metadata = buildDtcgMetadata(options.generatedAt);
+  const written: string[] = [];
+
+  const byComponent = new Map<string, ComponentToken[]>();
+  for (const t of tokens) {
+    const existing = byComponent.get(t.componentName);
+    if (existing) {
+      existing.push(t);
+    } else {
+      byComponent.set(t.componentName, [t]);
+    }
+  }
+
+  try {
+    for (const [componentName, componentTokens] of byComponent) {
+      const tree = tokensToDtcgTree(componentTokens);
+      const filePath = join(
+        outputDir,
+        "tokens",
+        "component",
+        `${componentName}.json`,
+      );
+      await writeJsonFile(filePath, tree, metadata);
+      written.push(filePath);
+    }
+  } catch (err) {
+    await bestEffortUnlinkPaths(written);
+    throw err;
   }
 
   return written;

@@ -64,6 +64,7 @@ export async function prune(
   cwd: string,
   canonicalCategories: readonly string[],
   activeThemes: readonly string[],
+  knownComponents?: readonly string[],
 ): Promise<PruneResult> {
   const canonical = new Set(canonicalCategories);
   const active = new Set(activeThemes);
@@ -73,6 +74,10 @@ export async function prune(
   await pruneDirectory(primitiveDir, canonical, result, cwd);
 
   await pruneSemanticRoot(cwd, canonical, active, result);
+
+  if (knownComponents !== undefined) {
+    await pruneComponentDir(cwd, new Set(knownComponents), result);
+  }
 
   return result;
 }
@@ -232,6 +237,64 @@ async function pruneDirectory(
       const rel = relative(cwd, fullPath);
       p.log.warn(
         `Could not remove ${rel.length > 0 ? rel : fullPath}: ${err.message}`,
+      );
+    }
+  }
+}
+
+async function pruneComponentDir(
+  cwd: string,
+  knownComponents: Set<string>,
+  result: PruneResult,
+): Promise<void> {
+  const componentDir = join(cwd, "tokens", "component");
+
+  let entries: string[];
+  try {
+    entries = await _fs.readdir(componentDir);
+  } catch (error) {
+    if (isErrnoException(error) && error.code === "ENOENT") return;
+    result.errors.push({
+      path: componentDir,
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
+    return;
+  }
+
+  for (const entry of entries) {
+    if (entry.startsWith(".")) continue;
+    if (!entry.endsWith(".json")) continue;
+    const basename = entry.slice(0, -".json".length);
+    if (knownComponents.has(basename)) continue;
+
+    const fullPath = join(componentDir, entry);
+
+    let entryStat;
+    try {
+      entryStat = await _fs.lstat(fullPath);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      result.errors.push({ path: fullPath, error: err });
+      continue;
+    }
+    if (entryStat.isSymbolicLink()) {
+      p.log.warn(
+        `Skipping symlinked entry ${relative(cwd, fullPath)}`,
+      );
+      continue;
+    }
+    if (!entryStat.isFile()) continue;
+
+    try {
+      await _fs.unlink(fullPath);
+      const rel = relative(cwd, fullPath);
+      result.removed.push(fullPath);
+      p.log.info(`✗ Removed ${rel.length > 0 ? rel : fullPath}`);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      result.errors.push({ path: fullPath, error: err });
+      p.log.warn(
+        `Could not remove ${relative(cwd, fullPath)}: ${err.message}`,
       );
     }
   }

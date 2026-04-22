@@ -32,9 +32,21 @@ export interface Theme {
   semanticTokens: SemanticToken[];
 }
 
+export interface ComponentToken {
+  tier: "component";
+  category: string;
+  componentName: string;
+  name: string;
+  $type: string;
+  $value: string;
+  description?: string;
+  path: string[];
+}
+
 export interface ThemeCollection {
   primitives: PrimitiveToken[];
   themes: Theme[];
+  components?: ComponentToken[];
 }
 
 export function colorRampToTokens(ramp: ColorRamp): PrimitiveToken[] {

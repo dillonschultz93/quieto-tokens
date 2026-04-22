@@ -5,6 +5,7 @@ import type { QuickStartOptions } from "../types.js";
 import type {
   AdvancedConfig,
   CategoryConfigs,
+  ComponentTokenConfig,
   QuietoConfig,
 } from "../types/config.js";
 import {
@@ -74,6 +75,7 @@ export interface BuildConfigInput {
    * `loadConfig`'s absence-vs-empty-map signal (AC #24) stays intact.
    */
   categoryConfigs?: CategoryConfigs;
+  components?: Record<string, ComponentTokenConfig>;
 }
 
 /**
@@ -99,6 +101,9 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
   }
   if (input.categoryConfigs !== undefined) {
     config.categoryConfigs = input.categoryConfigs;
+  }
+  if (input.components !== undefined) {
+    config.components = input.components;
   }
   return config;
 }

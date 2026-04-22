@@ -33,6 +33,15 @@ function isSemanticToken(token: TokenLike): boolean {
   return toPosix(fp).includes("/tokens/semantic/");
 }
 
+function isComponentToken(token: TokenLike): boolean {
+  const fp = token.filePath ?? "";
+  return toPosix(fp).includes("/tokens/component/");
+}
+
+function isSemanticOrComponentToken(token: TokenLike): boolean {
+  return isSemanticToken(token) || isComponentToken(token);
+}
+
 /**
  * Custom name transform that composes the CSS variable name from the token
  * path and injects a `semantic-` segment for tokens sourced from
@@ -50,14 +59,23 @@ function ensureQuietoTransformRegistered(): void {
     name: QUIETO_NAME_TRANSFORM,
     type: "name",
     transform: (token, config) => {
-      // Mirror the default `name/kebab` transform, which prepends the
-      // platform `prefix` to the token path before joining. Then inject
-      // `semantic` after the prefix for tokens sourced from the semantic
-      // tree, so primitives become `--<prefix>-color-blue-500` and
-      // semantics become `--<prefix>-semantic-color-background-primary`.
       const prefix = config.prefix;
-      const semanticSegment = isSemanticToken(token) ? ["semantic"] : [];
-      return [prefix, ...semanticSegment, ...token.path]
+      let tierSegment: string[] = [];
+      let tokenPath = [...token.path];
+
+      if (isComponentToken(token)) {
+        tierSegment = ["component"];
+        if (
+          tokenPath.length > 0 &&
+          tokenPath[tokenPath.length - 1] === "default"
+        ) {
+          tokenPath = tokenPath.slice(0, -1);
+        }
+      } else if (isSemanticToken(token)) {
+        tierSegment = ["semantic"];
+      }
+
+      return [prefix, ...tierSegment, ...tokenPath]
         .filter((s): s is string => typeof s === "string" && s.length > 0)
         .join("-");
     },
@@ -96,6 +114,7 @@ async function runSingleTheme(
   const source = [
     toPosix(join(outputDir, "tokens", "primitive", "**/*.json")),
     toPosix(join(outputDir, "tokens", "semantic", themeName, "**/*.json")),
+    toPosix(join(outputDir, "tokens", "component", "**/*.json")),
   ];
 
   const sd = new StyleDictionary({
@@ -166,14 +185,10 @@ async function runThemeSemantics(
 ): Promise<string> {
   ensureQuietoTransformRegistered();
 
-  // Primitives are included in `source` (not just the theme's semantics) so
-  // that Style Dictionary can resolve `{color.blue.500}` references when
-  // `outputReferences: true` emits `var(--quieto-color-blue-500)`. The file
-  // `filter` below then excludes primitives from this theme's .css output,
-  // since those are written separately by `runPrimitivesOnly`.
   const source = [
     toPosix(join(outputDir, "tokens", "primitive", "**/*.json")),
     toPosix(join(outputDir, "tokens", "semantic", themeName, "**/*.json")),
+    toPosix(join(outputDir, "tokens", "component", "**/*.json")),
   ];
 
   const sd = new StyleDictionary({
@@ -189,7 +204,7 @@ async function runThemeSemantics(
           {
             destination: `${themeName}.css`,
             format: "css/variables",
-            filter: (token: TokenLike) => isSemanticToken(token),
+            filter: (token: TokenLike) => isSemanticOrComponentToken(token),
             options: {
               selector,
               outputReferences: true,

@@ -129,4 +129,47 @@ describe("prune", () => {
       _fs.unlink = realUnlink;
     }
   });
+
+  describe("component pruning", () => {
+    it("removes orphaned component files not in knownComponents", async () => {
+      const componentDir = join(tempDir, "tokens", "component");
+      mkdirSync(componentDir, { recursive: true });
+      touch(join(componentDir, "button.json"));
+      touch(join(componentDir, "old-card.json"));
+
+      const result = await prune(tempDir, [], [], ["button"]);
+      expect(result.removed).toHaveLength(1);
+      expect(result.removed[0]).toContain("old-card.json");
+      expect(existsSync(join(componentDir, "button.json"))).toBe(true);
+      expect(existsSync(join(componentDir, "old-card.json"))).toBe(false);
+    });
+
+    it("removes all component files when knownComponents is empty", async () => {
+      const componentDir = join(tempDir, "tokens", "component");
+      mkdirSync(componentDir, { recursive: true });
+      touch(join(componentDir, "button.json"));
+      touch(join(componentDir, "modal.json"));
+
+      const result = await prune(tempDir, [], [], []);
+      expect(result.removed).toHaveLength(2);
+      expect(existsSync(join(componentDir, "button.json"))).toBe(false);
+      expect(existsSync(join(componentDir, "modal.json"))).toBe(false);
+    });
+
+    it("tolerates a missing tokens/component/ directory (ENOENT)", async () => {
+      const result = await prune(tempDir, [], [], ["button"]);
+      expect(result.errors).toHaveLength(0);
+      expect(result.removed).toHaveLength(0);
+    });
+
+    it("skips component pruning when knownComponents is undefined", async () => {
+      const componentDir = join(tempDir, "tokens", "component");
+      mkdirSync(componentDir, { recursive: true });
+      touch(join(componentDir, "button.json"));
+
+      const result = await prune(tempDir, [], []);
+      expect(result.removed).toHaveLength(0);
+      expect(existsSync(join(componentDir, "button.json"))).toBe(true);
+    });
+  });
 });

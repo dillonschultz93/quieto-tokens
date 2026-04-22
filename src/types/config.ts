@@ -76,6 +76,13 @@ export interface QuietoConfig {
    * this block; color/spacing/typography stay in `inputs` + `advanced`.
    */
   categoryConfigs?: CategoryConfigs;
+  /**
+   * Tier-3 component token configs keyed by component name. Each entry
+   * captures the user's walkthrough inputs so re-runs are deterministic.
+   * `undefined` on legacy configs (Epic 1 / 2.1 / 2.2); first
+   * `component` run adds the block.
+   */
+  components?: Record<string, ComponentTokenConfig>;
 }
 
 /**
@@ -202,3 +209,35 @@ export const DEFAULT_CATEGORIES: readonly string[] = Object.freeze([
   "spacing",
   "typography",
 ]);
+
+export type ComponentProperty =
+  | "color-background"
+  | "color-content"
+  | "color-border"
+  | "spacing-padding"
+  | "border-radius"
+  | "typography";
+
+export type ComponentState =
+  | "default"
+  | "hover"
+  | "active"
+  | "focus"
+  | "disabled";
+
+export interface ComponentTokenConfig {
+  variants: string[];
+  cells: ComponentCell[];
+}
+
+export interface ComponentCell {
+  variant: string;
+  property: ComponentProperty;
+  paddingShape?: "single" | "four-sides";
+  states: ComponentCellState[];
+}
+
+export interface ComponentCellState {
+  state: ComponentState;
+  value: string | { top: string; right: string; bottom: string; left: string };
+}
