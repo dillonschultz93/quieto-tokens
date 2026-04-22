@@ -144,11 +144,21 @@ export async function updateCommand(): Promise<void> {
       return;
     }
 
+    const scopedCategories = [
+      ...new Set([
+        ...pipeline.modifiedCategories,
+        ...getChangedOverrideCategories(
+          cleanedOverrides,
+          previewResult.overrides,
+        ),
+      ]),
+    ];
+
     const outputResult = await runOutputGeneration(
       previewResult.collection,
       cwd,
       {
-        scope: { categories: [...pipeline.modifiedCategories] },
+        scope: { categories: scopedCategories },
         skipComponents: true,
       },
     );
@@ -244,6 +254,58 @@ export async function updateCommand(): Promise<void> {
     p.cancel("Something went wrong.");
     throw error;
   }
+}
+
+function normalizeOverrides(
+  overrides: unknown,
+): Map<string, unknown> {
+  if (overrides instanceof Map) {
+    return new Map(overrides.entries());
+  }
+
+  if (overrides && typeof overrides === "object") {
+    return new Map(Object.entries(overrides as Record<string, unknown>));
+  }
+
+  return new Map();
+}
+
+function extractCategoryFromOverrideKey(key: string): string | null {
+  const trimmedKey = key.trim();
+
+  if (trimmedKey.length === 0) {
+    return null;
+  }
+
+  const separatorMatch = /[./]/.exec(trimmedKey);
+  if (!separatorMatch || separatorMatch.index === 0) {
+    return trimmedKey;
+  }
+
+  return trimmedKey.slice(0, separatorMatch.index);
+}
+
+function getChangedOverrideCategories(
+  previousOverrides: unknown,
+  nextOverrides: unknown,
+): string[] {
+  const previous = normalizeOverrides(previousOverrides);
+  const next = normalizeOverrides(nextOverrides);
+  const changedCategories = new Set<string>();
+  const keys = new Set([...previous.keys(), ...next.keys()]);
+
+  for (const key of keys) {
+    if (previous.get(key) === next.get(key)) {
+      continue;
+    }
+
+    const category = extractCategoryFromOverrideKey(key);
+    if (category) {
+      changedCategories.add(category);
+    }
+  }
+
+  return [...changedCategories];
 }
 
 function formatPath(absolutePath: string, cwd: string): string {
