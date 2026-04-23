@@ -6,3 +6,9 @@ find the full documentation for it [in our repository](https://github.com/change
 
 We have a quick list of common questions to get you started engaging with this project in
 [our documentation](https://github.com/changesets/changesets/blob/main/docs/common-questions.md).
+
+### Typical Workflow
+1. On a feature branch, run `npm run changeset` to describe the change and its semver bump.
+2. Merge to main.
+3. Run `npm run version-packages` to bump the version and generate the changelog.
+4. Commit the version bump, then `npm run release` to publish
