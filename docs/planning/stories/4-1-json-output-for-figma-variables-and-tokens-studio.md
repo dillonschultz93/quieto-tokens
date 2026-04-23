@@ -1,6 +1,6 @@
 # Story 4.1: JSON Output for Figma Variables and Tokens Studio
 
-Status: review
+Status: done
 
 ## Story
 
@@ -270,10 +270,12 @@ Composer (Cursor agent)
 ### Completion Notes List
 
 - All acceptance criteria satisfied; tests include `style-dictionary-figma.test.ts`, `output-figma.test.ts`, and config legacy/validation cases. `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` all pass.
+- Story status set to **done** after code review in GitHub Copilot.
 
 ### Change Log
 
 - 2026-04-22: Story 4.1 — Figma JSON output (`build/tokens.figma.json`), `outputs` in config, init multiselect, pipeline + changelog + README/HELP updates.
+- 2026-04-22: Marked **done** after merge-ready review via GitHub Copilot; sprint status updated to match.
 
 ### File List
 
