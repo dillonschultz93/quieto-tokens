@@ -129,4 +129,106 @@ describe("buildAndroid — name transforms and formats", () => {
     expect(color).toContain("quietoLightColorScheme");
     expect(color).toContain("quietoDarkColorScheme");
   });
+
+  it("xml: typography dimens omit fontWeight and number tokens", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-and-typdm-"));
+    const c = makeFullCollection(["default"]);
+    await writeTokensToJson(c, tempDir);
+    await buildAndroid(c, tempDir, "xml");
+    const typo = readFileSync(
+      join(tempDir, "build", "android", "values", "typography_dimens.xml"),
+      "utf-8",
+    );
+    // fontWeight token ("700") must not appear as a <dimen>
+    expect(typo).not.toContain("font_weight");
+    // fontFamily token must not appear as a <dimen>
+    expect(typo).not.toContain("font_family");
+    // font-size dimension token should appear as sp
+    expect(typo).toContain("sp");
+  });
+
+  it("xml: typography dimens do not pass em values through", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-and-typem-"));
+    const primitives: PrimitiveToken[] = [
+      makeTypoPrimitive("letter-spacing", "tight", "-0.02em", "dimension"),
+    ];
+    const c: ThemeCollection = {
+      primitives,
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+    await writeTokensToJson(c, tempDir);
+    await buildAndroid(c, tempDir, "xml");
+    const typo = readFileSync(
+      join(tempDir, "build", "android", "values", "typography_dimens.xml"),
+      "utf-8",
+    );
+    // em units are not valid Android dimen units; token should be skipped
+    expect(typo).not.toContain("em");
+    expect(typo).not.toContain("letter_spacing");
+  });
+
+  it("xml: typography strings escape backslash before apostrophe", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-and-typstr-"));
+    const primitives: PrimitiveToken[] = [
+      makeTypoPrimitive("font-family", "quote", "It's\\Cool", "fontFamily"),
+    ];
+    const c: ThemeCollection = {
+      primitives,
+      themes: [{ name: "default", semanticTokens: [] }],
+    };
+    await writeTokensToJson(c, tempDir);
+    await buildAndroid(c, tempDir, "xml");
+    const strings = readFileSync(
+      join(tempDir, "build", "android", "values", "typography_strings.xml"),
+      "utf-8",
+    );
+    // The fontFamily/css transform pre-escapes apostrophes for CSS, producing "It\'s\Cool".
+    // With the new (correct) order — backslashes doubled first, then apostrophes escaped —
+    // the file ends up with 3 backslashes before the apostrophe: It\\\'s\\Cool.
+    // The old (wrong) order would have doubled the backslash added for the apostrophe,
+    // yielding 4 backslashes: It\\\\'s\\Cool.
+    expect(strings).toContain(String.raw`It\\\'s\\Cool`);
+    expect(strings).not.toContain(String.raw`It\\\\'s\\Cool`);
+  });
+
+  it("compose: fontWeight tokens emit FontWeight(n), not TextStyle", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-and-cmpfw-"));
+    const c = makeFullCollection(["default"]);
+    await writeTokensToJson(c, tempDir);
+    await buildAndroid(c, tempDir, "compose");
+    const typo = readFileSync(
+      join(tempDir, "build", "android", "Typography.kt"),
+      "utf-8",
+    );
+    expect(typo).toMatch(/val \w+ = FontWeight\(\d+\)/);
+    expect(typo).not.toMatch(/FontWeight\(\d+\).*TextStyle/s);
+  });
+
+  it("compose: fontFamily tokens emit a string literal, not FontFamily(...) or TextStyle", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-and-cmpff-"));
+    const c = makeFullCollection(["default"]);
+    await writeTokensToJson(c, tempDir);
+    await buildAndroid(c, tempDir, "compose");
+    const typo = readFileSync(
+      join(tempDir, "build", "android", "Typography.kt"),
+      "utf-8",
+    );
+    // font-family tokens should be plain string vals, not FontFamily("...") constructors
+    expect(typo).toMatch(/val \w+ = "Inter"/);
+    expect(typo).not.toMatch(/FontFamily\("Inter"\)/);
+  });
+
+  it("compose: Typography.kt never uses invalid FontFamily(string) constructor", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "quieto-and-cmpts-"));
+    // Use the full collection which includes fontFamily primitives
+    const c = makeFullCollection(["default"]);
+    await writeTokensToJson(c, tempDir);
+    await buildAndroid(c, tempDir, "compose");
+    const typo = readFileSync(
+      join(tempDir, "build", "android", "Typography.kt"),
+      "utf-8",
+    );
+    // FontFamily("string") is not a valid Compose constructor; must never appear
+    expect(typo).not.toMatch(/FontFamily\("[^"]+"\)/);
+  });
 });

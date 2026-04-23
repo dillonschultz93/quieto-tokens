@@ -202,7 +202,7 @@ export function validateConfigShape(parsed: unknown): string[] {
     if (root.androidFormat !== "xml" && root.androidFormat !== "compose") {
       errors.push("androidFormat");
     } else if (
-      Array.isArray(root.outputs) &&
+      !Array.isArray(root.outputs) ||
       !root.outputs.includes("android")
     ) {
       errors.push("androidFormat");

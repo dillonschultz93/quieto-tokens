@@ -663,8 +663,11 @@ function ensureAndroidHooksRegistered(): void {
     if (s.endsWith("px")) {
       return `${Math.round(n)}dp`;
     }
-    if (s.endsWith("sp") || s.endsWith("dp") || s.endsWith("em")) {
-      return s; // keep as token written
+    if (s.endsWith("sp") || s.endsWith("dp")) {
+      return s; // keep supported Android dimen units as written
+    }
+    if (s.endsWith("em")) {
+      return null;
     }
     return Number.isInteger(n) ? `${n}dp` : `${n}dp`;
   }
@@ -696,12 +699,14 @@ function ensureAndroidHooksRegistered(): void {
       ];
       for (const t of dictionary.allTokens) {
         const tok = t as { name: string; $value?: unknown; $type?: string };
-        if (tok.$type === "fontFamily") continue;
-        const dimen = dimenFromTokenValue(tok.$value, tok.$type ?? "");
+        const type = tok.$type ?? "";
+        // Only emit actual dimension tokens as <dimen>; skip fontFamily, fontWeight, and unitless numbers
+        if (type === "fontFamily" || type === "fontWeight" || type === "number") continue;
+        const dimen = dimenFromTokenValue(tok.$value, type);
         if (dimen === null) continue;
-        const isSp = tok.name.includes("line");
-        const unit = isSp ? dimen : dimen.replace(/dp$/, "sp");
-        lines.push(`  <dimen name="${tok.name}">${unit}</dimen>`);
+        // Font-related dimensions should use sp (scalable pixels), not dp
+        const spValue = dimen.replace(/dp$/, "sp");
+        lines.push(`  <dimen name="${tok.name}">${spValue}</dimen>`);
       }
       lines.push("</resources>\n");
       return lines.join("\n");
@@ -726,8 +731,8 @@ function ensureAndroidHooksRegistered(): void {
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/"/g, "&quot;")
-          .replace(/'/g, "\\'")
-          .replace(/\\/g, "\\\\");
+          .replace(/\\/g, "\\\\")
+          .replace(/'/g, "\\'");
         lines.push(`  <string name="${tok.name}">${escaped}</string>`);
       }
       lines.push("</resources>\n");
@@ -824,7 +829,7 @@ import androidx.compose.ui.unit.sp
               : "FontWeight.Normal";
           const fam =
             typeof ff === "string" && ff.length > 0
-              ? `FontFamily("${ff.replace(/"/g, "")}")`
+              ? "FontFamily.SansSerif" // FontFamily requires Font(...) resource refs; use default
               : "FontFamily.SansSerif";
           lines.push(
             `  val ${tok.name} = TextStyle(`,
@@ -840,7 +845,7 @@ import androidx.compose.ui.unit.sp
           const n = Number(tok.$value);
           if (Number.isFinite(n)) {
             lines.push(
-              `  val ${tok.name} = TextStyle(fontSize = ${n}.sp)`,
+              `  val ${tok.name} = FontWeight(${Math.round(n)})`,
               "",
             );
           }
@@ -848,7 +853,7 @@ import androidx.compose.ui.unit.sp
           const str = Array.isArray(tok.$value) ? tok.$value[0] : tok.$value;
           if (typeof str === "string") {
             lines.push(
-              `  val ${tok.name} = TextStyle(fontFamily = FontFamily("${str.replace(/"/g, "")}"))`,
+              `  val ${tok.name} = "${str.replace(/"/g, "")}"`,
               "",
             );
           }
