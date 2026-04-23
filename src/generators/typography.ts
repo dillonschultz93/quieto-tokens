@@ -59,7 +59,7 @@ export function generateTypographyPrimitives(
     tier: "primitive" as const,
     category: "typography",
     name: `typography.font-size.${step.label}`,
-    $type: "dimension",
+    $type: "fontSize",
     $value: `${step.value}px`,
     path: ["typography", "font-size", step.label],
   }));

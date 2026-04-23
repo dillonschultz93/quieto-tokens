@@ -1,5 +1,11 @@
 # @quieto/tokens
 
+## 0.2.2
+
+### Patch Changes
+
+- Use DTCG `fontSize` for type-scale primitives and semantic font-size roles so tools like Tokens Studio classify them as font size, not generic dimension
+
 ## 0.2.1
 
 ### Patch Changes

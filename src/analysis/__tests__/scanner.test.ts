@@ -125,7 +125,7 @@ describe("scanDirectory", () => {
           tier: "primitive",
           category: "typography",
           name: "typography.fontSize.base",
-          $type: "dimension",
+          $type: "fontSize",
           $value: "16px",
           path: ["typography", "fontSize", "base"],
         },

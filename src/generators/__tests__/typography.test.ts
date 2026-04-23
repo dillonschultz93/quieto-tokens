@@ -102,11 +102,11 @@ describe("generateTypographyPrimitives", () => {
       }
     });
 
-    it("font-size tokens have $type 'dimension'", () => {
+    it("font-size tokens have $type 'fontSize' (DTCG / Tokens Studio font size)", () => {
       tokens = generateTypographyPrimitives("balanced");
       const fontSizes = tokens.filter((t) => t.path[1] === "font-size");
       for (const t of fontSizes) {
-        expect(t.$type).toBe("dimension");
+        expect(t.$type).toBe("fontSize");
       }
     });
 

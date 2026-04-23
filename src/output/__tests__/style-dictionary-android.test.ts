@@ -22,7 +22,7 @@ function makeFullCollection(themeNames: string[]): ThemeCollection {
     makeColorPrimitive("neutral", 900, "#111827"),
     makeSpacingPrimitive(4),
     makeSpacingPrimitive(16),
-    makeTypoPrimitive("font-size", "lg", "18px", "dimension"),
+    makeTypoPrimitive("font-size", "lg", "18px", "fontSize"),
     makeTypoPrimitive("font-weight", "bold", "700", "fontWeight"),
     makeTypoPrimitive("font-family", "body", "Inter", "fontFamily"),
   ];
@@ -143,7 +143,7 @@ describe("buildAndroid — name transforms and formats", () => {
     expect(typo).not.toContain("font_weight");
     // fontFamily token must not appear as a <dimen>
     expect(typo).not.toContain("font_family");
-    // font-size dimension token should appear as sp
+    // font-size (fontSize type) token should appear as sp
     expect(typo).toContain("sp");
   });
 
