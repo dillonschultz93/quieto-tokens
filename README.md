@@ -12,17 +12,20 @@ Quieto Tokens generates a three-tier design token system (primitive, semantic, a
 
 ## Installation
 
-Quieto Tokens is not yet published to npm. For now, install it from source:
+Quieto Tokens is published on npm as `@quieto/tokens`.
 
 ```bash
-git clone https://github.com/dillonschultz93/quieto-tokens.git
-cd quieto-tokens
-npm install
-npm run build
-npm link
+npm install -g @quieto/tokens
+quieto-tokens --help
 ```
 
-`npm link` makes the `quieto-tokens` binary available globally so you can run it from any project directory. Requires Node.js 18 or newer.
+Alternatively, you can run it without installing globally:
+
+```bash
+npx @quieto/tokens init
+```
+
+Requires Node.js 22 or newer.
 
 ## Quick Start
 
