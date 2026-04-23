@@ -145,6 +145,23 @@ Output lands in `tokens/component/<name>.json` and CSS is rebuilt to include the
 
 Component tokens are theme-agnostic at the JSON level — theming is delegated to the CSS cascade via the semantic token references they point at. Re-running `component button` prompts for confirmation before replacing the existing tokens.
 
+### Inspecting your token system
+
+Run **`quieto-tokens inspect`** to analyze your token system's health without modifying any files. The command loads all DTCG JSON source files and produces a terminal report covering:
+
+- **Summary** — total tokens by tier (primitive, semantic, component), by category, and theme count.
+- **Orphaned primitives** — primitive tokens not referenced by any semantic or component token.
+- **Broken references** — semantic or component tokens whose `{...}` references point to non-existent tokens.
+- **Naming violations** — token paths that don't follow the lowercase-hyphen naming convention.
+- **WCAG contrast** — contrast ratios for paired background/content semantic color tokens, with pass/fail against WCAG AA (4.5:1).
+
+Add `--output report.md` (or `-o report.md`) to write the report to a markdown file in addition to the terminal display.
+
+```bash
+quieto-tokens inspect                    # terminal report only
+quieto-tokens inspect --output report.md # also write markdown
+```
+
 ### Token Tiers
 
 - **Primitive** — Core values: color ramps, spacing scales, type scales. Obfuscation layer over raw values. _(shipped)_
@@ -171,7 +188,7 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 - DTCG JSON source tokens _(shipped)_
 - JSON for Figma Variables / Tokens Studio _(shipped)_
 - iOS Swift (UIColor, SwiftUI Color, CGFloat, font constants) _(shipped)_
-- Android XML / Compose _(planned — Epic 4)_
+- Android XML / Compose _(shipped)_
 
 ## Key Features
 
@@ -193,7 +210,7 @@ This project is in active development. Progress by epic:
 | 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | **Done** |
 | 3 — Token System Evolution | `update` (re-entrant editing, selective regen), token diff in the terminal, dry-run, design-system changelog | **In progress** (diff + `update` shipped; dry-run & changelog next) |
 | 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | **In progress** (Figma JSON & iOS Swift shipped; Android next) |
-| 5 — Design System Intelligence | `inspect` command, `migrate` command | Backlog |
+| 5 — Design System Intelligence | `inspect` command, `migrate` command | **In progress** (`inspect` shipped; `migrate` next) |
 
 See [`docs/planning/epics.md`](docs/planning/epics.md) for the full roadmap and [`docs/planning/sprint-status.yaml`](docs/planning/sprint-status.yaml) for per-story status.
 

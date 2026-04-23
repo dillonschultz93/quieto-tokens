@@ -149,6 +149,7 @@ export async function runConfigGeneration(
       '  • Run "quieto-tokens add border" to add border widths + radii',
       '  • Run "quieto-tokens add animation" to add durations + easing',
       '  • Run "quieto-tokens component button" (or any component name) to author component tokens',
+      '  • Run "quieto-tokens inspect" to analyze your token system\'s health (orphans, broken refs, contrast)',
     ].join("\n"),
   );
 
