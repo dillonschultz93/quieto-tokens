@@ -80,7 +80,7 @@ export function samplePrimitives(): PrimitiveToken[] {
     makeColorPrimitive("neutral", 900, "#111827"),
     makeSpacingPrimitive(4),
     makeSpacingPrimitive(16),
-    makeTypoPrimitive("font-size", "base", "16px", "dimension"),
+    makeTypoPrimitive("font-size", "base", "16px", "fontSize"),
     makeTypoPrimitive("font-weight", "regular", "400", "fontWeight"),
   ];
 }

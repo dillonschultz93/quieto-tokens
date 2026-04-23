@@ -113,9 +113,9 @@ const NEUTRAL_PRIMITIVES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map
 
 const SPACING_PRIMITIVES = [4, 8, 12, 16, 24, 32, 48, 64].map(makeSpacingPrimitive);
 const TYPO_PRIMITIVES: PrimitiveToken[] = [
-  makeTypoPrimitive("font-size", "xs", "12px", "dimension"),
-  makeTypoPrimitive("font-size", "sm", "14px", "dimension"),
-  makeTypoPrimitive("font-size", "base", "16px", "dimension"),
+  makeTypoPrimitive("font-size", "xs", "12px", "fontSize"),
+  makeTypoPrimitive("font-size", "sm", "14px", "fontSize"),
+  makeTypoPrimitive("font-size", "base", "16px", "fontSize"),
   makeTypoPrimitive("font-weight", "regular", "400", "fontWeight"),
   makeTypoPrimitive("font-weight", "bold", "700", "fontWeight"),
 ];
@@ -143,7 +143,7 @@ const SPACING_SEMANTICS: SemanticToken[] = [
 ];
 
 const TYPO_SEMANTICS: SemanticToken[] = [
-  makeTypoSemantic("body", "font-size", "base", "dimension"),
+  makeTypoSemantic("body", "font-size", "base", "fontSize"),
   makeTypoSemantic("body", "font-weight", "regular", "fontWeight"),
 ];
 

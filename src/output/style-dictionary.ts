@@ -700,7 +700,7 @@ function ensureAndroidHooksRegistered(): void {
       for (const t of dictionary.allTokens) {
         const tok = t as { name: string; $value?: unknown; $type?: string };
         const type = tok.$type ?? "";
-        // Only emit actual dimension tokens as <dimen>; skip fontFamily, fontWeight, and unitless numbers
+        // Emit dimension and fontSize as <dimen>; skip fontFamily, fontWeight, and unitless numbers
         if (type === "fontFamily" || type === "fontWeight" || type === "number") continue;
         const dimen = dimenFromTokenValue(tok.$value, type);
         if (dimen === null) continue;

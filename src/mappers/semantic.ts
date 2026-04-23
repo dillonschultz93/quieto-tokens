@@ -137,7 +137,7 @@ export function mapTypographySemantics(
       tier: "semantic" as const,
       category: "typography",
       name: `typography.${role.role}.font-size`,
-      $type: "dimension",
+      $type: "fontSize",
       $value: `{typography.font-size.${sizeLabel}}`,
       path: ["typography", role.role, "font-size"],
     });

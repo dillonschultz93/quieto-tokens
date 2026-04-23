@@ -23,7 +23,7 @@ function makeFullCollection(themeNames: string[]): ThemeCollection {
     makeColorPrimitive("neutral", 900, "#111827"),
     makeSpacingPrimitive(4),
     makeSpacingPrimitive(16),
-    makeTypoPrimitive("font-size", "lg", "18px", "dimension"),
+    makeTypoPrimitive("font-size", "lg", "18px", "fontSize"),
     makeTypoPrimitive("font-weight", "bold", "700", "fontWeight"),
     makeTypoPrimitive("font-family", "body", "Inter", "fontFamily"),
   ];

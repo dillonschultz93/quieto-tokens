@@ -72,13 +72,13 @@ const SPACING_4_VALUES = [4, 8, 12, 16, 24, 32, 48, 64, 96];
 const SPACING_PRIMITIVES = SPACING_4_VALUES.map(makeSpacingPrimitive);
 
 const TYPO_PRIMITIVES: PrimitiveToken[] = [
-  makeTypoPrimitive("font-size", "xs", "12px", "dimension"),
-  makeTypoPrimitive("font-size", "sm", "14px", "dimension"),
-  makeTypoPrimitive("font-size", "base", "16px", "dimension"),
-  makeTypoPrimitive("font-size", "lg", "20px", "dimension"),
-  makeTypoPrimitive("font-size", "xl", "24px", "dimension"),
-  makeTypoPrimitive("font-size", "2xl", "30px", "dimension"),
-  makeTypoPrimitive("font-size", "3xl", "36px", "dimension"),
+  makeTypoPrimitive("font-size", "xs", "12px", "fontSize"),
+  makeTypoPrimitive("font-size", "sm", "14px", "fontSize"),
+  makeTypoPrimitive("font-size", "base", "16px", "fontSize"),
+  makeTypoPrimitive("font-size", "lg", "20px", "fontSize"),
+  makeTypoPrimitive("font-size", "xl", "24px", "fontSize"),
+  makeTypoPrimitive("font-size", "2xl", "30px", "fontSize"),
+  makeTypoPrimitive("font-size", "3xl", "36px", "fontSize"),
   makeTypoPrimitive("font-weight", "regular", "400", "fontWeight"),
   makeTypoPrimitive("font-weight", "medium", "500", "fontWeight"),
   makeTypoPrimitive("font-weight", "semibold", "600", "fontWeight"),
@@ -304,6 +304,13 @@ describe("mapTypographySemantics", () => {
       (t) => t.path[1] === "headline" && t.path[2] === "font-size",
     );
     expect(headline!.path).toEqual(["typography", "headline", "font-size"]);
+  });
+
+  it("font-size tokens have $type 'fontSize'", () => {
+    const fontSizeTokens = tokens.filter((t) => t.path[2] === "font-size");
+    for (const t of fontSizeTokens) {
+      expect(t.$type).toBe("fontSize");
+    }
   });
 });
 

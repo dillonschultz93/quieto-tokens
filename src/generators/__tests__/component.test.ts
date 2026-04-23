@@ -64,7 +64,7 @@ const SEMANTIC_TOKENS: SemanticToken[] = [
     tier: "semantic",
     category: "typography",
     name: "typography.body.font-size",
-    $type: "dimension",
+    $type: "fontSize",
     $value: "16px",
     path: ["typography", "body", "font-size"],
   },
@@ -189,7 +189,7 @@ describe("generateComponentTokens", () => {
 
     expect(fontSizeToken.path).toEqual(["button", "primary", "typography", "font-size", "default"]);
     expect(fontSizeToken.$value).toBe("{typography.body.font-size}");
-    expect(fontSizeToken.$type).toBe("dimension");
+    expect(fontSizeToken.$type).toBe("fontSize");
 
     expect(fontWeightToken.path).toEqual(["button", "primary", "typography", "font-weight", "default"]);
     expect(fontWeightToken.$value).toBe("{typography.body.font-weight}");

@@ -55,7 +55,7 @@ function makeCollection(): ThemeCollection {
       tier: "primitive",
       category: "typography",
       name: "typography.font-size.base",
-      $type: "dimension",
+      $type: "fontSize",
       $value: "16px",
       path: ["typography", "font-size", "base"],
     },
