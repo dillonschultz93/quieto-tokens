@@ -1,6 +1,6 @@
 {
   "name": "@quieto/tokens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI tool for generating complete, accessible design token systems.",
   "type": "module",
   "bin": {
