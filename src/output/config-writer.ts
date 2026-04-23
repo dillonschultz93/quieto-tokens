@@ -105,7 +105,7 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
     overrides: Object.fromEntries(input.overrides),
     output: { ...DEFAULT_OUTPUT_CONFIG },
     outputs: fromInput.filter(
-      (p): p is OutputPlatform => p === "css" || p === "figma",
+      (p): p is OutputPlatform => p === "css" || p === "figma" || p === "ios",
     ),
     categories: input.categories ? [...input.categories] : [...DEFAULT_CATEGORIES],
   };

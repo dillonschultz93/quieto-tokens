@@ -43,6 +43,7 @@ export interface ComponentPipelineResult {
   jsonFiles: string[];
   cssFiles: string[];
   figmaFiles?: string[];
+  iosFiles?: string[];
 }
 
 export type ComponentPipelineOutcome =

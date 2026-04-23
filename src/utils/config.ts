@@ -188,7 +188,7 @@ export function validateConfigShape(parsed: unknown): string[] {
     } else {
       for (let oi = 0; oi < root.outputs.length; oi++) {
         const p = root.outputs[oi];
-        if (p !== "css" && p !== "figma") {
+        if (p !== "css" && p !== "figma" && p !== "ios") {
           errors.push(`outputs[${oi}]`);
         }
       }

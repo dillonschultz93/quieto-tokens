@@ -473,8 +473,8 @@ function ensureIosHooksRegistered(): void {
         const tok = t as { name: string; $value?: unknown };
         const val = tok.$value;
         if (typeof val !== "string") continue;
-        uiColorBlock += `    static let ${tok.name} = ${val}\n`;
-        swiftUIBlock += `    static let ${tok.name} = Color(uiColor: .${tok.name})\n`;
+        uiColorBlock += `    public static let ${tok.name} = ${val}\n`;
+        swiftUIBlock += `    public static let ${tok.name} = Color(uiColor: .${tok.name})\n`;
       }
 
       uiColorBlock += "}\n";
