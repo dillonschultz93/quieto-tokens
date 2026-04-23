@@ -1,6 +1,6 @@
 # Story 5.1: Inspect Command for Design System Health
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -68,14 +68,14 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: CLI routing for `inspect` (AC: #3)**
-  - [ ] 1.1: In `src/cli.ts`, add `inspect` to the `switch` statement in `runCli`. Parse args for `--output <path>`.
-  - [ ] 1.2: Add `parseInspectArgs(args)` returning `{ output?: string; unknown: string[] }`.
-  - [ ] 1.3: Update `HELP_TEXT` to include the `inspect` command and `--output` option.
-  - [ ] 1.4: Wire to `inspectCommand({ output? })` in a new `src/commands/inspect.ts`.
+- [x] **Task 1: CLI routing for `inspect` (AC: #3)**
+  - [x] 1.1: In `src/cli.ts`, add `inspect` to the `switch` statement in `runCli`. Parse args for `--output <path>`.
+  - [x] 1.2: Add `parseInspectArgs(args)` returning `{ output?: string; unknown: string[] }`.
+  - [x] 1.3: Update `HELP_TEXT` to include the `inspect` command and `--output` option.
+  - [x] 1.4: Wire to `inspectCommand({ output? })` in a new `src/commands/inspect.ts`.
 
-- [ ] **Task 2: Token loader for inspection (AC: #1, #3)**
-  - [ ] 2.1: Create `src/analysis/token-loader.ts` exporting:
+- [x] **Task 2: Token loader for inspection (AC: #1, #3)**
+  - [x] 2.1: Create `src/analysis/token-loader.ts` exporting:
     ```typescript
     export interface LoadedTokenSystem {
       primitives: PrimitiveToken[];
@@ -85,12 +85,12 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
     }
     export async function loadTokenSystem(cwd?: string): Promise<LoadedTokenSystem | null>;
     ```
-  - [ ] 2.2: `loadTokenSystem` reads `quieto.config.json`, then scans `tokens/primitive/`, `tokens/semantic/<theme>/`, and `tokens/component/` directories. Parses each JSON file into the token type arrays.
-  - [ ] 2.3: Return `null` if config or token directory doesn't exist (caller shows "no token system" error).
-  - [ ] 2.4: Reuse the DTCG JSON parsing logic — tokens are stored with `$type` and `$value` fields. Walk the JSON tree to extract leaf tokens.
+  - [x] 2.2: `loadTokenSystem` reads `quieto.config.json`, then scans `tokens/primitive/`, `tokens/semantic/<theme>/`, and `tokens/component/` directories. Parses each JSON file into the token type arrays.
+  - [x] 2.3: Return `null` if config or token directory doesn't exist (caller shows "no token system" error).
+  - [x] 2.4: Reuse the DTCG JSON parsing logic — tokens are stored with `$type` and `$value` fields. Walk the JSON tree to extract leaf tokens.
 
-- [ ] **Task 3: Summary analyzer (AC: #2)**
-  - [ ] 3.1: Create `src/analysis/summary.ts` exporting:
+- [x] **Task 3: Summary analyzer (AC: #2)**
+  - [x] 3.1: Create `src/analysis/summary.ts` exporting:
     ```typescript
     export interface TokenSummary {
       totalByTier: { primitive: number; semantic: number; component: number };
@@ -101,16 +101,16 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
     export function computeSummary(system: LoadedTokenSystem): TokenSummary;
     ```
 
-- [ ] **Task 4: Orphan detector (AC: #4, #5)**
-  - [ ] 4.1: Create `src/analysis/orphans.ts` exporting:
+- [x] **Task 4: Orphan detector (AC: #4, #5)**
+  - [x] 4.1: Create `src/analysis/orphans.ts` exporting:
     ```typescript
     export interface OrphanedToken { path: string[]; category: string; }
     export function detectOrphans(system: LoadedTokenSystem): OrphanedToken[];
     ```
-  - [ ] 4.2: Build a set of all DTCG reference strings used in semantic tokens across all themes. Compare against primitive token paths. Any primitive not referenced is orphaned.
+  - [x] 4.2: Build a set of all DTCG reference strings used in semantic tokens across all themes. Compare against primitive token paths. Any primitive not referenced is orphaned.
 
-- [ ] **Task 5: Broken reference detector (AC: #6, #7, #8)**
-  - [ ] 5.1: Create `src/analysis/references.ts` exporting:
+- [x] **Task 5: Broken reference detector (AC: #6, #7, #8)**
+  - [x] 5.1: Create `src/analysis/references.ts` exporting:
     ```typescript
     export interface BrokenReference {
       tokenPath: string[];
@@ -120,10 +120,10 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
     }
     export function detectBrokenReferences(system: LoadedTokenSystem): BrokenReference[];
     ```
-  - [ ] 5.2: For each semantic and component token, check if the `$value` is a DTCG reference (`{...}` pattern). Resolve it against the primitive token paths. Report unresolvable references.
+  - [x] 5.2: For each semantic and component token, check if the `$value` is a DTCG reference (`{...}` pattern). Resolve it against the primitive token paths. Report unresolvable references.
 
-- [ ] **Task 6: Naming validator (AC: #9, #10)**
-  - [ ] 6.1: Create `src/analysis/naming.ts` exporting:
+- [x] **Task 6: Naming validator (AC: #9, #10)**
+  - [x] 6.1: Create `src/analysis/naming.ts` exporting:
     ```typescript
     export interface NamingViolation {
       tokenPath: string[];
@@ -132,10 +132,10 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
     }
     export function validateNaming(system: LoadedTokenSystem): NamingViolation[];
     ```
-  - [ ] 6.2: Check token paths against expected patterns: lowercase, hyphen-separated segments, valid category prefixes. Flag paths with uppercase, special characters, or unexpected nesting depth.
+  - [x] 6.2: Check token paths against expected patterns: lowercase, hyphen-separated segments, valid category prefixes. Flag paths with uppercase, special characters, or unexpected nesting depth.
 
-- [ ] **Task 7: WCAG contrast analyzer (AC: #11, #12, #13)**
-  - [ ] 7.1: Create `src/analysis/contrast.ts` exporting:
+- [x] **Task 7: WCAG contrast analyzer (AC: #11, #12, #13)**
+  - [x] 7.1: Create `src/analysis/contrast.ts` exporting:
     ```typescript
     export interface ContrastPair {
       backgroundPath: string[];
@@ -148,12 +148,12 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
     }
     export function analyzeContrast(system: LoadedTokenSystem): ContrastPair[];
     ```
-  - [ ] 7.2: Identify pairs by matching semantic color paths: tokens with `background` in the path are paired with tokens that have `content` (or `text`) at the same nesting level (e.g., `color.background.primary` ↔ `color.content.primary`).
-  - [ ] 7.3: Resolve each semantic token's `$value` reference to the primitive's hex value. Compute contrast ratio using the WCAG luminance formula (relative luminance → contrast ratio).
-  - [ ] 7.4: The contrast computation can use the same `hexToAnsi` / color-math utilities in `src/ui/preview.ts` if they expose luminance calculation, or implement the WCAG formula directly (it's ~15 lines).
+  - [x] 7.2: Identify pairs by matching semantic color paths: tokens with `background` in the path are paired with tokens that have `content` (or `text`) at the same nesting level (e.g., `color.background.primary` ↔ `color.content.primary`).
+  - [x] 7.3: Resolve each semantic token's `$value` reference to the primitive's hex value. Compute contrast ratio using the WCAG luminance formula (relative luminance → contrast ratio).
+  - [x] 7.4: The contrast computation can use the same `hexToAnsi` / color-math utilities in `src/ui/preview.ts` if they expose luminance calculation, or implement the WCAG formula directly (it's ~15 lines).
 
-- [ ] **Task 8: Report renderer (AC: #14, #15, #16)**
-  - [ ] 8.1: Create `src/analysis/report.ts` exporting:
+- [x] **Task 8: Report renderer (AC: #14, #15, #16)**
+  - [x] 8.1: Create `src/analysis/report.ts` exporting:
     ```typescript
     export interface InspectReport {
       summary: TokenSummary;
@@ -165,31 +165,61 @@ This is the **first story of Epic 5** and introduces a new `inspect` CLI command
     export function renderTerminalReport(report: InspectReport): void;
     export function renderMarkdownReport(report: InspectReport): string;
     ```
-  - [ ] 8.2: `renderTerminalReport` uses `@clack/prompts` (`p.log.info`, `p.log.warn`, `p.log.success`) to display each section with pass/fail indicators.
-  - [ ] 8.3: `renderMarkdownReport` produces structured markdown with tables for summary, lists for issues, and contrast ratio tables.
+  - [x] 8.2: `renderTerminalReport` uses `@clack/prompts` (`p.log.info`, `p.log.warn`, `p.log.success`) to display each section with pass/fail indicators.
+  - [x] 8.3: `renderMarkdownReport` produces structured markdown with tables for summary, lists for issues, and contrast ratio tables.
 
-- [ ] **Task 9: Inspect command orchestrator (AC: all)**
-  - [ ] 9.1: Create `src/commands/inspect.ts`:
+- [x] **Task 9: Inspect command orchestrator (AC: all)**
+  - [x] 9.1: Create `src/commands/inspect.ts`:
     ```typescript
     export async function inspectCommand(opts: { output?: string }): Promise<void>;
     ```
-  - [ ] 9.2: Flow: load token system → compute summary → detect orphans → detect broken refs → validate naming → analyze contrast → build report → render terminal → optionally write markdown.
-  - [ ] 9.3: On write failure for `--output` → `p.log.warn` (non-fatal).
+  - [x] 9.2: Flow: load token system → compute summary → detect orphans → detect broken refs → validate naming → analyze contrast → build report → render terminal → optionally write markdown.
+  - [x] 9.3: On write failure for `--output` → `p.log.warn` (non-fatal).
 
-- [ ] **Task 10: Tests (AC: all)**
-  - [ ] 10.1: `src/analysis/__tests__/token-loader.test.ts` — loads test fixtures, returns null for missing system.
-  - [ ] 10.2: `src/analysis/__tests__/orphans.test.ts` — detects orphaned primitives, empty when all referenced.
-  - [ ] 10.3: `src/analysis/__tests__/references.test.ts` — detects broken refs, clean when all valid.
-  - [ ] 10.4: `src/analysis/__tests__/naming.test.ts` — catches violations, passes clean names.
-  - [ ] 10.5: `src/analysis/__tests__/contrast.test.ts` — correct ratio calculation, pass/fail thresholds.
-  - [ ] 10.6: `src/analysis/__tests__/report.test.ts` — markdown output matches expected format.
-  - [ ] 10.7: `src/commands/__tests__/inspect.test.ts` — CLI routing, `--output` flag, "no system" error.
-  - [ ] 10.8: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+- [x] **Task 10: Tests (AC: all)**
+  - [x] 10.1: `src/analysis/__tests__/token-loader.test.ts` — loads test fixtures, returns null for missing system.
+  - [x] 10.2: `src/analysis/__tests__/orphans.test.ts` — detects orphaned primitives, empty when all referenced.
+  - [x] 10.3: `src/analysis/__tests__/references.test.ts` — detects broken refs, clean when all valid.
+  - [x] 10.4: `src/analysis/__tests__/naming.test.ts` — catches violations, passes clean names.
+  - [x] 10.5: `src/analysis/__tests__/contrast.test.ts` — correct ratio calculation, pass/fail thresholds.
+  - [x] 10.6: `src/analysis/__tests__/report.test.ts` — markdown output matches expected format.
+  - [x] 10.7: `src/commands/__tests__/inspect.test.ts` — CLI routing, `--output` flag, "no system" error.
+  - [x] 10.8: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 11: Close-out**
-  - [ ] 11.1: Update README.md to document the `inspect` command.
-  - [ ] 11.2: Update `src/pipeline/config.ts` "What's next" to mention `inspect`.
-  - [ ] 11.3: Move this story to `review`, then to `done` after code review.
+- [x] **Task 11: Close-out**
+  - [x] 11.1: Update README.md to document the `inspect` command.
+  - [x] 11.2: Update `src/pipeline/config.ts` "What's next" to mention `inspect`.
+  - [x] 11.3: Move this story to `review`, then to `done` after code review.
+
+### Review Findings
+
+- [x] [Review][Decision] Exit code behavior — resolved: exit **1** only when “no token system found”.
+
+- [x] [Review][Decision] Orphan definition — resolved: orphans are primitives not referenced by **semantic** tokens (align AC #4).
+
+- [x] [Review][Decision] Broken reference rules — resolved: allow semantic→semantic chains, validate **within the same theme**, and fail if the chain can’t resolve to a primitive (cycle-safe).
+
+- [x] [Review][Decision] Summary semantics counting — resolved: keep **unique semantic paths** across themes (current behavior; clarify wording).
+
+- [x] [Review][Patch] Document `inspect --output/-o` in help text (Task 1.3) [`src/cli.ts`]
+
+- [x] [Review][Patch] Prevent false positives in orphan/broken-ref detection by restricting reference parsing (today it extracts `{...}` substrings, which also matches JSON-stringified composite values like shadow/cubicBezier) [`src/analysis/orphans.ts`, `src/analysis/references.ts`]
+
+- [x] [Review][Patch] Fix broken-reference validation across themes (a ref in theme `dark` shouldn’t be “saved” by the same path existing in theme `light`) [`src/analysis/references.ts`]
+
+- [x] [Review][Patch] Handle semantic reference cycles in contrast resolution (avoid infinite recursion/stack overflow) [`src/analysis/contrast.ts`]
+
+- [x] [Review][Patch] Don’t return “no system” when only component tokens exist (components are loaded after the early `null` return) [`src/analysis/token-loader.ts`]
+
+- [x] [Review][Patch] `--output=` should be rejected (empty path) and `--output <path>` should accept legitimate paths even if they start with `-` (currently treated as unknown) [`src/cli.ts`]
+
+- [x] [Review][Patch] Align “reference detected” vs “reference resolvable” behavior (contrast only resolves full-string `{ref}`, while broken-ref detection accepts brace substrings) [`src/analysis/contrast.ts`, `src/analysis/references.ts`]
+
+- [x] [Review][Patch] Align `detectOrphans` with AC #4 (semantic-only; don’t treat component references as “covered”) [`src/analysis/orphans.ts`]
+
+- [x] [Review][Patch] Implement per-theme, cycle-safe reference resolution for broken references (semantic→semantic chains allowed, must resolve to primitive) [`src/analysis/references.ts`]
+
+- [x] [Review][Patch] Clarify summary wording: semantic count is “unique semantic paths” across themes (not “per theme”) [`src/analysis/report.ts`, `docs/planning/stories/5-1-inspect-command-for-design-system-health.md`]
 
 ## Dev Notes
 
@@ -295,8 +325,44 @@ src/
 
 ### Agent Model Used
 
+Claude Opus 4.6 (claude-opus-4-6)
+
 ### Debug Log References
+
+None — no debugging issues encountered during implementation.
 
 ### Completion Notes List
 
+- All analysis modules (token-loader, summary, orphans, references, naming, contrast, report) created under `src/analysis/`.
+- Reused existing `loadPrimitivesFromDisk`, `loadSemanticTokensFromDisk`, `loadComponentTokensFromDisk` from `src/pipeline/load-from-disk.ts` for token loading.
+- Reused existing `contrastRatio` and `meetsWcagAA` from `src/utils/contrast.ts` for WCAG analysis.
+- Semantic deduplication in `computeSummary` uses category+path key to avoid double-counting across themes.
+- Contrast pairing matches background/content tokens by role extracted from path position after the keyword.
+- `renderTerminalReport` uses `@clack/prompts` log methods; `renderMarkdownReport` produces tables and lists.
+- 41 new tests across 8 test files; all 703 total tests pass.
+- Type-check, build, and validate:sprint all clean.
+
 ### File List
+
+**New files:**
+- `src/analysis/token-loader.ts` — LoadedTokenSystem interface, loadTokenSystem function
+- `src/analysis/summary.ts` — TokenSummary interface, computeSummary function
+- `src/analysis/orphans.ts` — OrphanedToken interface, detectOrphans function
+- `src/analysis/references.ts` — BrokenReference interface, detectBrokenReferences function
+- `src/analysis/naming.ts` — NamingViolation interface, validateNaming function
+- `src/analysis/contrast.ts` — ContrastPair interface, analyzeContrast function
+- `src/analysis/report.ts` — InspectReport interface, renderTerminalReport, renderMarkdownReport
+- `src/commands/inspect.ts` — inspectCommand orchestrator
+- `src/analysis/__tests__/token-loader.test.ts` — 3 tests
+- `src/analysis/__tests__/summary.test.ts` — 5 tests
+- `src/analysis/__tests__/orphans.test.ts` — 5 tests
+- `src/analysis/__tests__/references.test.ts` — 6 tests
+- `src/analysis/__tests__/naming.test.ts` — 6 tests
+- `src/analysis/__tests__/contrast.test.ts` — 6 tests
+- `src/analysis/__tests__/report.test.ts` — 7 tests
+- `src/commands/__tests__/inspect.test.ts` — 3 tests
+
+**Modified files:**
+- `src/cli.ts` — Added inspect command routing, parseInspectArgs, HELP_TEXT entry
+- `src/pipeline/config.ts` — Added inspect to "What's next" guidance
+- `README.md` — Documented inspect command, updated Epic 5 status

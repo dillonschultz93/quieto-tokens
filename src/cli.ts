@@ -5,6 +5,7 @@ import { initCommand } from "./commands/init.js";
 import { addCommand } from "./commands/add.js";
 import { componentCommand } from "./commands/component.js";
 import { updateCommand } from "./commands/update.js";
+import { inspectCommand } from "./commands/inspect.js";
 import {
   ADDABLE_CATEGORIES,
   isAddableCategory,
@@ -26,6 +27,8 @@ const HELP_TEXT = `
     component <name>  Generate tier-3 component tokens (e.g., button, modal) that
                       reference your semantic tokens. Walks through variants, states,
                       and property assignments interactively.
+    inspect           Analyze your token system's structure and health — orphans,
+                      broken references, naming, and WCAG contrast.
 
   Command options:
     --advanced        (init) Enter advanced mode: customize individual tokens
@@ -34,6 +37,8 @@ const HELP_TEXT = `
     --dry-run         Run the full pipeline without writing any files.
                       Must be passed after the command word.
                       Also accepts --dry-run=true / --dry-run=false.
+    --output, -o      (inspect) Also write the report to a markdown file.
+                      Usage: --output report.md / -o report.md / --output=report.md
 
   Global options:
     --help, -h        Show this help message
@@ -204,6 +209,36 @@ export function parseComponentArgs(args: readonly string[]): {
   return name !== undefined ? { name, dryRun, unknown } : { dryRun, unknown };
 }
 
+export function parseInspectArgs(args: readonly string[]): {
+  output?: string;
+  unknown: string[];
+} {
+  let output: string | undefined;
+  const unknown: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg === "--output" || arg === "-o") {
+      const next = args[i + 1];
+      if (next && next !== "--output" && next !== "-o") {
+        output = next;
+        i++;
+      } else {
+        unknown.push(arg);
+      }
+    } else if (arg.startsWith("--output=")) {
+      const value = arg.slice("--output=".length);
+      if (value.length === 0) {
+        unknown.push(arg);
+      } else {
+        output = value;
+      }
+    } else {
+      unknown.push(arg);
+    }
+  }
+  return output !== undefined ? { output, unknown } : { unknown };
+}
+
 /**
  * Pure routing core extracted from `main()` for testability. Returns an
  * exit code instead of calling `process.exit`, and accepts an explicit
@@ -335,6 +370,22 @@ export async function runCli(args: readonly string[]): Promise<number> {
       const componentExit = process.exitCode;
       process.exitCode = undefined;
       return typeof componentExit === "number" ? componentExit : 0;
+    }
+    case "inspect": {
+      const parsed = parseInspectArgs(args.slice(1));
+      if (parsed.unknown.length > 0) {
+        p.intro("◆  quieto-tokens");
+        p.log.error(
+          `Unknown argument(s) for inspect: ${parsed.unknown.join(", ")}`,
+        );
+        p.note(HELP_TEXT.trim(), "Usage");
+        p.outro("Fix the options and re-run.");
+        return 1;
+      }
+      await inspectCommand({ output: parsed.output });
+      const inspectExit = process.exitCode;
+      process.exitCode = undefined;
+      return typeof inspectExit === "number" ? inspectExit : 0;
     }
     default:
       p.intro("◆  quieto-tokens");
