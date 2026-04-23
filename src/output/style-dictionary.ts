@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import StyleDictionary from "style-dictionary";
 import type { ThemeCollection } from "../types/tokens.js";
@@ -52,6 +52,11 @@ function isSemanticOrComponentToken(token: TokenLike): boolean {
  * to mutate the on-disk JSON shape.
  */
 const QUIETO_NAME_TRANSFORM = "name/quieto";
+
+const IOS_NAME_TRANSFORM = "name/ios";
+const IOS_COLOR_FORMAT = "ios/color-swift";
+const IOS_SPACING_FORMAT = "ios/spacing-swift";
+const IOS_TYPOGRAPHY_FORMAT = "ios/typography-swift";
 
 const FIGMA_NAME_TRANSFORM = "name/figma";
 const FIGMA_JSON_FORMAT = "figma/json";
@@ -417,4 +422,352 @@ export async function buildFigmaJson(
   await mkdir(dirname(dest), { recursive: true });
   await writeFile(dest, JSON.stringify(merged, null, 2) + "\n", "utf-8");
   return [dest];
+}
+
+// ---------------------------------------------------------------------------
+// iOS Swift output
+// ---------------------------------------------------------------------------
+
+function toCamelCase(segments: string[]): string {
+  return segments
+    .filter((s) => s.length > 0)
+    .map((s, i) => {
+      const cleaned = s.replace(/-([a-z0-9])/g, (_, ch: string) =>
+        ch.toUpperCase(),
+      );
+      if (i === 0) return cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+      return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    })
+    .join("");
+}
+
+let iosHooksRegistered = false;
+function ensureIosHooksRegistered(): void {
+  if (iosHooksRegistered) return;
+
+  StyleDictionary.registerTransform({
+    name: IOS_NAME_TRANSFORM,
+    type: "name",
+    transform: (token) => {
+      const tokenPath = [...token.path];
+      if (isComponentToken(token)) {
+        return toCamelCase(["component", ...tokenPath]);
+      }
+      if (isSemanticToken(token)) {
+        return toCamelCase(["semantic", ...tokenPath]);
+      }
+      return toCamelCase(tokenPath);
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: IOS_COLOR_FORMAT,
+    format: ({ dictionary }): string => {
+      const header =
+        "// Do not edit directly, this file was auto-generated.\n\nimport UIKit\nimport SwiftUI\n";
+
+      let uiColorBlock = "\npublic extension UIColor {\n";
+      let swiftUIBlock = "\npublic extension Color {\n";
+
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown };
+        const val = tok.$value;
+        if (typeof val !== "string") continue;
+        uiColorBlock += `    static let ${tok.name} = ${val}\n`;
+        swiftUIBlock += `    static let ${tok.name} = Color(uiColor: .${tok.name})\n`;
+      }
+
+      uiColorBlock += "}\n";
+      swiftUIBlock += "}\n";
+      return header + uiColorBlock + swiftUIBlock;
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: IOS_SPACING_FORMAT,
+    format: ({ dictionary }): string => {
+      const header =
+        "// Do not edit directly, this file was auto-generated.\n\nimport CoreGraphics\n";
+      let body = "\npublic enum Spacing {\n";
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown };
+        const val = tok.$value;
+        if (typeof val !== "string" && typeof val !== "number") continue;
+        const num =
+          typeof val === "number"
+            ? val
+            : parseFloat(String(val).replace(/[^0-9.]/g, ""));
+        if (Number.isNaN(num)) continue;
+        const formatted = Number.isInteger(num) ? String(num) : num.toFixed(2);
+        body += `    public static let ${tok.name}: CGFloat = ${formatted}\n`;
+      }
+      body += "}\n";
+      return header + body;
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: IOS_TYPOGRAPHY_FORMAT,
+    format: ({ dictionary }): string => {
+      const header =
+        "// Do not edit directly, this file was auto-generated.\n\nimport CoreGraphics\n";
+      let body = "\npublic enum Typography {\n";
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $type?: string; $value?: unknown };
+        const val = tok.$value;
+        if (val === undefined || val === null) continue;
+        const $type = tok.$type ?? "";
+        if ($type === "fontWeight" || $type === "number") {
+          body += `    public static let ${tok.name}: CGFloat = ${val}\n`;
+        } else if ($type === "fontFamily") {
+          const str = Array.isArray(val) ? val[0] : val;
+          body += `    public static let ${tok.name}: String = ${JSON.stringify(str)}\n`;
+        } else {
+          const num = parseFloat(String(val).replace(/[^0-9.]/g, ""));
+          if (Number.isNaN(num)) continue;
+          const formatted = Number.isInteger(num)
+            ? String(num)
+            : num.toFixed(2);
+          body += `    public static let ${tok.name}: CGFloat = ${formatted}\n`;
+        }
+      }
+      body += "}\n";
+      return header + body;
+    },
+  });
+
+  iosHooksRegistered = true;
+}
+
+function isColorCategory(token: TokenLike): boolean {
+  return token.path[0] === "color";
+}
+
+function isSpacingCategory(token: TokenLike): boolean {
+  return token.path[0] === "spacing";
+}
+
+function isTypographyCategory(token: TokenLike): boolean {
+  return token.path[0] === "typography";
+}
+
+const IOS_TRANSFORMS: string[] = [
+  "attribute/cti",
+  IOS_NAME_TRANSFORM,
+  "color/UIColorSwift",
+];
+
+function createIosStyleDictionary(
+  outputDir: string,
+  themeName: string,
+  buildPath: string,
+): InstanceType<typeof StyleDictionary> {
+  ensureIosHooksRegistered();
+
+  const source = [
+    toPosix(join(outputDir, "tokens", "primitive", "**/*.json")),
+    toPosix(join(outputDir, "tokens", "semantic", themeName, "**/*.json")),
+    toPosix(join(outputDir, "tokens", "component", "**/*.json")),
+  ];
+
+  return new StyleDictionary({
+    source,
+    usesDtcg: true,
+    log: silenceLogs(),
+    platforms: {
+      ios: {
+        transforms: IOS_TRANSFORMS,
+        buildPath: toPosix(buildPath) + "/",
+        files: [
+          {
+            destination: "Color.swift",
+            format: IOS_COLOR_FORMAT,
+            filter: (token: TokenLike) => isColorCategory(token),
+          },
+          {
+            destination: "Spacing.swift",
+            format: IOS_SPACING_FORMAT,
+            filter: (token: TokenLike) => isSpacingCategory(token),
+          },
+          {
+            destination: "Typography.swift",
+            format: IOS_TYPOGRAPHY_FORMAT,
+            filter: (token: TokenLike) => isTypographyCategory(token),
+          },
+        ],
+      },
+    },
+  });
+}
+
+export async function buildIos(
+  collection: ThemeCollection,
+  outputDir: string,
+): Promise<string[]> {
+  const themes = collection.themes;
+  const buildPath = join(outputDir, "build", "ios");
+
+  if (themes.length === 1) {
+    const sd = createIosStyleDictionary(outputDir, themes[0]!.name, buildPath);
+    await sd.buildAllPlatforms();
+    const candidates = [
+      join(buildPath, "Color.swift"),
+      join(buildPath, "Spacing.swift"),
+      join(buildPath, "Typography.swift"),
+    ];
+    const written: string[] = [];
+    for (const p of candidates) {
+      try {
+        await stat(p);
+        written.push(p);
+      } catch {
+        // SD skips files when the filter matches no tokens
+      }
+    }
+    return written;
+  }
+
+  // Multi-theme: build per-theme formatted output, then merge into theme enums
+  const themeOutputs = new Map<
+    string,
+    { colors: string; spacing: string; typography: string }
+  >();
+
+  for (const theme of themes) {
+    const sd = createIosStyleDictionary(outputDir, theme.name, buildPath);
+    const parts = await sd.formatPlatform("ios");
+    const mapped = Object.create(null) as Record<string, string>;
+    for (const part of parts) {
+      const dest = (part.destination ?? "").split("/").pop() ?? "";
+      mapped[dest] = typeof part.output === "string" ? part.output : "";
+    }
+    themeOutputs.set(theme.name, {
+      colors: mapped["Color.swift"] ?? "",
+      spacing: mapped["Spacing.swift"] ?? "",
+      typography: mapped["Typography.swift"] ?? "",
+    });
+  }
+
+  await mkdir(buildPath, { recursive: true });
+
+  const written: string[] = [];
+
+  const fileDefs: Array<{
+    name: string;
+    field: "colors" | "spacing" | "typography";
+    imports: string[];
+  }> = [
+    { name: "Color.swift", field: "colors", imports: ["UIKit", "SwiftUI"] },
+    { name: "Spacing.swift", field: "spacing", imports: ["CoreGraphics"] },
+    { name: "Typography.swift", field: "typography", imports: ["CoreGraphics"] },
+  ];
+
+  for (const def of fileDefs) {
+    const hasContent = themes.some((t) => {
+      const out = themeOutputs.get(t.name);
+      return out && extractMembers(out[def.field]).length > 0;
+    });
+    if (!hasContent) continue;
+    const filePath = join(buildPath, def.name);
+    await writeFile(
+      filePath,
+      buildMultiThemeSwift(
+        def.name.replace(".swift", ""),
+        themes.map((t) => t.name),
+        themeOutputs,
+        def.field,
+        def.imports,
+      ),
+      "utf-8",
+    );
+    written.push(filePath);
+  }
+
+  return written;
+}
+
+function buildMultiThemeSwift(
+  category: string,
+  themeNames: string[],
+  themeOutputs: Map<
+    string,
+    { colors: string; spacing: string; typography: string }
+  >,
+  field: "colors" | "spacing" | "typography",
+  imports: string[],
+): string {
+  const header =
+    "// Do not edit directly, this file was auto-generated.\n\n" +
+    imports.map((i) => `import ${i}`).join("\n") +
+    "\n";
+
+  let body = `\npublic enum Theme {\n`;
+  for (const name of themeNames) {
+    const output = themeOutputs.get(name);
+    if (!output) continue;
+    const raw = output[field];
+    let members = extractMembers(raw);
+    if (field === "colors") {
+      members = members.filter((l) => l.includes("UIColor("));
+    }
+    const enumName = name.charAt(0).toUpperCase() + name.slice(1);
+    body += `    public enum ${enumName} {\n`;
+    for (const line of members) {
+      body += `        ${line}\n`;
+    }
+    body += `    }\n`;
+  }
+  body += `}\n`;
+
+  if (field === "colors") {
+    body += buildMultiThemeSwiftUIColors(themeNames, themeOutputs);
+  }
+
+  return header + body;
+}
+
+function extractMembers(formatOutput: string): string[] {
+  const lines: string[] = [];
+  for (const line of formatOutput.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("static let ") || trimmed.startsWith("public static let ")) {
+      lines.push(
+        trimmed.startsWith("public ") ? trimmed : `public ${trimmed}`,
+      );
+    }
+  }
+  return lines;
+}
+
+function buildMultiThemeSwiftUIColors(
+  themeNames: string[],
+  themeOutputs: Map<
+    string,
+    { colors: string; spacing: string; typography: string }
+  >,
+): string {
+  let block = "";
+  for (const name of themeNames) {
+    const output = themeOutputs.get(name);
+    if (!output) continue;
+    const raw = output.colors;
+    const uiColorMembers = extractMembers(raw).filter((l) =>
+      l.includes("UIColor("),
+    );
+    if (uiColorMembers.length === 0) continue;
+    const enumName = name.charAt(0).toUpperCase() + name.slice(1);
+    block += `\npublic extension Color {\n`;
+    block += `    enum ${enumName} {\n`;
+    for (const line of uiColorMembers) {
+      const match = line.match(
+        /static let (\w+)\s*=\s*UIColor\(/,
+      );
+      if (match) {
+        block += `        public static let ${match[1]} = Color(uiColor: Theme.${enumName}.${match[1]})\n`;
+      }
+    }
+    block += `    }\n`;
+    block += `}\n`;
+  }
+  return block;
 }

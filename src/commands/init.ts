@@ -322,6 +322,11 @@ export async function initCommand(
             label: "Figma JSON (Variables / Tokens Studio)",
             hint: "Optional — build/tokens.figma.json for manual import",
           },
+          {
+            value: "ios" as const,
+            label: "iOS Swift constants",
+            hint: "Optional — build/ios/*.swift for UIKit / SwiftUI",
+          },
         ],
         initialValues: ["css" as const],
         required: true,
@@ -332,9 +337,7 @@ export async function initCommand(
       }
       const picked = new Set(platformPick as OutputPlatform[]);
       picked.add("css");
-      outputPlatforms = picked.has("figma")
-        ? ["css", "figma"]
-        : ["css"];
+      outputPlatforms = Array.from(picked) as OutputPlatform[];
     }
 
     const previewResult = await previewAndConfirm(themeCollection, {
