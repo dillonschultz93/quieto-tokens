@@ -49,8 +49,11 @@ build/
   primitives.css          # Primitives only
   light.css               # Light-theme semantic layer
   dark.css                # Dark-theme semantic layer
+  tokens.figma.json       # Optional — Figma Variables / Tokens Studio import
 quieto.config.json        # Your answers, so you can re-run to modify
 ```
+
+When `quieto.config.json` includes `"outputs": ["css", "figma"]` (set during `init` or by editing the file), the CLI also writes **`build/tokens.figma.json`**: a nested, DTCG-shaped JSON file with one top-level key per theme (`default`, or `light` and `dark`, etc.). Token paths use `/` as the segment separator (Figma group style). Import that file into [Tokens Studio](https://tokens.studio/) or a Variables workflow; there is no Figma API integration — it is a static build artifact, like the CSS.
 
 ### Design System Changelog
 

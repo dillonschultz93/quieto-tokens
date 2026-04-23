@@ -22,6 +22,7 @@ vi.mock("@clack/prompts", () => ({
   text: vi.fn(),
   select: vi.fn(),
   confirm: vi.fn(),
+  multiselect: vi.fn().mockResolvedValue(["css"]),
 }));
 
 vi.mock("../../utils/config.js", () => ({

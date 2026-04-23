@@ -250,6 +250,7 @@ describe("writeConfig", () => {
       buildDir: "build",
       prefix: "quieto",
     });
+    expect(parsed.outputs).toEqual(["css"]);
   });
 
   it("overwrites an existing config file in place", async () => {

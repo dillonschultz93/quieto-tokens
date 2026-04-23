@@ -47,6 +47,7 @@ function sampleConfig(
       buildDir: "build",
       prefix: "quieto",
     },
+    outputs: ["css"],
     categories: ["color", "spacing", "typography"],
     ...overrides,
   };
@@ -75,6 +76,13 @@ describe("CONFIG_FILENAME + path helpers", () => {
 });
 
 describe("validateConfigShape", () => {
+  it("rejects outputs that omit css", () => {
+    const bad = { ...sampleConfig(), outputs: ["figma"] };
+    expect(validateConfigShape(bad).some((e) => e === "outputs")).toBe(
+      true,
+    );
+  });
+
   it("returns no errors for a well-formed config", () => {
     expect(validateConfigShape(sampleConfig())).toEqual([]);
   });
@@ -187,6 +195,21 @@ describe("configExists + loadConfig", () => {
     );
     const result = loadConfig(tempDir);
     expect(result.status).toBe("ok");
+  });
+
+  it("defaults outputs to [css] when the field is absent (legacy)", () => {
+    const full = sampleConfig();
+    const { outputs: _drop, ...legacy } = full;
+    writeFileSync(
+      join(tempDir, "quieto.config.json"),
+      JSON.stringify(legacy),
+      "utf-8",
+    );
+    const result = loadConfig(tempDir);
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(result.config.outputs).toEqual(["css"]);
+    }
   });
 
   it("returns { status: 'invalid' } with the list of broken paths", () => {

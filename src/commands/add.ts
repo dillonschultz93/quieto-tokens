@@ -209,7 +209,7 @@ export async function addCommand(
         toolVersion: newVersion,
         command: `add ${category}`,
         categoriesAffected: [category],
-        summary: buildAddSummary(category, result.collection),
+        summary: buildAddSummary(category, result.collection, result.output),
       },
       cwd,
     );
@@ -263,6 +263,7 @@ function buildNextConfig(input: BuildNextConfigInput): QuietoConfig {
     advanced: input.prev.advanced,
     categories: input.newCategories,
     categoryConfigs: input.newCategoryConfigs,
+    outputs: input.prev.outputs,
   });
   next.output = { ...input.prev.output };
   if (input.prev.$schema) {

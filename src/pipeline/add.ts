@@ -44,6 +44,7 @@ import { collectShadowInputs } from "../commands/add-shadow.js";
 import { applyPriorOverrides } from "../utils/overrides.js";
 import { runOutputGeneration } from "./output.js";
 import type { OutputResult } from "./output.js";
+import { DEFAULT_OUTPUTS } from "../types/config.js";
 import { prune } from "../output/pruner.js";
 
 /**
@@ -266,6 +267,7 @@ export async function runAdd(
 
   const output = await runOutputGeneration(collection, cwd, {
     scope: { categories: [category] },
+    outputs: config.outputs ?? [...DEFAULT_OUTPUTS],
   });
   if (!output) return { status: "error", message: "output generation failed" };
 

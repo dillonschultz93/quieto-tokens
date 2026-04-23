@@ -27,7 +27,8 @@ import { applyPriorOverrides } from "../utils/overrides.js";
 import { generateComponentTokens } from "../generators/component.js";
 import { collectComponentInputs } from "../commands/component-flow.js";
 import { writeComponentTokens } from "../output/json-writer.js";
-import { buildCss } from "../output/style-dictionary.js";
+import { buildCss, buildFigmaJson } from "../output/style-dictionary.js";
+import { DEFAULT_OUTPUTS } from "../types/config.js";
 import { prune } from "../output/pruner.js";
 import { sortCategoriesCanonical } from "../utils/categories.js";
 import {
@@ -41,6 +42,7 @@ export interface ComponentPipelineResult {
   tokenCount: number;
   jsonFiles: string[];
   cssFiles: string[];
+  figmaFiles?: string[];
 }
 
 export type ComponentPipelineOutcome =
@@ -115,6 +117,21 @@ export async function runComponent(
     p.log.step("Rebuilding CSS…");
     const cssFiles = await buildCss(collection, cwd);
 
+    const outputs = config.outputs ?? [...DEFAULT_OUTPUTS];
+    let figmaFiles: string[] | undefined;
+    if (outputs.includes("figma")) {
+      p.log.step("Rebuilding Figma / Tokens Studio JSON…");
+      try {
+        figmaFiles = await buildFigmaJson(collection, cwd);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        p.log.warn(
+          `Figma JSON build failed (CSS was still updated): ${message}`,
+        );
+      }
+    }
+
     const knownComponents = Object.keys({
       ...config.components,
       [name]: componentConfig,
@@ -134,6 +151,7 @@ export async function runComponent(
         tokenCount: componentTokens.length,
         jsonFiles,
         cssFiles,
+        ...(figmaFiles && figmaFiles.length > 0 ? { figmaFiles } : {}),
       },
     };
   } catch (error) {

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import * as p from "@clack/prompts";
-import type { QuietoConfig } from "../types/config.js";
-import { DEFAULT_CATEGORIES } from "../types/config.js";
+import type { OutputPlatform, QuietoConfig } from "../types/config.js";
+import { DEFAULT_CATEGORIES, DEFAULT_OUTPUTS } from "../types/config.js";
 import { validateComponentName } from "./validation.js";
 import {
   SHADOW_MAX_LEVELS,
@@ -180,6 +180,22 @@ export function validateConfigShape(parsed: unknown): string[] {
     if (typeof o.tokensDir !== "string") errors.push("output.tokensDir");
     if (typeof o.buildDir !== "string") errors.push("output.buildDir");
     if (typeof o.prefix !== "string") errors.push("output.prefix");
+  }
+
+  if (root.outputs !== undefined) {
+    if (!Array.isArray(root.outputs) || root.outputs.length === 0) {
+      errors.push("outputs");
+    } else {
+      for (let oi = 0; oi < root.outputs.length; oi++) {
+        const p = root.outputs[oi];
+        if (p !== "css" && p !== "figma") {
+          errors.push(`outputs[${oi}]`);
+        }
+      }
+      if (!root.outputs.includes("css")) {
+        errors.push("outputs");
+      }
+    }
   }
 
   // Epic 2 optional fields — only validated when present.
@@ -667,12 +683,19 @@ export function loadConfig(
   // safe way to promote an untrusted record to our typed shape.
   const root = parsed as Record<string, unknown>;
   const rawCategories = root.categories;
+  const defaultOutputs: OutputPlatform[] = [...DEFAULT_OUTPUTS];
+  const fromDisk = root.outputs;
+  const outputs: OutputPlatform[] = Array.isArray(fromDisk) && fromDisk.length > 0
+    ? [...(fromDisk as OutputPlatform[])]
+    : defaultOutputs;
+
   const config: QuietoConfig = {
     version: root.version as string,
     generated: root.generated as string,
     inputs: { ...(root.inputs as QuietoConfig["inputs"]) },
     overrides: { ...(root.overrides as QuietoConfig["overrides"]) },
     output: { ...(root.output as QuietoConfig["output"]) },
+    outputs,
     categories: Array.isArray(rawCategories)
       ? (rawCategories as string[]).slice()
       : [...DEFAULT_CATEGORIES],

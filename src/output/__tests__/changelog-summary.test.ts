@@ -50,6 +50,7 @@ function minimalQuietoConfig(overrides: Partial<QuietoConfig["inputs"]> = {}): Q
     },
     overrides: {},
     output: { tokensDir: "tokens", buildDir: "build", prefix: "quieto" },
+    outputs: ["css"],
     categories: ["color", "spacing", "typography"],
   };
 }
