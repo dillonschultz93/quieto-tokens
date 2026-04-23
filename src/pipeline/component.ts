@@ -27,7 +27,12 @@ import { applyPriorOverrides } from "../utils/overrides.js";
 import { generateComponentTokens } from "../generators/component.js";
 import { collectComponentInputs } from "../commands/component-flow.js";
 import { writeComponentTokens } from "../output/json-writer.js";
-import { buildCss, buildFigmaJson, buildIos } from "../output/style-dictionary.js";
+import {
+  buildAndroid,
+  buildCss,
+  buildFigmaJson,
+  buildIos,
+} from "../output/style-dictionary.js";
 import { DEFAULT_OUTPUTS } from "../types/config.js";
 import { prune } from "../output/pruner.js";
 import { sortCategoriesCanonical } from "../utils/categories.js";
@@ -44,6 +49,7 @@ export interface ComponentPipelineResult {
   cssFiles: string[];
   figmaFiles?: string[];
   iosFiles?: string[];
+  androidFiles?: string[];
 }
 
 export type ComponentPipelineOutcome =
@@ -147,6 +153,24 @@ export async function runComponent(
       }
     }
 
+    let androidFiles: string[] | undefined;
+    if (outputs.includes("android")) {
+      p.log.step("Rebuilding Android output…");
+      try {
+        androidFiles = await buildAndroid(
+          collection,
+          cwd,
+          config.androidFormat ?? "xml",
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        p.log.warn(
+          `Android build failed (CSS was still updated): ${message}`,
+        );
+      }
+    }
+
     const knownComponents = Object.keys({
       ...config.components,
       [name]: componentConfig,
@@ -168,6 +192,9 @@ export async function runComponent(
         cssFiles,
         ...(figmaFiles && figmaFiles.length > 0 ? { figmaFiles } : {}),
         ...(iosFiles && iosFiles.length > 0 ? { iosFiles } : {}),
+        ...(androidFiles && androidFiles.length > 0
+          ? { androidFiles }
+          : {}),
       },
     };
   } catch (error) {

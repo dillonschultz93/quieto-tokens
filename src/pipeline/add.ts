@@ -268,6 +268,7 @@ export async function runAdd(
   const output = await runOutputGeneration(collection, cwd, {
     scope: { categories: [category] },
     outputs: config.outputs ?? [...DEFAULT_OUTPUTS],
+    androidFormat: config.androidFormat,
   });
   if (!output) return { status: "error", message: "output generation failed" };
 
