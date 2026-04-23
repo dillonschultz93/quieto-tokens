@@ -669,7 +669,7 @@ function ensureAndroidHooksRegistered(): void {
     if (s.endsWith("em")) {
       return null;
     }
-    return Number.isInteger(n) ? `${n}dp` : `${n}dp`;
+    return `${n}dp`;
   }
 
   StyleDictionary.registerFormat({
