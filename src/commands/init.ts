@@ -15,7 +15,11 @@ import {
 } from "./modify.js";
 import { runAdvancedFlow } from "./advanced.js";
 import type { QuickStartOptions } from "../types.js";
-import type { AdvancedConfig } from "../types/config.js";
+import {
+  type OutputPlatform,
+  DEFAULT_OUTPUTS,
+  type AdvancedConfig,
+} from "../types/config.js";
 import { runColorGeneration } from "../pipeline/color.js";
 import {
   runSpacingGeneration,
@@ -301,6 +305,38 @@ export async function initCommand(
       applyPriorOverrides(themeCollection, priorOverrides);
     }
 
+    let outputPlatforms: OutputPlatform[] = [...DEFAULT_OUTPUTS];
+    if (priorContext) {
+      outputPlatforms = priorContext.config.outputs ?? [...DEFAULT_OUTPUTS];
+    } else {
+      const platformPick = await p.multiselect({
+        message: "Which output platforms should be enabled?",
+        options: [
+          {
+            value: "css" as const,
+            label: "CSS custom properties",
+            hint: "Required — always generated as build/*.css",
+          },
+          {
+            value: "figma" as const,
+            label: "Figma JSON (Variables / Tokens Studio)",
+            hint: "Optional — build/tokens.figma.json for manual import",
+          },
+        ],
+        initialValues: ["css" as const],
+        required: true,
+      });
+      if (p.isCancel(platformPick)) {
+        p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
+        return;
+      }
+      const picked = new Set(platformPick as OutputPlatform[]);
+      picked.add("css");
+      outputPlatforms = picked.has("figma")
+        ? ["css", "figma"]
+        : ["css"];
+    }
+
     const previewResult = await previewAndConfirm(themeCollection, {
       initialOverrides: new Map(Object.entries(priorOverrides)),
       dryRun,
@@ -316,7 +352,9 @@ export async function initCommand(
       return;
     }
 
-    const outputResult = await runOutputGeneration(previewResult.collection);
+    const outputResult = await runOutputGeneration(previewResult.collection, process.cwd(), {
+      outputs: outputPlatforms,
+    });
 
     if (!outputResult) {
       process.exitCode = 1;
@@ -329,6 +367,7 @@ export async function initCommand(
       output: outputResult,
       advanced: advancedConfig,
       themeNames: previewResult.collection.themes.map((t) => t.name),
+      outputs: outputPlatforms,
     });
 
     if (!configOk) {
@@ -354,6 +393,7 @@ export async function initCommand(
         summary: buildInitSummary(
           previewResult.collection,
           initChangelogContext,
+          outputResult,
         ),
       },
       process.cwd(),

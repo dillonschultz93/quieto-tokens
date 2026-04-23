@@ -25,6 +25,7 @@ function makeConfig(over: Partial<QuietoConfig> = {}): QuietoConfig {
     },
     overrides: {},
     output: { tokensDir: "tokens", buildDir: "build", prefix: "quieto" },
+    outputs: ["css"],
     categories: ["color", "spacing", "typography"],
     ...over,
   };

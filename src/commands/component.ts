@@ -179,6 +179,11 @@ export async function componentCommand(
           options.name,
           result.tokenCount,
           hadComponentFile,
+          {
+            jsonFiles: result.jsonFiles,
+            cssFiles: result.cssFiles,
+            figmaFiles: result.figmaFiles,
+          },
         ),
       },
       cwd,

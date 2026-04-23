@@ -78,6 +78,7 @@ function baseConfig(
     },
     overrides: {},
     output: { tokensDir: "tokens", buildDir: "build", prefix: "quieto" },
+    outputs: ["css"],
     categories: ["color", "spacing", "typography"],
     ...overrides,
   };

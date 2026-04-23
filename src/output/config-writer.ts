@@ -10,7 +10,9 @@ import type {
 } from "../types/config.js";
 import {
   DEFAULT_CATEGORIES,
+  DEFAULT_OUTPUTS,
   DEFAULT_OUTPUT_CONFIG,
+  type OutputPlatform,
 } from "../types/config.js";
 import { getConfigPath } from "../utils/config.js";
 
@@ -76,6 +78,11 @@ export interface BuildConfigInput {
    */
   categoryConfigs?: CategoryConfigs;
   components?: Record<string, ComponentTokenConfig>;
+  /**
+   * Build targets. Defaults to CSS-only when omitted.
+   * `buildConfig` always includes `"css"`.
+   */
+  outputs?: readonly OutputPlatform[];
 }
 
 /**
@@ -83,6 +90,9 @@ export interface BuildConfigInput {
  * function — safe to unit-test without touching the filesystem.
  */
 export function buildConfig(input: BuildConfigInput): QuietoConfig {
+  const fromInput = input.outputs
+    ? [...new Set<OutputPlatform>(["css" as const, ...input.outputs])]
+    : [...DEFAULT_OUTPUTS];
   const config: QuietoConfig = {
     version: input.version,
     generated: input.generated ?? new Date().toISOString(),
@@ -94,6 +104,9 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
     },
     overrides: Object.fromEntries(input.overrides),
     output: { ...DEFAULT_OUTPUT_CONFIG },
+    outputs: fromInput.filter(
+      (p): p is OutputPlatform => p === "css" || p === "figma",
+    ),
     categories: input.categories ? [...input.categories] : [...DEFAULT_CATEGORIES],
   };
   if (input.advanced !== undefined) {

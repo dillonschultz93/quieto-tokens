@@ -1,3 +1,4 @@
+import type { OutputResult } from "../pipeline/output.js";
 import type { QuietoConfig } from "../types/config.js";
 import type { QuickStartOptions } from "../types.js";
 import { sortCategoriesCanonical } from "../utils/categories.js";
@@ -80,9 +81,20 @@ function buildCascadeChangelogLine(diff: TokenDiff, current: ThemeCollection): s
  *   `init` on a project that had a config and chose “start fresh”. `modify` =
  *   the modify flow from an existing system.
  */
+function figmaChangelogLine(output: OutputResult | undefined): string {
+  if (output?.figmaFiles && output.figmaFiles.length > 0) {
+    return [
+      "",
+      "- Also generated Figma / Tokens Studio JSON at `build/tokens.figma.json` (alongside CSS in `build/`).",
+    ].join("\n");
+  }
+  return "";
+}
+
 export function buildInitSummary(
   collection: ThemeCollection,
   context: InitChangelogContext = "initial",
+  output?: OutputResult,
 ): string {
   const nPrim = collection.primitives.length;
   const nSem = collection.themes.reduce(
@@ -91,20 +103,26 @@ export function buildInitSummary(
   );
   const k = collection.themes.length;
   if (context === "modify") {
-    return `Regenerated token system via init modify-flow. Created ${nPrim} primitives, ${nSem} semantic tokens.`;
+    return `Regenerated token system via init modify-flow. Created ${nPrim} primitives, ${nSem} semantic tokens.${figmaChangelogLine(output)}`;
   }
   if (context === "regenerate") {
     return [
       "Regenerated token system.",
       "",
       `- Created ${nPrim} primitives, ${nSem} semantic tokens across ${k} theme${k === 1 ? "" : "s"}.`,
-    ].join("\n");
+      figmaChangelogLine(output),
+    ]
+      .filter((line) => line.length > 0)
+      .join("\n");
   }
   return [
     "Initial token system generated.",
     "",
     `- Created ${nPrim} primitives, ${nSem} semantic tokens across ${k} theme${k === 1 ? "" : "s"}.`,
-  ].join("\n");
+    figmaChangelogLine(output),
+  ]
+    .filter((line) => line.length > 0)
+    .join("\n");
 }
 
 export interface ConfigDelta {
@@ -167,6 +185,7 @@ export function buildUpdateSummary(
   diff: TokenDiff,
   current: ThemeCollection,
   configDelta?: ConfigDelta,
+  output?: OutputResult,
 ): string {
   const pMod = countByKind(diff.primitiveChanges, "modified");
   const pAdd = countByKind(diff.primitiveChanges, "added");
@@ -188,6 +207,11 @@ export function buildUpdateSummary(
   lines.push(
     `- **Semantics:** ${semTotal} remapped across ${themeWithSem} theme${themeWithSem === 1 ? "" : "s"}`,
   );
+  if (output?.figmaFiles && output.figmaFiles.length > 0) {
+    lines.push(
+      "- **Figma JSON:** `build/tokens.figma.json` regenerated (alongside CSS).",
+    );
+  }
   const cascade = buildCascadeChangelogLine(diff, current);
   if (cascade) {
     lines.push(`- ${cascade}`);
@@ -202,6 +226,7 @@ export function buildUpdateSummary(
 export function buildAddSummary(
   category: string,
   collection: ThemeCollection,
+  output?: OutputResult,
 ): string {
   const primN = collection.primitives.filter((p) => p.category === category).length;
   let semN = 0;
@@ -210,24 +235,40 @@ export function buildAddSummary(
       if (st.category === category) semN += 1;
     }
   }
+  const figma =
+    output?.figmaFiles && output.figmaFiles.length > 0
+      ? [
+          "",
+          "- Figma JSON at `build/tokens.figma.json` was regenerated (alongside CSS).",
+        ].join("\n")
+      : "";
   return [
     `Added ${category} category.`,
     "",
     `- Created ${primN} primitive token${primN === 1 ? "" : "s"}, ${semN} semantic token${semN === 1 ? "" : "s"}.`,
-  ].join("\n");
+    figma,
+  ]
+    .filter((s) => s.length > 0)
+    .join("\n");
 }
 
 export function buildComponentSummary(
   componentName: string,
   tokenCount: number,
   isReauthor: boolean,
+  output?: OutputResult,
 ): string {
   const first = isReauthor
     ? `Re-authored component tokens for ${componentName}.`
     : `Added component tokens for ${componentName}.`;
-  return [
-    first,
-    "",
-    `- Created ${tokenCount} component token${tokenCount === 1 ? "" : "s"}.`,
-  ].join("\n");
+  const figma =
+    output?.figmaFiles && output.figmaFiles.length > 0
+      ? [
+          "",
+          "- Figma JSON at `build/tokens.figma.json` was regenerated (alongside CSS).",
+        ].join("\n")
+      : "";
+  return [first, "", `- Created ${tokenCount} component token${tokenCount === 1 ? "" : "s"}.`, figma]
+    .filter((s) => s.length > 0)
+    .join("\n");
 }

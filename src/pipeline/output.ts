@@ -4,11 +4,13 @@ import * as p from "@clack/prompts";
 import type { ThemeCollection } from "../types/tokens.js";
 import { writeTokensToJson } from "../output/json-writer.js";
 import type { WriteScope } from "../output/json-writer.js";
-import { buildCss } from "../output/style-dictionary.js";
+import { buildCss, buildFigmaJson } from "../output/style-dictionary.js";
+import { DEFAULT_OUTPUTS, type OutputPlatform } from "../types/config.js";
 
 export interface OutputResult {
   jsonFiles: string[];
   cssFiles: string[];
+  figmaFiles?: string[];
 }
 
 export interface RunOutputOptions {
@@ -29,6 +31,11 @@ export interface RunOutputOptions {
    * this so tier-3 component JSON mtimes stay stable.
    */
   skipComponents?: boolean;
+  /**
+   * Build targets (CSS is always run; Figma is optional). When omitted,
+   * only CSS is generated (legacy behaviour).
+   */
+  outputs?: readonly OutputPlatform[];
 }
 
 /**
@@ -83,6 +90,10 @@ export async function runOutputGeneration(
     p.log.info(`✓ Wrote ${formatPath(file)}`);
   }
 
+  const outputPlatforms: readonly OutputPlatform[] = options.outputs?.length
+    ? [...new Set<OutputPlatform>(["css" as const, ...options.outputs])]
+    : [...DEFAULT_OUTPUTS];
+
   p.log.step("Building CSS custom properties…");
 
   let cssFiles: string[];
@@ -115,9 +126,33 @@ export async function runOutputGeneration(
     );
   }
 
+  let figmaFiles: string[] | undefined;
+  if (outputPlatforms.includes("figma")) {
+    p.log.step("Building Figma / Tokens Studio JSON…");
+    try {
+      figmaFiles = await buildFigmaJson(collection, outputDir);
+      for (const file of figmaFiles) {
+        p.log.info(`✓ Generated ${formatPath(file)}`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+      p.log.warn(
+        `Figma JSON build failed (CSS was still generated): ${message}`,
+      );
+    }
+  }
+
+  const figmaPart = figmaFiles
+    ? `, ${figmaFiles.length} Figma JSON file${figmaFiles.length === 1 ? "" : "s"}`
+    : "";
   p.log.success(
-    `Output complete — ${jsonFiles.length} JSON source files, ${cssFiles.length} CSS file${cssFiles.length === 1 ? "" : "s"}.`,
+    `Output complete — ${jsonFiles.length} JSON source files, ${cssFiles.length} CSS file${cssFiles.length === 1 ? "" : "s"}${figmaPart}.`,
   );
 
-  return { jsonFiles, cssFiles };
+  return {
+    jsonFiles,
+    cssFiles,
+    ...(figmaFiles && figmaFiles.length > 0 ? { figmaFiles } : {}),
+  };
 }

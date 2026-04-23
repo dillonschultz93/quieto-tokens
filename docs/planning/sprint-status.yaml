@@ -81,7 +81,7 @@ development_status:
 
   # Epic 4: Multi-Platform Output
   epic-4: in-progress
-  4-1-json-output-for-figma-variables-and-tokens-studio: ready-for-dev
+  4-1-json-output-for-figma-variables-and-tokens-studio: done
   4-2-ios-swift-output: ready-for-dev
   4-3-android-output: ready-for-dev
   epic-4-retrospective: optional

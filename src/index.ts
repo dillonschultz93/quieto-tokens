@@ -64,7 +64,7 @@ export { generateComponentTokens } from "./generators/component.js";
 export { componentCommand } from "./commands/component.js";
 export type { ComponentCommandOptions } from "./commands/component.js";
 export { validateComponentName } from "./utils/validation.js";
-export { buildCss } from "./output/style-dictionary.js";
+export { buildCss, buildFigmaJson } from "./output/style-dictionary.js";
 export { runOutputGeneration } from "./pipeline/output.js";
 export type { OutputResult } from "./pipeline/output.js";
 export { buildConfig, writeConfig } from "./output/config-writer.js";
@@ -85,11 +85,13 @@ export type {
   ComponentState,
   ComponentTokenConfig,
   QuietoConfig,
+  OutputPlatform,
   ShadowCategoryConfig,
 } from "./types/config.js";
 export {
   DEFAULT_CATEGORIES,
   DEFAULT_OUTPUT_CONFIG,
+  DEFAULT_OUTPUTS,
 } from "./types/config.js";
 export {
   ADDABLE_CATEGORIES,

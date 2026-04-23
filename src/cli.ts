@@ -38,6 +38,10 @@ const HELP_TEXT = `
   Global options:
     --help, -h        Show this help message
     --version         Show version number
+
+  On first run, init can enable Figma / Tokens Studio JSON in addition to CSS
+  (see the outputs field in quieto.config.json). The CLI has no separate
+  command for that — it is part of the init and update build pipeline.
 `;
 
 /**

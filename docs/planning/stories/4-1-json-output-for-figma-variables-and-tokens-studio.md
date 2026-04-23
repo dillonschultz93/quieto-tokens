@@ -1,6 +1,6 @@
 # Story 4.1: JSON Output for Figma Variables and Tokens Studio
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -56,73 +56,73 @@ This is the **first story of Epic 4** and introduces the multi-platform output a
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Extend `QuietoConfig` with `outputs` (AC: #1, #2, #3)**
-  - [ ] 1.1: In `src/types/config.ts`, add an `outputs` property to `QuietoConfig`:
+- [x] **Task 1: Extend `QuietoConfig` with `outputs` (AC: #1, #2, #3)**
+  - [x] 1.1: In `src/types/config.ts`, add an `outputs` property to `QuietoConfig`:
     ```typescript
     outputs: OutputPlatform[];
     ```
     Where `OutputPlatform = "css" | "figma"` (extensible for Stories 4.2/4.3: `"ios"`, `"android"`).
-  - [ ] 1.2: Add `DEFAULT_OUTPUTS: readonly OutputPlatform[] = Object.freeze(["css"])` alongside `DEFAULT_OUTPUT_CONFIG`.
-  - [ ] 1.3: In `src/output/config-writer.ts`, update `buildConfig` to accept and serialize `outputs`. Default to `["css"]` if not provided.
-  - [ ] 1.4: In `src/utils/config.ts` (or wherever `loadConfig` lives), ensure loading a legacy config without `outputs` defaults to `["css"]`.
+  - [x] 1.2: Add `DEFAULT_OUTPUTS: readonly OutputPlatform[] = Object.freeze(["css"])` alongside `DEFAULT_OUTPUT_CONFIG`.
+  - [x] 1.3: In `src/output/config-writer.ts`, update `buildConfig` to accept and serialize `outputs`. Default to `["css"]` if not provided.
+  - [x] 1.4: In `src/utils/config.ts` (or wherever `loadConfig` lives), ensure loading a legacy config without `outputs` defaults to `["css"]`.
 
-- [ ] **Task 2: Output platform selection prompt (AC: #1, #2)**
-  - [ ] 2.1: Create a prompt step (in the init flow, after theme selection and before preview) using `p.multiselect` that lets the user choose output platforms. CSS is pre-selected and marked as `required: true` (cannot be deselected). Figma JSON is an opt-in choice.
-  - [ ] 2.2: Thread the selected `outputs` array through the pipeline into `buildConfig` and `runOutputGeneration`.
-  - [ ] 2.3: In the `update` modify-flow, respect the existing `outputs` from the loaded config — do not re-prompt unless the user explicitly modifies output settings.
+- [x] **Task 2: Output platform selection prompt (AC: #1, #2)**
+  - [x] 2.1: Create a prompt step (in the init flow, after theme selection and before preview) using `p.multiselect` that lets the user choose output platforms. CSS is pre-selected and marked as `required: true` (cannot be deselected). Figma JSON is an opt-in choice.
+  - [x] 2.2: Thread the selected `outputs` array through the pipeline into `buildConfig` and `runOutputGeneration`.
+  - [x] 2.3: In the `update` modify-flow, respect the existing `outputs` from the loaded config — do not re-prompt unless the user explicitly modifies output settings.
 
-- [ ] **Task 3: Figma name transform and format (AC: #5, #6, #7, #8, #9, #14, #15)**
-  - [ ] 3.1: In `src/output/style-dictionary.ts`, register a `name/figma` transform:
+- [x] **Task 3: Figma name transform and format (AC: #5, #6, #7, #8, #9, #14, #15)**
+  - [x] 3.1: In `src/output/style-dictionary.ts`, register a `name/figma` transform:
     ```typescript
     const FIGMA_NAME_TRANSFORM = "name/figma";
     // Transform: join token.path with "/" separator
     // e.g., ["color", "blue", "500"] → "color/blue/500"
     // Semantic tokens get "semantic/" prefix, component tokens get "component/" prefix
     ```
-  - [ ] 3.2: Register a custom `figma/json` format via `StyleDictionary.registerFormat` that outputs the Tokens Studio-compatible structure:
+  - [x] 3.2: Register a custom `figma/json` format via `StyleDictionary.registerFormat` that outputs the Tokens Studio-compatible structure:
     - Nested JSON object grouped by `/`-separated path segments.
     - Leaf nodes include `$type` and `$value`.
     - `$value` preserves DTCG references for semantic/component tokens (`outputReferences: true`).
-  - [ ] 3.3: For multi-theme systems, produce a JSON structure with theme names as top-level keys. Each theme collection includes primitives + that theme's semantics + components.
-  - [ ] 3.4: For single-theme systems, produce a single top-level key using the theme name.
+  - [x] 3.3: For multi-theme systems, produce a JSON structure with theme names as top-level keys. Each theme collection includes primitives + that theme's semantics + components.
+  - [x] 3.4: For single-theme systems, produce a single top-level key using the theme name.
 
-- [ ] **Task 4: `buildFigmaJson` orchestrator (AC: #4, #6, #7, #10)**
-  - [ ] 4.1: In `src/output/style-dictionary.ts`, export a new `buildFigmaJson(collection, outputDir): Promise<string[]>` function mirroring `buildCss`. It configures the `figma` platform with:
+- [x] **Task 4: `buildFigmaJson` orchestrator (AC: #4, #6, #7, #10)**
+  - [x] 4.1: In `src/output/style-dictionary.ts`, export a new `buildFigmaJson(collection, outputDir): Promise<string[]>` function mirroring `buildCss`. It configures the `figma` platform with:
     - Source globs matching `buildCss` patterns (primitive + semantic per theme + component).
     - `buildPath`: `build/` (same as CSS).
     - `files`: `[{ destination: "tokens.figma.json", format: "figma/json" }]`.
-  - [ ] 4.2: Handle multi-theme by running one SD build per theme or by building a merged output. Follow the same `runSingleTheme` / `runPrimitivesOnly` / `runThemeSemantics` decomposition pattern that `buildCss` uses.
+  - [x] 4.2: Handle multi-theme by running one SD build per theme or by building a merged output. Follow the same `runSingleTheme` / `runPrimitivesOnly` / `runThemeSemantics` decomposition pattern that `buildCss` uses.
 
-- [ ] **Task 5: Wire into output pipeline (AC: #10, #11, #12, #13)**
-  - [ ] 5.1: In `src/pipeline/output.ts`, modify `runOutputGeneration` to accept an `outputs` parameter (from config). After CSS build, if `"figma"` is in `outputs`, call `buildFigmaJson`.
-  - [ ] 5.2: Extend `OutputResult` to include `figmaFiles?: string[]`.
-  - [ ] 5.3: A Figma build failure logs a warning but does not roll back CSS or JSON source files — CSS is the primary output.
-  - [ ] 5.4: Update log messages to show Figma JSON file paths when written.
+- [x] **Task 5: Wire into output pipeline (AC: #10, #11, #12, #13)**
+  - [x] 5.1: In `src/pipeline/output.ts`, modify `runOutputGeneration` to accept an `outputs` parameter (from config). After CSS build, if `"figma"` is in `outputs`, call `buildFigmaJson`.
+  - [x] 5.2: Extend `OutputResult` to include `figmaFiles?: string[]`.
+  - [x] 5.3: A Figma build failure logs a warning but does not roll back CSS or JSON source files — CSS is the primary output.
+  - [x] 5.4: Update log messages to show Figma JSON file paths when written.
 
-- [ ] **Task 6: Update `init` and `update` commands (AC: #1, #2, #3, #12)**
-  - [ ] 6.1: In `src/commands/init.ts`, add the output platform prompt step. Pass selected `outputs` to config builder and output pipeline.
-  - [ ] 6.2: In `src/commands/update.ts`, read `outputs` from the loaded config and pass through to the output pipeline.
-  - [ ] 6.3: In `src/commands/add.ts` and `src/commands/component.ts`, similarly read `outputs` from config and pass to the output pipeline.
+- [x] **Task 6: Update `init` and `update` commands (AC: #1, #2, #3, #12)**
+  - [x] 6.1: In `src/commands/init.ts`, add the output platform prompt step. Pass selected `outputs` to config builder and output pipeline.
+  - [x] 6.2: In `src/commands/update.ts`, read `outputs` from the loaded config and pass through to the output pipeline.
+  - [x] 6.3: In `src/commands/add.ts` and `src/commands/component.ts`, similarly read `outputs` from config and pass to the output pipeline.
 
-- [ ] **Task 7: Tests (AC: all)**
-  - [ ] 7.1: `src/output/__tests__/style-dictionary-figma.test.ts` — unit tests for the Figma format:
+- [x] **Task 7: Tests (AC: all)**
+  - [x] 7.1: `src/output/__tests__/style-dictionary-figma.test.ts` — unit tests for the Figma format:
     - `name/figma` transform produces `/`-separated paths.
     - `figma/json` format produces valid Tokens Studio structure.
     - Multi-theme output has separate top-level keys.
     - Single-theme output has one top-level key.
     - References preserved in semantic token `$value`.
     - Component tokens included under `component/` group.
-  - [ ] 7.2: `src/pipeline/__tests__/output-figma.test.ts` — integration tests:
+  - [x] 7.2: `src/pipeline/__tests__/output-figma.test.ts` — integration tests:
     - `runOutputGeneration` with `outputs: ["css", "figma"]` produces both CSS and Figma JSON.
     - `outputs: ["css"]` skips Figma build.
     - Figma build failure does not block CSS.
-  - [ ] 7.3: Config round-trip tests: `buildConfig` with `outputs` serializes correctly; `loadConfig` on legacy config without `outputs` defaults to `["css"]`.
-  - [ ] 7.4: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+  - [x] 7.3: Config round-trip tests: `buildConfig` with `outputs` serializes correctly; `loadConfig` on legacy config without `outputs` defaults to `["css"]`.
+  - [x] 7.4: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 8: Close-out**
-  - [ ] 8.1: Update HELP_TEXT in `src/cli.ts` to mention multi-platform output support.
-  - [ ] 8.2: Update README.md to document the Figma JSON output format and how to enable it.
-  - [ ] 8.3: Move this story to `review`, then to `done` after code review.
+- [x] **Task 8: Close-out**
+  - [x] 8.1: Update HELP_TEXT in `src/cli.ts` to mention multi-platform output support.
+  - [x] 8.2: Update README.md to document the Figma JSON output format and how to enable it.
+  - [x] 8.3: Move this story to `review`, then to `done` after code review.
 
 ## Dev Notes
 
@@ -256,8 +256,49 @@ src/
 
 ### Agent Model Used
 
+Composer (Cursor agent)
+
 ### Debug Log References
+
+### Implementation Plan
+
+- Added `OutputPlatform` / `outputs` / `DEFAULT_OUTPUTS` to `QuietoConfig`; `buildConfig` always ensures `css`; `loadConfig` defaults missing `outputs` to `["css"]`; `validateConfigShape` rejects `outputs` without `css` or with invalid entries.
+- Init: `p.multiselect` (CSS + optional Figma) after theme work and before preview; modify-flow takes `outputs` from loaded config. `runConfigGeneration` and `runOutputGeneration` receive the selected list.
+- Style Dictionary: `name/figma` + `figma/json` format; `buildFigmaJson` runs `formatPlatform("figma")` per theme, merges to one file, `mkdir` for `build/` before write.
+- Pipeline: `runOutputGeneration` options `outputs`; Figma errors warn only. Changelog helpers mention Figma when `figmaFiles` present. `component` pipeline calls `buildFigmaJson` when enabled.
 
 ### Completion Notes List
 
+- All acceptance criteria satisfied; tests include `style-dictionary-figma.test.ts`, `output-figma.test.ts`, and config legacy/validation cases. `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` all pass.
+- Story status set to **done** after code review in GitHub Copilot.
+
+### Change Log
+
+- 2026-04-22: Story 4.1 — Figma JSON output (`build/tokens.figma.json`), `outputs` in config, init multiselect, pipeline + changelog + README/HELP updates.
+- 2026-04-22: Marked **done** after merge-ready review via GitHub Copilot; sprint status updated to match.
+
 ### File List
+
+- `src/types/config.ts`
+- `src/utils/config.ts`
+- `src/output/config-writer.ts`
+- `src/output/style-dictionary.ts`
+- `src/pipeline/output.ts`
+- `src/pipeline/config.ts`
+- `src/pipeline/add.ts`
+- `src/pipeline/component.ts`
+- `src/output/changelog-summary.ts`
+- `src/commands/init.ts`
+- `src/commands/update.ts`
+- `src/commands/add.ts`
+- `src/commands/component.ts`
+- `src/cli.ts`
+- `src/index.ts`
+- `README.md`
+- `docs/planning/sprint-status.yaml`
+- `src/output/__tests__/style-dictionary-figma.test.ts` (new)
+- `src/pipeline/__tests__/output-figma.test.ts` (new)
+- `src/utils/__tests__/config.test.ts` (and other test fixture updates)
+- `src/output/__tests__/config-writer.test.ts`
+- `src/commands/__tests__/init-dry-run.test.ts`
+- `docs/planning/stories/4-1-json-output-for-figma-variables-and-tokens-studio.md`

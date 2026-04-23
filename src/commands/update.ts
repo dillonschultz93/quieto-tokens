@@ -405,6 +405,7 @@ async function finalizeWrite(
   const outputResult = await runOutputGeneration(collection, cwd, {
     scope: { categories: scopedCategories },
     skipComponents: true,
+    outputs: config.outputs,
   });
   if (!outputResult) {
     process.exitCode = 1;
@@ -427,6 +428,7 @@ async function finalizeWrite(
     categories: sortCategoriesCanonical(config.categories),
     categoryConfigs,
     components: config.components,
+    outputs: config.outputs,
   });
   built.output = { ...config.output };
   if (config.$schema) {
@@ -458,6 +460,7 @@ async function finalizeWrite(
   const allFiles = [
     ...outputResult.jsonFiles,
     ...outputResult.cssFiles,
+    ...(outputResult.figmaFiles ?? []),
     configPath,
   ];
   const fileListLines = allFiles
@@ -471,7 +474,7 @@ async function finalizeWrite(
       toolVersion: version,
       command: "update",
       categoriesAffected: sortCategoriesCanonical(scopedCategories),
-      summary: buildUpdateSummary(diff, collection, configDelta),
+      summary: buildUpdateSummary(diff, collection, configDelta, outputResult),
     },
     cwd,
   );

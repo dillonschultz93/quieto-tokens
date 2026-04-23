@@ -47,6 +47,7 @@ vi.mock("../../output/config-writer.js", () => ({
     },
     overrides: {},
     output: { tokensDir: "tokens", buildDir: "build", prefix: "quieto" },
+    outputs: ["css"],
     categories: args.categories,
   })),
   writeConfig: vi.fn().mockResolvedValue(undefined),
@@ -81,6 +82,7 @@ function validConfig(overrides: Partial<QuietoConfig> = {}): QuietoConfig {
     },
     overrides: {},
     output: { tokensDir: "tokens", buildDir: "build", prefix: "quieto" },
+    outputs: ["css"],
     categories: ["color", "spacing", "typography"],
     ...overrides,
   };

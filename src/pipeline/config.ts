@@ -9,6 +9,7 @@ import {
 } from "../output/config-writer.js";
 import { prune } from "../output/pruner.js";
 import { sortCategoriesCanonical } from "../utils/categories.js";
+import type { OutputPlatform } from "../types/config.js";
 import type { OutputResult } from "./output.js";
 
 export interface ConfigGenerationInput {
@@ -38,6 +39,8 @@ export interface ConfigGenerationInput {
    * can't cheaply enumerate the active themes.
    */
   themeNames?: readonly string[];
+  /** Build targets (CSS + optional Figma). When omitted, uses CSS only. */
+  outputs?: readonly OutputPlatform[];
 }
 
 /**
@@ -80,6 +83,7 @@ export async function runConfigGeneration(
     version,
     advanced: input.advanced,
     categories: input.categories,
+    outputs: input.outputs,
   });
 
   let configPath: string;
@@ -117,6 +121,7 @@ export async function runConfigGeneration(
   const allFiles = [
     ...input.output.jsonFiles,
     ...input.output.cssFiles,
+    ...(input.output.figmaFiles ?? []),
     configPath,
   ];
 
