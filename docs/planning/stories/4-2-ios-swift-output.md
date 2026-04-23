@@ -1,6 +1,6 @@
 # Story 4.2: iOS Swift Output
 
-Status: review
+Status: done
 
 ## Story
 
