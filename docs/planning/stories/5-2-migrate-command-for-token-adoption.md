@@ -1,6 +1,6 @@
 # Story 5.2: Migrate Command for Token Adoption
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -60,15 +60,15 @@ This is the **second and final story of Epic 5** and introduces the `migrate` CL
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: CLI routing for `migrate` (AC: #12, #13)**
-  - [ ] 1.1: In `src/cli.ts`, add `migrate` to the `switch` statement in `runCli`.
-  - [ ] 1.2: Add `parseMigrateArgs(args)` returning `{ mode: "scan" | "apply"; target: string; output?: string; unknown: string[] }`.
-  - [ ] 1.3: Validate: `--scan` or `--apply` is required; target directory is required. Error on unknown flags.
-  - [ ] 1.4: Update `HELP_TEXT` to include the `migrate` command with `--scan`, `--apply`, and `--output` options.
-  - [ ] 1.5: Wire to `migrateCommand(opts)` in a new `src/commands/migrate.ts`.
+- [x] **Task 1: CLI routing for `migrate` (AC: #12, #13)**
+  - [x] 1.1: In `src/cli.ts`, add `migrate` to the `switch` statement in `runCli`.
+  - [x] 1.2: Add `parseMigrateArgs(args)` returning `{ mode: "scan" | "apply"; target: string; output?: string; unknown: string[] }`.
+  - [x] 1.3: Validate: `--scan` or `--apply` is required; target directory is required. Error on unknown flags.
+  - [x] 1.4: Update `HELP_TEXT` to include the `migrate` command with `--scan`, `--apply`, and `--output` options.
+  - [x] 1.5: Wire to `migrateCommand(opts)` in a new `src/commands/migrate.ts`.
 
-- [ ] **Task 2: Token value index builder (AC: #2, #3)**
-  - [ ] 2.1: Create `src/analysis/token-index.ts` exporting:
+- [x] **Task 2: Token value index builder (AC: #2, #3)**
+  - [x] 2.1: Create `src/analysis/token-index.ts` exporting:
     ```typescript
     export interface TokenEntry {
       cssVar: string;         // e.g., "var(--quieto-color-blue-500)"
@@ -84,12 +84,12 @@ This is the **second and final story of Epic 5** and introduces the `migrate` CL
     }
     export function buildTokenIndex(system: LoadedTokenSystem): TokenIndex;
     ```
-  - [ ] 2.2: `buildTokenIndex` iterates all primitives and builds lookup maps. Color hex values are normalized to lowercase 6-digit. Spacing dimensions are converted to pixel numbers. Typography values indexed by their raw value.
-  - [ ] 2.3: The CSS variable name is computed using the same `name/quieto` logic: `--quieto-<path-joined-by-dash>` for primitives, `--quieto-semantic-<path>` for semantics.
-  - [ ] 2.4: Reuse `LoadedTokenSystem` from Story 5.1's `src/analysis/token-loader.ts`.
+  - [x] 2.2: `buildTokenIndex` iterates all primitives and builds lookup maps. Color hex values are normalized to lowercase 6-digit. Spacing dimensions are converted to pixel numbers. Typography values indexed by their raw value.
+  - [x] 2.3: The CSS variable name is computed using the same `name/quieto` logic: `--quieto-<path-joined-by-dash>` for primitives, `--quieto-semantic-<path>` for semantics.
+  - [x] 2.4: Reuse `LoadedTokenSystem` from Story 5.1's `src/analysis/token-loader.ts`.
 
-- [ ] **Task 3: File scanner (AC: #1, #4, #15)**
-  - [ ] 3.1: Create `src/analysis/scanner.ts` exporting:
+- [x] **Task 3: File scanner (AC: #1, #4, #15)**
+  - [x] 3.1: Create `src/analysis/scanner.ts` exporting:
     ```typescript
     export interface ScanMatch {
       filePath: string;
@@ -110,19 +110,19 @@ This is the **second and final story of Epic 5** and introduces the `migrate` CL
       index: TokenIndex,
     ): Promise<ScanResult>;
     ```
-  - [ ] 3.2: Recursively find all `.css`, `.scss`, `.sass`, `.less`, and `.styl` files in the target directory. Use `node:fs` + `node:path` — no glob library needed.
-  - [ ] 3.3: For each file, read line by line. Skip lines containing `var(--quieto-` (already tokenized).
-  - [ ] 3.4: Match hex colors via regex: `/#[0-9a-fA-F]{3,8}\b/`. Normalize to 6-digit lowercase and look up in `colorsByHex`. Exact if found; approximate if within Euclidean distance threshold in RGB space.
-  - [ ] 3.5: Match pixel values via regex: `/\b(\d+(?:\.\d+)?)(px|rem|em)\b/`. Convert to px (rem × 16). Look up in `spacingByPx`. Exact if matches; approximate if within 1px.
-  - [ ] 3.6: Skip CSS custom property declarations (`--quieto-*:`) — these are token definitions, not hardcoded values.
+  - [x] 3.2: Recursively find all `.css`, `.scss`, `.sass`, `.less`, and `.styl` files in the target directory. Use `node:fs` + `node:path` — no glob library needed.
+  - [x] 3.3: For each file, read line by line. Skip lines containing `var(--quieto-` (already tokenized).
+  - [x] 3.4: Match hex colors via regex: `/#[0-9a-fA-F]{3,8}\b/`. Normalize to 6-digit lowercase and look up in `colorsByHex`. Exact if found; approximate if within Euclidean distance threshold in RGB space.
+  - [x] 3.5: Match pixel values via regex: `/\b(\d+(?:\.\d+)?)(px|rem|em)\b/`. Convert to px (rem × 16). Look up in `spacingByPx`. Exact if matches; approximate if within 1px.
+  - [x] 3.6: Skip CSS custom property declarations (`--quieto-*:`) — these are token definitions, not hardcoded values.
 
-- [ ] **Task 4: Approximate matching (AC: #4)**
-  - [ ] 4.1: In `src/analysis/scanner.ts`, implement color distance: Euclidean distance in RGB space. Threshold: distance < 10 (out of 255 per channel) for approximate match.
-  - [ ] 4.2: For spacing, approximate: value within ±1px of any token value.
-  - [ ] 4.3: Approximate matches include the closest token and the distance/difference in the report.
+- [x] **Task 4: Approximate matching (AC: #4)**
+  - [x] 4.1: In `src/analysis/scanner.ts`, implement color distance: Euclidean distance in RGB space. Threshold: distance < 10 (out of 255 per channel) for approximate match.
+  - [x] 4.2: For spacing, approximate: value within ±1px of any token value.
+  - [x] 4.3: Approximate matches include the closest token and the distance/difference in the report.
 
-- [ ] **Task 5: Apply engine (AC: #6, #7, #8, #9)**
-  - [ ] 5.1: Create `src/analysis/applier.ts` exporting:
+- [x] **Task 5: Apply engine (AC: #6, #7, #8, #9)**
+  - [x] 5.1: Create `src/analysis/applier.ts` exporting:
     ```typescript
     export interface ApplyResult {
       replacementsMade: number;
@@ -134,25 +134,25 @@ This is the **second and final story of Epic 5** and introduces the `migrate` CL
       cwd: string,
     ): Promise<ApplyResult>;
     ```
-  - [ ] 5.2: Filter matches to `confidence === "exact"` only.
-  - [ ] 5.3: Group by file path. For each file, read contents, apply replacements from bottom to top (to preserve line numbers), write back.
-  - [ ] 5.4: Use atomic write (tmp + rename) for each modified file.
+  - [x] 5.2: Filter matches to `confidence === "exact"` only.
+  - [x] 5.3: Group by file path. For each file, read contents, apply replacements from bottom to top (to preserve line numbers), write back.
+  - [x] 5.4: Use atomic write (tmp + rename) for each modified file.
 
-- [ ] **Task 6: Git clean check (AC: #6)**
-  - [ ] 6.1: Before apply, run `git status --porcelain` via `child_process.execSync`. If output is non-empty, warn and prompt for confirmation via `p.confirm`.
-  - [ ] 6.2: If user declines, abort with a non-error exit.
+- [x] **Task 6: Git clean check (AC: #6)**
+  - [x] 6.1: Before apply, run `git status --porcelain` via `child_process.execSync`. If output is non-empty, warn and prompt for confirmation via `p.confirm`.
+  - [x] 6.2: If user declines, abort with a non-error exit.
 
-- [ ] **Task 7: Report renderer (AC: #5, #9, #10, #11)**
-  - [ ] 7.1: Create `src/analysis/migration-report.ts` exporting:
+- [x] **Task 7: Report renderer (AC: #5, #9, #10, #11)**
+  - [x] 7.1: Create `src/analysis/migration-report.ts` exporting:
     ```typescript
     export function renderMigrationTerminalReport(result: ScanResult, applyResult?: ApplyResult): void;
     export function renderMigrationMarkdownReport(result: ScanResult, applyResult?: ApplyResult): string;
     ```
-  - [ ] 7.2: Terminal report: summary stats, then grouped matches by confidence with file:line references.
-  - [ ] 7.3: Markdown report: tables with file path, line, hardcoded value, suggested replacement, confidence.
+  - [x] 7.2: Terminal report: summary stats, then grouped matches by confidence with file:line references.
+  - [x] 7.3: Markdown report: tables with file path, line, hardcoded value, suggested replacement, confidence.
 
-- [ ] **Task 8: Migrate command orchestrator (AC: all)**
-  - [ ] 8.1: Create `src/commands/migrate.ts`:
+- [x] **Task 8: Migrate command orchestrator (AC: all)**
+  - [x] 8.1: Create `src/commands/migrate.ts`:
     ```typescript
     export async function migrateCommand(opts: {
       mode: "scan" | "apply";
@@ -160,29 +160,39 @@ This is the **second and final story of Epic 5** and introduces the `migrate` CL
       output?: string;
     }): Promise<void>;
     ```
-  - [ ] 8.2: Flow: load token system → build index → scan directory → render report → (if apply: git check → apply → render apply summary) → (if --output: write markdown).
+  - [x] 8.2: Flow: load token system → build index → scan directory → render report → (if apply: git check → apply → render apply summary) → (if --output: write markdown).
 
-- [ ] **Task 9: Tests (AC: all)**
-  - [ ] 9.1: `src/analysis/__tests__/token-index.test.ts` — builds correct lookup maps from token system.
-  - [ ] 9.2: `src/analysis/__tests__/scanner.test.ts`:
+- [x] **Task 9: Tests (AC: all)**
+  - [x] 9.1: `src/analysis/__tests__/token-index.test.ts` — builds correct lookup maps from token system.
+  - [x] 9.2: `src/analysis/__tests__/scanner.test.ts`:
     - Detects hex colors in CSS files.
     - Detects pixel values in CSS files.
     - Skips lines already using `var(--quieto-*)`.
     - Correctly classifies exact vs approximate matches.
     - Handles .scss, .sass, .less file extensions.
-  - [ ] 9.3: `src/analysis/__tests__/applier.test.ts`:
+  - [x] 9.3: `src/analysis/__tests__/applier.test.ts`:
     - Only applies exact matches.
     - Preserves file contents outside the replacement.
     - Handles multiple replacements in one file.
     - Bottom-to-top replacement preserves line numbers.
-  - [ ] 9.4: `src/analysis/__tests__/migration-report.test.ts` — markdown output format.
-  - [ ] 9.5: `src/commands/__tests__/migrate.test.ts` — CLI routing, --scan/--apply, missing directory error.
-  - [ ] 9.6: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+  - [x] 9.4: `src/analysis/__tests__/migration-report.test.ts` — markdown output format.
+  - [x] 9.5: `src/commands/__tests__/migrate.test.ts` — CLI routing, --scan/--apply, missing directory error.
+  - [x] 9.6: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 10: Close-out**
-  - [ ] 10.1: Update README.md to document the `migrate` command with `--scan` and `--apply` modes.
-  - [ ] 10.2: Update `src/pipeline/config.ts` "What's next" to mention `migrate`.
-  - [ ] 10.3: Move this story to `review`, then to `done` after code review.
+- [x] **Task 10: Close-out**
+  - [x] 10.1: Update README.md to document the `migrate` command with `--scan` and `--apply` modes.
+  - [x] 10.2: Update `src/pipeline/config.ts` "What's next" to mention `migrate`.
+  - [x] 10.3: Move this story to `review`, then to `done` after code review.
+
+### Review Findings
+
+- [x] [Review][Patch] Apply-mode safety: create backups before modifying files [src/analysis/applier.ts:92] — `--apply` now writes a per-file backup (`.quieto-bak`) the first time a file is modified.
+- [x] [Review][Patch] Typography value matching (AC #3) [src/analysis/scanner.ts:230] — scanner now matches typography dimension tokens and reports them as `category: "typography"`.
+- [x] [Review][Patch] Prevent alpha hex from being treated as exact/applyable [src/analysis/scanner.ts:206] — alpha-bearing hex values are never emitted as `confidence: "exact"`.
+- [x] [Review][Patch] Column reporting stability for apply [src/analysis/scanner.ts:195] — columns are now derived from the original source line via substring search.
+- [x] [Review][Patch] Skip scanning common build/vendor dirs [src/analysis/scanner.ts:28] — added an ignore list (e.g. `node_modules`, `dist`, `build`).
+- [x] [Review][Patch] Harden apply path resolution for absolute/Windows paths [src/analysis/applier.ts:55] — switched to `path.resolve(cwd, filePath)` instead of `startsWith` + `join`.
+- [x] [Review][Patch] Reduce wrong-occurrence replacements on same line [src/analysis/applier.ts:24] — apply prefers exact replacement at the reported column before falling back to `indexOf`.
 
 ## Dev Notes
 
@@ -299,8 +309,41 @@ src/
 
 ### Agent Model Used
 
+GPT-5.2
+
 ### Debug Log References
 
+- `npm run type-check`
+- `npm test`
+- `npm run build`
+- `npm run validate:sprint`
 ### Completion Notes List
 
+- Implemented `quieto-tokens migrate` with `--scan` and `--apply` modes.
+- Added token indexing (`token-index`), directory scanner (`scanner`), and exact-match applier (`applier`).
+- Added terminal + markdown report renderers with confidence grouping and adoption coverage estimation.
+- Added Vitest coverage for token-index, scanner, applier, markdown renderer, CLI routing, and migrate command behavior.
+- Updated docs (`README.md`) and pipeline "What's next" to mention `migrate`.
+
 ### File List
+
+- docs/planning/sprint-status.yaml
+- docs/planning/stories/5-2-migrate-command-for-token-adoption.md
+- README.md
+- src/cli.ts
+- src/pipeline/config.ts
+- src/commands/migrate.ts
+- src/commands/__tests__/migrate.test.ts
+- src/analysis/token-index.ts
+- src/analysis/scanner.ts
+- src/analysis/applier.ts
+- src/analysis/migration-report.ts
+- src/analysis/__tests__/token-index.test.ts
+- src/analysis/__tests__/scanner.test.ts
+- src/analysis/__tests__/applier.test.ts
+- src/analysis/__tests__/migration-report.test.ts
+- src/__tests__/cli.test.ts
+
+### Change Log
+
+- 2026-04-23: Added `migrate` command (scan/apply) and supporting analysis modules + tests.

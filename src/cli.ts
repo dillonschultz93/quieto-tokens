@@ -6,6 +6,7 @@ import { addCommand } from "./commands/add.js";
 import { componentCommand } from "./commands/component.js";
 import { updateCommand } from "./commands/update.js";
 import { inspectCommand } from "./commands/inspect.js";
+import { migrateCommand } from "./commands/migrate.js";
 import {
   ADDABLE_CATEGORIES,
   isAddableCategory,
@@ -29,6 +30,8 @@ const HELP_TEXT = `
                       and property assignments interactively.
     inspect           Analyze your token system's structure and health — orphans,
                       broken references, naming, and WCAG contrast.
+    migrate           Scan your codebase for hardcoded values that match your
+                      tokens, and optionally apply exact-match replacements.
 
   Command options:
     --advanced        (init) Enter advanced mode: customize individual tokens
@@ -39,6 +42,10 @@ const HELP_TEXT = `
                       Also accepts --dry-run=true / --dry-run=false.
     --output, -o      (inspect) Also write the report to a markdown file.
                       Usage: --output report.md / -o report.md / --output=report.md
+    --output, -o      (migrate) Write the migration report to a markdown file.
+                      Usage: --output migration-report.md / -o migration-report.md / --output=migration-report.md
+    --scan            (migrate) Scan a target directory for hardcoded values.
+    --apply           (migrate) Apply exact-match replacements to files.
 
   Global options:
     --help, -h        Show this help message
@@ -239,6 +246,92 @@ export function parseInspectArgs(args: readonly string[]): {
   return output !== undefined ? { output, unknown } : { unknown };
 }
 
+export function parseMigrateArgs(args: readonly string[]): {
+  mode: "scan" | "apply";
+  target: string;
+  output?: string;
+  unknown: string[];
+} {
+  let mode: "scan" | "apply" | undefined;
+  let target: string | undefined;
+  let output: string | undefined;
+  const unknown: string[] = [];
+  let sawMode = false;
+  let sawTarget = false;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg === "--scan") {
+      if (mode !== undefined) {
+        unknown.push(arg);
+      } else {
+        mode = "scan";
+        sawMode = true;
+      }
+      continue;
+    }
+    if (arg === "--apply") {
+      if (mode !== undefined) {
+        unknown.push(arg);
+      } else {
+        mode = "apply";
+        sawMode = true;
+      }
+      continue;
+    }
+    if (arg === "--output" || arg === "-o") {
+      const next = args[i + 1];
+      if (next && next !== "--output" && next !== "-o") {
+        output = next;
+        i++;
+      } else {
+        unknown.push(arg);
+      }
+      continue;
+    }
+    if (arg.startsWith("--output=")) {
+      const value = arg.slice("--output=".length);
+      if (value.length === 0) {
+        unknown.push(arg);
+      } else {
+        output = value;
+      }
+      continue;
+    }
+    if (arg.startsWith("--") || arg.startsWith("-")) {
+      unknown.push(arg);
+      continue;
+    }
+    if (target === undefined) {
+      target = arg;
+      sawTarget = true;
+    } else {
+      unknown.push(arg);
+    }
+  }
+
+  // Keep the return type stable while still letting routing distinguish
+  // missing required values without expanding the public return shape.
+  if (!sawMode) {
+    unknown.push("__MIGRATE_MISSING_MODE__");
+  }
+  if (!sawTarget) {
+    unknown.push("__MIGRATE_MISSING_TARGET__");
+  }
+
+  const finalMode: "scan" | "apply" = mode ?? "scan";
+  const finalTarget = target ?? "";
+
+  const base: {
+    mode: "scan" | "apply";
+    target: string;
+    unknown: string[];
+    output?: string;
+  } = { mode: finalMode, target: finalTarget, unknown };
+  if (output !== undefined) base.output = output;
+  return base;
+}
+
 /**
  * Pure routing core extracted from `main()` for testability. Returns an
  * exit code instead of calling `process.exit`, and accepts an explicit
@@ -386,6 +479,42 @@ export async function runCli(args: readonly string[]): Promise<number> {
       const inspectExit = process.exitCode;
       process.exitCode = undefined;
       return typeof inspectExit === "number" ? inspectExit : 0;
+    }
+    case "migrate": {
+      const parsed = parseMigrateArgs(args.slice(1));
+      const missingMode = parsed.unknown.includes("__MIGRATE_MISSING_MODE__");
+      const missingTarget = parsed.unknown.includes(
+        "__MIGRATE_MISSING_TARGET__",
+      );
+      const unknown = parsed.unknown.filter(
+        (u) =>
+          u !== "__MIGRATE_MISSING_MODE__" &&
+          u !== "__MIGRATE_MISSING_TARGET__",
+      );
+
+      if (missingMode || missingTarget || unknown.length > 0) {
+        p.intro("◆  quieto-tokens");
+        if (missingMode) {
+          p.log.error("Missing required option for migrate: --scan or --apply");
+        } else if (missingTarget) {
+          p.log.error("Missing required target directory for migrate.");
+        } else {
+          p.log.error(
+            `Unknown argument(s) for migrate: ${unknown.join(", ")}`,
+          );
+        }
+        p.note(HELP_TEXT.trim(), "Usage");
+        p.outro("Fix the options and re-run.");
+        return 1;
+      }
+      await migrateCommand({
+        mode: parsed.mode,
+        target: parsed.target,
+        output: parsed.output,
+      });
+      const migrateExit = process.exitCode;
+      process.exitCode = undefined;
+      return typeof migrateExit === "number" ? migrateExit : 0;
     }
     default:
       p.intro("◆  quieto-tokens");
