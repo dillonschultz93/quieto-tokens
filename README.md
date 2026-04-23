@@ -162,6 +162,24 @@ quieto-tokens inspect                    # terminal report only
 quieto-tokens inspect --output report.md # also write markdown
 ```
 
+### Migrating hardcoded values to tokens
+
+Once you have a token system, run **`quieto-tokens migrate`** to scan a codebase for hardcoded hex colors and spacing/typography dimensions that match your tokens.
+
+Scan mode is read-only:
+
+```bash
+quieto-tokens migrate --scan ./src
+quieto-tokens migrate --scan ./src --output migration-report.md
+```
+
+Apply mode performs **exact-match** replacements only (approximate matches are reported for manual review). Before modifying a file, the tool writes a one-time backup alongside it as **`<file>.quieto-bak`**.
+
+```bash
+quieto-tokens migrate --apply ./src
+quieto-tokens migrate --apply ./src --output migration-report.md
+```
+
 ### Token Tiers
 
 - **Primitive** — Core values: color ramps, spacing scales, type scales. Obfuscation layer over raw values. _(shipped)_
@@ -196,8 +214,9 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 - **No framework lock-in** — Platform-native output that works with any framework
 - **Light/dark themes** — Generated from a single yes/no question using the same primitive palette
 - **Selective updates** — `quieto-tokens update` re-runs only the categories you change, then shows a **terminal diff** (with cascade context) before you write
-- **Dry-run mode** — See planned changes without writing (planned)
-- **Design system changelog** — Automatic tracking of what changed and why (planned)
+- **Dry-run mode** — Add `--dry-run` to run without writing files
+- **Design system changelog** — Automatic tracking of what the tool last wrote to disk (`TOKENS_CHANGELOG.md`)
+- **Design system intelligence** — `inspect` (token health) and `migrate` (adoption scanning + exact-match apply)
 - **DTCG-aligned** — Interoperable with the growing design token tool ecosystem
 
 ## Status
@@ -208,9 +227,9 @@ This project is in active development. Progress by epic:
 |---|---|---|
 | 1 — Quick-Start Token Generation (MVP) | CLI scaffold, quick-start flow, primitives, semantics, theming, preview, DTCG + CSS output, config | **Done** |
 | 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | **Done** |
-| 3 — Token System Evolution | `update` (re-entrant editing, selective regen), token diff in the terminal, dry-run, design-system changelog | **In progress** (diff + `update` shipped; dry-run & changelog next) |
-| 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | **In progress** (Figma JSON & iOS Swift shipped; Android next) |
-| 5 — Design System Intelligence | `inspect` command, `migrate` command | **In progress** (`inspect` shipped; `migrate` next) |
+| 3 — Token System Evolution | `update` (re-entrant editing, selective regen), token diff in the terminal, dry-run, design-system changelog | **Done** |
+| 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | **Done** |
+| 5 — Design System Intelligence | `inspect` command, `migrate` command | **Done** |
 
 See [`docs/planning/epics.md`](docs/planning/epics.md) for the full roadmap and [`docs/planning/sprint-status.yaml`](docs/planning/sprint-status.yaml) for per-story status.
 

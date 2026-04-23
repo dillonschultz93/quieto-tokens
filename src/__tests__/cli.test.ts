@@ -18,6 +18,9 @@ vi.mock("../commands/component.js", () => ({
 vi.mock("../commands/update.js", () => ({
   updateCommand: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("../commands/migrate.js", () => ({
+  migrateCommand: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
   outro: vi.fn(),
@@ -42,6 +45,7 @@ import {
   parseAddArgs,
   parseComponentArgs,
   parseInitArgs,
+  parseMigrateArgs,
   parseUpdateArgs,
   runCli,
 } from "../cli.js";
@@ -49,6 +53,7 @@ import { initCommand } from "../commands/init.js";
 import { addCommand } from "../commands/add.js";
 import { componentCommand } from "../commands/component.js";
 import { updateCommand } from "../commands/update.js";
+import { migrateCommand } from "../commands/migrate.js";
 
 describe("parseInitArgs", () => {
   it("returns advanced=false, dryRun=false, and no unknowns for an empty arg list", () => {
@@ -288,6 +293,31 @@ describe("parseComponentArgs", () => {
   });
 });
 
+describe("parseMigrateArgs", () => {
+  it("parses migrate --scan ./src", () => {
+    expect(parseMigrateArgs(["--scan", "./src"])).toEqual({
+      mode: "scan",
+      target: "./src",
+      unknown: [],
+    });
+  });
+
+  it("parses migrate --apply ./src --output out.md", () => {
+    expect(parseMigrateArgs(["--apply", "./src", "--output", "out.md"])).toEqual({
+      mode: "apply",
+      target: "./src",
+      output: "out.md",
+      unknown: [],
+    });
+  });
+
+  it("collects unknown flags", () => {
+    expect(parseMigrateArgs(["--scan", "./src", "--bogus"]).unknown).toContain(
+      "--bogus",
+    );
+  });
+});
+
 /**
  * End-to-end routing coverage for Story 2.4 AC #4 / Task 2. `runCli` is
  * the pure core extracted from `main()` so tests can assert exit codes
@@ -478,6 +508,27 @@ describe("runCli — routing (AC #4)", () => {
       const code = await runCli(["update", "--dry-run"]);
       expect(code).toBe(0);
       expect(updateCommand).toHaveBeenCalledWith({ dryRun: true });
+    });
+  });
+
+  describe("migrate routing", () => {
+    it("dispatches to migrateCommand on `migrate --scan ./src`", async () => {
+      const code = await runCli(["migrate", "--scan", "./src"]);
+      expect(code).toBe(0);
+      expect(migrateCommand).toHaveBeenCalledWith({
+        mode: "scan",
+        target: "./src",
+        output: undefined,
+      });
+    });
+
+    it("returns 1 when mode is missing", async () => {
+      const code = await runCli(["migrate", "./src"]);
+      expect(code).toBe(1);
+      expect(vi.mocked(p.log.error)).toHaveBeenCalledWith(
+        expect.stringContaining("Missing required option for migrate"),
+      );
+      expect(migrateCommand).not.toHaveBeenCalled();
     });
   });
 

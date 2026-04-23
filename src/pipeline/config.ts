@@ -150,6 +150,7 @@ export async function runConfigGeneration(
       '  • Run "quieto-tokens add animation" to add durations + easing',
       '  • Run "quieto-tokens component button" (or any component name) to author component tokens',
       '  • Run "quieto-tokens inspect" to analyze your token system\'s health (orphans, broken refs, contrast)',
+      '  • Run "quieto-tokens migrate --scan ./src" to find hardcoded values you can replace with token references',
     ].join("\n"),
   );
 
