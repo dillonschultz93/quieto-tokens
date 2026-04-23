@@ -1,6 +1,6 @@
 {
   "name": "@quieto/tokens",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CLI tool for generating complete, accessible design token systems.",
   "type": "module",
   "bin": {
@@ -57,11 +57,15 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@changesets/changelog-git": "^0.2.1",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.31.0",
     "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.4"
+  },
+  "overrides": {
+    "@changesets/get-github-info": "^0.8.0"
   }
 }
