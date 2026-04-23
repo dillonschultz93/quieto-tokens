@@ -12,6 +12,7 @@ import {
   DEFAULT_CATEGORIES,
   DEFAULT_OUTPUTS,
   DEFAULT_OUTPUT_CONFIG,
+  OUTPUT_PLATFORMS,
   type OutputPlatform,
 } from "../types/config.js";
 import { getConfigPath } from "../utils/config.js";
@@ -104,8 +105,8 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
     },
     overrides: Object.fromEntries(input.overrides),
     output: { ...DEFAULT_OUTPUT_CONFIG },
-    outputs: fromInput.filter(
-      (p): p is OutputPlatform => p === "css" || p === "figma",
+    outputs: fromInput.filter((p): p is OutputPlatform =>
+      OUTPUT_PLATFORMS.includes(p as OutputPlatform),
     ),
     categories: input.categories ? [...input.categories] : [...DEFAULT_CATEGORIES],
   };

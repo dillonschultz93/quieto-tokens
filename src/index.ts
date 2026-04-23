@@ -64,7 +64,7 @@ export { generateComponentTokens } from "./generators/component.js";
 export { componentCommand } from "./commands/component.js";
 export type { ComponentCommandOptions } from "./commands/component.js";
 export { validateComponentName } from "./utils/validation.js";
-export { buildCss, buildFigmaJson } from "./output/style-dictionary.js";
+export { buildCss, buildFigmaJson, buildIos } from "./output/style-dictionary.js";
 export { runOutputGeneration } from "./pipeline/output.js";
 export type { OutputResult } from "./pipeline/output.js";
 export { buildConfig, writeConfig } from "./output/config-writer.js";

@@ -27,7 +27,7 @@ import { applyPriorOverrides } from "../utils/overrides.js";
 import { generateComponentTokens } from "../generators/component.js";
 import { collectComponentInputs } from "../commands/component-flow.js";
 import { writeComponentTokens } from "../output/json-writer.js";
-import { buildCss, buildFigmaJson } from "../output/style-dictionary.js";
+import { buildCss, buildFigmaJson, buildIos } from "../output/style-dictionary.js";
 import { DEFAULT_OUTPUTS } from "../types/config.js";
 import { prune } from "../output/pruner.js";
 import { sortCategoriesCanonical } from "../utils/categories.js";
@@ -43,6 +43,7 @@ export interface ComponentPipelineResult {
   jsonFiles: string[];
   cssFiles: string[];
   figmaFiles?: string[];
+  iosFiles?: string[];
 }
 
 export type ComponentPipelineOutcome =
@@ -132,6 +133,20 @@ export async function runComponent(
       }
     }
 
+    let iosFiles: string[] | undefined;
+    if (outputs.includes("ios")) {
+      p.log.step("Rebuilding iOS Swift constants…");
+      try {
+        iosFiles = await buildIos(collection, cwd);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        p.log.warn(
+          `iOS Swift build failed (CSS was still updated): ${message}`,
+        );
+      }
+    }
+
     const knownComponents = Object.keys({
       ...config.components,
       [name]: componentConfig,
@@ -152,6 +167,7 @@ export async function runComponent(
         jsonFiles,
         cssFiles,
         ...(figmaFiles && figmaFiles.length > 0 ? { figmaFiles } : {}),
+        ...(iosFiles && iosFiles.length > 0 ? { iosFiles } : {}),
       },
     };
   } catch (error) {

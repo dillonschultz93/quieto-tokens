@@ -50,10 +50,16 @@ build/
   light.css               # Light-theme semantic layer
   dark.css                # Dark-theme semantic layer
   tokens.figma.json       # Optional — Figma Variables / Tokens Studio import
+  ios/
+    Color.swift             # Optional — UIColor + SwiftUI Color extensions
+    Spacing.swift           # Optional — CGFloat spacing constants
+    Typography.swift        # Optional — Font size / weight / family constants
 quieto.config.json        # Your answers, so you can re-run to modify
 ```
 
 When `quieto.config.json` includes `"outputs": ["css", "figma"]` (set during `init` or by editing the file), the CLI also writes **`build/tokens.figma.json`**: a nested, DTCG-shaped JSON file with one top-level key per theme (`default`, or `light` and `dark`, etc.). Token paths use `/` as the segment separator (Figma group style). Import that file into [Tokens Studio](https://tokens.studio/) or a Variables workflow; there is no Figma API integration — it is a static build artifact, like the CSS.
+
+When `outputs` includes `"ios"`, the CLI writes Swift source files to **`build/ios/`**: `Color.swift` (UIColor static constants + SwiftUI Color extensions), `Spacing.swift` (CGFloat constants), and `Typography.swift` (font size, weight, and family constants). For multi-theme systems, tokens are organized under `Theme.Light` / `Theme.Dark` enums. These are raw `.swift` files — copy or reference them in your Xcode project.
 
 ### Design System Changelog
 
@@ -158,8 +164,8 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 
 - CSS custom properties _(shipped)_
 - DTCG JSON source tokens _(shipped)_
-- JSON for Figma Variables / Tokens Studio _(planned — Epic 4)_
-- iOS Swift _(planned — Epic 4)_
+- JSON for Figma Variables / Tokens Studio _(shipped)_
+- iOS Swift (UIColor, SwiftUI Color, CGFloat, font constants) _(shipped)_
 - Android XML / Compose _(planned — Epic 4)_
 
 ## Key Features
@@ -181,7 +187,7 @@ This project is in active development. Progress by epic:
 | 1 — Quick-Start Token Generation (MVP) | CLI scaffold, quick-start flow, primitives, semantics, theming, preview, DTCG + CSS output, config | **Done** |
 | 2 — Advanced Token Authoring | Advanced mode for core categories, `add` subcommand, component tokens | **Done** |
 | 3 — Token System Evolution | `update` (re-entrant editing, selective regen), token diff in the terminal, dry-run, design-system changelog | **In progress** (diff + `update` shipped; dry-run & changelog next) |
-| 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | Backlog |
+| 4 — Multi-Platform Output | Figma Variables / Tokens Studio, iOS Swift, Android | **In progress** (Figma JSON & iOS Swift shipped; Android next) |
 | 5 — Design System Intelligence | `inspect` command, `migrate` command | Backlog |
 
 See [`docs/planning/epics.md`](docs/planning/epics.md) for the full roadmap and [`docs/planning/sprint-status.yaml`](docs/planning/sprint-status.yaml) for per-story status.

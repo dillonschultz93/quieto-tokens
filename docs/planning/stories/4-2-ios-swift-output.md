@@ -1,6 +1,6 @@
 # Story 4.2: iOS Swift Output
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -68,54 +68,54 @@ This is the **second story of Epic 4** and builds on the multi-platform output a
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Extend `OutputPlatform` type (AC: #1, #2, #3)**
-  - [ ] 1.1: In `src/types/config.ts`, add `"ios"` to the `OutputPlatform` union.
-  - [ ] 1.2: Update the output platform prompt in `init` to include the iOS option.
+- [x] **Task 1: Extend `OutputPlatform` type (AC: #1, #2, #3)**
+  - [x] 1.1: In `src/types/config.ts`, add `"ios"` to the `OutputPlatform` union.
+  - [x] 1.2: Update the output platform prompt in `init` to include the iOS option.
 
-- [ ] **Task 2: iOS name transform (AC: #4, #7, #9)**
-  - [ ] 2.1: In `src/output/style-dictionary.ts`, register a `name/ios` transform that converts token paths to camelCase Swift identifiers (e.g., `["color", "blue", "500"]` → `"blue500"`, `["spacing", "space-4"]` → `"space4"`).
-  - [ ] 2.2: Semantic tokens get a `semantic` prefix in the identifier (e.g., `semanticColorBackgroundPrimary`). Component tokens get a `component` prefix.
+- [x] **Task 2: iOS name transform (AC: #4, #7, #9)**
+  - [x] 2.1: In `src/output/style-dictionary.ts`, register a `name/ios` transform that converts token paths to camelCase Swift identifiers (e.g., `["color", "blue", "500"]` → `"blue500"`, `["spacing", "space-4"]` → `"space4"`).
+  - [x] 2.2: Semantic tokens get a `semantic` prefix in the identifier (e.g., `semanticColorBackgroundPrimary`). Component tokens get a `component` prefix.
 
-- [ ] **Task 3: Custom iOS formats (AC: #4, #5, #6, #7, #8, #9, #10, #11)**
-  - [ ] 3.1: Register a `ios/color-swift` format that outputs a Swift extension on `UIColor` with static color constants. Each color token becomes:
+- [x] **Task 3: Custom iOS formats (AC: #4, #5, #6, #7, #8, #9, #10, #11)**
+  - [x] 3.1: Register a `ios/color-swift` format that outputs a Swift extension on `UIColor` with static color constants. Each color token becomes:
     ```swift
     static let blue500 = UIColor(red: 0.23, green: 0.51, blue: 0.96, alpha: 1.0)
     ```
-  - [ ] 3.2: Include a SwiftUI `Color` companion extension.
-  - [ ] 3.3: Register a `ios/spacing-swift` format that outputs `CGFloat` constants:
+  - [x] 3.2: Include a SwiftUI `Color` companion extension.
+  - [x] 3.3: Register a `ios/spacing-swift` format that outputs `CGFloat` constants:
     ```swift
     static let space4: CGFloat = 4
     ```
-  - [ ] 3.4: Register a `ios/typography-swift` format that outputs font size, weight, line-height, and font-family constants.
-  - [ ] 3.5: For multi-theme, generate theme-aware structures — either `enum Theme { enum Light { ... } enum Dark { ... } }` or `@Environment(\.colorScheme)` conditional logic.
+  - [x] 3.4: Register a `ios/typography-swift` format that outputs font size, weight, line-height, and font-family constants.
+  - [x] 3.5: For multi-theme, generate theme-aware structures — either `enum Theme { enum Light { ... } enum Dark { ... } }` or `@Environment(\.colorScheme)` conditional logic.
 
-- [ ] **Task 4: `buildIos` orchestrator (AC: #13, #14, #15)**
-  - [ ] 4.1: In `src/output/style-dictionary.ts`, export `buildIos(collection, outputDir): Promise<string[]>` following the `buildCss` pattern.
-  - [ ] 4.2: Configure the `ios` platform with:
+- [x] **Task 4: `buildIos` orchestrator (AC: #13, #14, #15)**
+  - [x] 4.1: In `src/output/style-dictionary.ts`, export `buildIos(collection, outputDir): Promise<string[]>` following the `buildCss` pattern.
+  - [x] 4.2: Configure the `ios` platform with:
     - `buildPath`: `build/ios/`
     - `files`: one per category — `Color.swift`, `Spacing.swift`, `Typography.swift`, etc.
     - `transforms`: `["attribute/cti", "name/ios", "color/UIColorSwift", "size/swift/remToCGFloat"]` (use SD built-in iOS transforms where available, custom where needed).
-  - [ ] 4.3: Handle multi-theme: separate SD runs per theme or merged output with conditional constants.
+  - [x] 4.3: Handle multi-theme: separate SD runs per theme or merged output with conditional constants.
 
-- [ ] **Task 5: Wire into output pipeline (AC: #15, #16)**
-  - [ ] 5.1: In `src/pipeline/output.ts`, after Figma build (if enabled), check for `"ios"` in `outputs` and call `buildIos`.
-  - [ ] 5.2: Extend `OutputResult` to include `iosFiles?: string[]`.
-  - [ ] 5.3: iOS build failure logs warning, does not roll back other outputs.
+- [x] **Task 5: Wire into output pipeline (AC: #15, #16)**
+  - [x] 5.1: In `src/pipeline/output.ts`, after Figma build (if enabled), check for `"ios"` in `outputs` and call `buildIos`.
+  - [x] 5.2: Extend `OutputResult` to include `iosFiles?: string[]`.
+  - [x] 5.3: iOS build failure logs warning, does not roll back other outputs.
 
-- [ ] **Task 6: Tests (AC: all)**
-  - [ ] 6.1: `src/output/__tests__/style-dictionary-ios.test.ts`:
+- [x] **Task 6: Tests (AC: all)**
+  - [x] 6.1: `src/output/__tests__/style-dictionary-ios.test.ts`:
     - `name/ios` transform produces camelCase identifiers.
     - `ios/color-swift` format produces valid UIColor + Color extensions.
     - `ios/spacing-swift` format produces CGFloat constants.
     - `ios/typography-swift` format produces font constants.
     - Multi-theme output has theme namespaces.
-  - [ ] 6.2: Integration test: `runOutputGeneration` with `outputs: ["css", "ios"]` produces CSS + Swift files.
-  - [ ] 6.3: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+  - [x] 6.2: Integration test: `runOutputGeneration` with `outputs: ["css", "ios"]` produces CSS + Swift files.
+  - [x] 6.3: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 7: Close-out**
-  - [ ] 7.1: Update HELP_TEXT in `src/cli.ts` if needed.
-  - [ ] 7.2: Update README.md to document iOS Swift output.
-  - [ ] 7.3: Move this story to `review`, then to `done` after code review.
+- [x] **Task 7: Close-out**
+  - [x] 7.1: Update HELP_TEXT in `src/cli.ts` if needed.
+  - [x] 7.2: Update README.md to document iOS Swift output.
+  - [x] 7.3: Move this story to `review`, then to `done` after code review.
 
 ## Dev Notes
 
@@ -204,8 +204,42 @@ src/
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+- SD v5.4.0 built-in iOS transforms verified: `color/UIColorSwift`, `color/ColorSwiftUI`, `size/swift/remToCGFloat` exist.
+- `size/swift/remToCGFloat` multiplies by 16 (rem→px), but source tokens are already in px — used custom format parsing instead.
+- `formatPlatform("ios")` returns full paths in `destination`; fixed to extract filename only for multi-theme mapping.
+- SD v5 skips writing files when filter matches zero tokens; `buildIos` now checks file existence before returning paths.
 
 ### Completion Notes List
 
+- Added `"ios"` to `OutputPlatform` union type and init multiselect prompt.
+- Registered `name/ios` custom transform: camelCase with `semantic`/`component` tier prefixes.
+- Registered three custom formats: `ios/color-swift` (UIColor + SwiftUI Color), `ios/spacing-swift` (CGFloat), `ios/typography-swift` (font size/weight/family).
+- Used SD built-in `color/UIColorSwift` transform for hex→UIColor RGBA conversion.
+- Single-theme: flat UIColor/Color extensions + enum constants.
+- Multi-theme: `enum Theme { enum Light { ... } enum Dark { ... } }` with per-theme SwiftUI Color extensions.
+- `buildIos` orchestrator follows `buildCss`/`buildFigmaJson` pattern.
+- Wired into both `runOutputGeneration` and `runComponentPipeline`; failure logs warning without blocking CSS.
+- 17 unit tests (name transform, formats, multi-theme, file organization) + 4 integration tests (pipeline dispatch, isolation, failure handling).
+- All 642 tests pass, type-check clean, build succeeds, sprint validation OK.
+
 ### File List
+
+- `src/types/config.ts` — added `"ios"` to `OutputPlatform` union
+- `src/commands/init.ts` — added iOS option to platform multiselect prompt
+- `src/output/style-dictionary.ts` — added `name/ios` transform, `ios/color-swift`, `ios/spacing-swift`, `ios/typography-swift` formats, `buildIos` orchestrator, multi-theme support
+- `src/pipeline/output.ts` — added `iosFiles` to `OutputResult`, iOS dispatch block
+- `src/pipeline/component.ts` — added iOS rebuild dispatch
+- `src/index.ts` — re-exported `buildIos`
+- `src/cli.ts` — updated HELP_TEXT to mention iOS Swift
+- `README.md` — documented iOS Swift output, updated roadmap
+- `src/output/__tests__/style-dictionary-ios.test.ts` — NEW, 17 tests
+- `src/pipeline/__tests__/output-ios.test.ts` — NEW, 4 integration tests
+- `docs/planning/stories/4-2-ios-swift-output.md` — updated tasks, status, dev record
+
+### Change Log
+
+- 2026-04-22: Implemented iOS Swift output (Story 4.2) — `buildIos` generates Color.swift, Spacing.swift, Typography.swift with UIColor/SwiftUI/CGFloat/font constants. Multi-theme supported via Theme enum namespaces.

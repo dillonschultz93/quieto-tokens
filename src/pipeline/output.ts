@@ -4,13 +4,14 @@ import * as p from "@clack/prompts";
 import type { ThemeCollection } from "../types/tokens.js";
 import { writeTokensToJson } from "../output/json-writer.js";
 import type { WriteScope } from "../output/json-writer.js";
-import { buildCss, buildFigmaJson } from "../output/style-dictionary.js";
+import { buildCss, buildFigmaJson, buildIos } from "../output/style-dictionary.js";
 import { DEFAULT_OUTPUTS, type OutputPlatform } from "../types/config.js";
 
 export interface OutputResult {
   jsonFiles: string[];
   cssFiles: string[];
   figmaFiles?: string[];
+  iosFiles?: string[];
 }
 
 export interface RunOutputOptions {
@@ -143,16 +144,37 @@ export async function runOutputGeneration(
     }
   }
 
+  let iosFiles: string[] | undefined;
+  if (outputPlatforms.includes("ios")) {
+    p.log.step("Building iOS Swift constants…");
+    try {
+      iosFiles = await buildIos(collection, outputDir);
+      for (const file of iosFiles) {
+        p.log.info(`✓ Generated ${formatPath(file)}`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+      p.log.warn(
+        `iOS Swift build failed (CSS was still generated): ${message}`,
+      );
+    }
+  }
+
   const figmaPart = figmaFiles
     ? `, ${figmaFiles.length} Figma JSON file${figmaFiles.length === 1 ? "" : "s"}`
     : "";
+  const iosPart = iosFiles
+    ? `, ${iosFiles.length} Swift file${iosFiles.length === 1 ? "" : "s"}`
+    : "";
   p.log.success(
-    `Output complete — ${jsonFiles.length} JSON source files, ${cssFiles.length} CSS file${cssFiles.length === 1 ? "" : "s"}${figmaPart}.`,
+    `Output complete — ${jsonFiles.length} JSON source files, ${cssFiles.length} CSS file${cssFiles.length === 1 ? "" : "s"}${figmaPart}${iosPart}.`,
   );
 
   return {
     jsonFiles,
     cssFiles,
     ...(figmaFiles && figmaFiles.length > 0 ? { figmaFiles } : {}),
+    ...(iosFiles && iosFiles.length > 0 ? { iosFiles } : {}),
   };
 }

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import * as p from "@clack/prompts";
 import type { OutputPlatform, QuietoConfig } from "../types/config.js";
-import { DEFAULT_CATEGORIES, DEFAULT_OUTPUTS } from "../types/config.js";
+import { DEFAULT_CATEGORIES, DEFAULT_OUTPUTS, OUTPUT_PLATFORMS } from "../types/config.js";
 import { validateComponentName } from "./validation.js";
 import {
   SHADOW_MAX_LEVELS,
@@ -188,7 +188,7 @@ export function validateConfigShape(parsed: unknown): string[] {
     } else {
       for (let oi = 0; oi < root.outputs.length; oi++) {
         const p = root.outputs[oi];
-        if (p !== "css" && p !== "figma") {
+        if (!OUTPUT_PLATFORMS.includes(p as OutputPlatform)) {
           errors.push(`outputs[${oi}]`);
         }
       }

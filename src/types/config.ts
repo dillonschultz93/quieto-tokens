@@ -15,7 +15,8 @@
  * - Story 3.1 will read this file to drive diff-based re-entrant editing.
  * - Story 4.1 adds `outputs` for multi-platform build targets.
  */
-export type OutputPlatform = "css" | "figma";
+export const OUTPUT_PLATFORMS = ["css", "figma", "ios"] as const;
+export type OutputPlatform = (typeof OUTPUT_PLATFORMS)[number];
 
 export interface QuietoConfig {
   /** Optional JSON Schema URL. Reserved for future hosted schema (not MVP). */
