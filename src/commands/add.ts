@@ -264,6 +264,7 @@ function buildNextConfig(input: BuildNextConfigInput): QuietoConfig {
     categories: input.newCategories,
     categoryConfigs: input.newCategoryConfigs,
     outputs: input.prev.outputs,
+    androidFormat: input.prev.androidFormat,
   });
   next.output = { ...input.prev.output };
   if (input.prev.$schema) {

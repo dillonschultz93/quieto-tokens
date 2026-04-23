@@ -80,10 +80,10 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Multi-Platform Output
-  epic-4: in-progress
+  epic-4: done
   4-1-json-output-for-figma-variables-and-tokens-studio: done
-  4-2-ios-swift-output: ready-for-dev
-  4-3-android-output: ready-for-dev
+  4-2-ios-swift-output: done
+  4-3-android-output: done
   epic-4-retrospective: optional
 
   # Epic 5: Design System Intelligence

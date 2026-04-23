@@ -1,6 +1,6 @@
 # Story 4.3: Android Output
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -76,45 +76,45 @@ This is the **third and final story of Epic 4** and builds on the multi-platform
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Extend `OutputPlatform` and config (AC: #1, #2, #3)**
-  - [ ] 1.1: In `src/types/config.ts`, add `"android"` to `OutputPlatform`.
-  - [ ] 1.2: Add `androidFormat?: "xml" | "compose"` to `QuietoConfig` (optional — only present when `outputs` includes `"android"`).
-  - [ ] 1.3: Update the output platform prompt to include Android. When Android is selected, show a follow-up prompt for XML vs Compose.
-  - [ ] 1.4: Thread `androidFormat` through `buildConfig` and config loading.
+- [x] **Task 1: Extend `OutputPlatform` and config (AC: #1, #2, #3)**
+  - [x] 1.1: In `src/types/config.ts`, add `"android"` to `OutputPlatform`.
+  - [x] 1.2: Add `androidFormat?: "xml" | "compose"` to `QuietoConfig` (optional — only present when `outputs` includes `"android"`).
+  - [x] 1.3: Update the output platform prompt to include Android. When Android is selected, show a follow-up prompt for XML vs Compose.
+  - [x] 1.4: Thread `androidFormat` through `buildConfig` and config loading.
 
-- [ ] **Task 2: Android name transform (AC: #4, #5, #7, #8)**
-  - [ ] 2.1: For XML: register a `name/android-xml` transform producing underscore-separated resource names with the `quieto_` prefix (e.g., `quieto_color_blue_500`, `quieto_space_4`).
-  - [ ] 2.2: For Compose: register a `name/android-compose` transform producing PascalCase Kotlin identifiers (e.g., `Blue500`, `Space4`).
+- [x] **Task 2: Android name transform (AC: #4, #5, #7, #8)**
+  - [x] 2.1: For XML: register a `name/android-xml` transform producing underscore-separated resource names with the `quieto_` prefix (e.g., `quieto_color_blue_500`, `quieto_space_4`).
+  - [x] 2.2: For Compose: register a `name/android-compose` transform producing PascalCase Kotlin identifiers (e.g., `Blue500`, `Space4`).
 
-- [ ] **Task 3: Custom Android formats (AC: #4, #5, #6, #7, #8, #9, #10, #11, #12)**
-  - [ ] 3.1: Register an `android/colors-xml` format producing:
+- [x] **Task 3: Custom Android formats (AC: #4, #5, #6, #7, #8, #9, #10, #11, #12)**
+  - [x] 3.1: Register an `android/colors-xml` format producing:
     ```xml
     <?xml version="1.0" encoding="utf-8"?>
     <resources>
       <color name="quieto_color_blue_500">#3B82F6</color>
     </resources>
     ```
-  - [ ] 3.2: Register an `android/dimens-xml` format producing `<dimen>` resources.
-  - [ ] 3.3: Register an `android/typography-xml` format for font-related resources.
-  - [ ] 3.4: Register `android/color-compose` format producing Kotlin `Color` constants in an `object QuietoTokens`.
-  - [ ] 3.5: Register `android/spacing-compose` format producing `Dp` constants.
-  - [ ] 3.6: Register `android/typography-compose` format producing `TextStyle` constants.
-  - [ ] 3.7: Multi-theme XML: run separate SD builds — light tokens → `values/`, dark tokens → `values-night/`.
-  - [ ] 3.8: Multi-theme Compose: generate `lightColorScheme()` and `darkColorScheme()` compatible structures.
+  - [x] 3.2: Register an `android/dimens-xml` format producing `<dimen>` resources.
+  - [x] 3.3: Register an `android/typography-xml` format for font-related resources.
+  - [x] 3.4: Register `android/color-compose` format producing Kotlin `Color` constants in an `object QuietoTokens`.
+  - [x] 3.5: Register `android/spacing-compose` format producing `Dp` constants.
+  - [x] 3.6: Register `android/typography-compose` format producing `TextStyle` constants.
+  - [x] 3.7: Multi-theme XML: run separate SD builds — light tokens → `values/`, dark tokens → `values-night/`.
+  - [x] 3.8: Multi-theme Compose: generate `lightColorScheme()` and `darkColorScheme()` compatible structures.
 
-- [ ] **Task 4: `buildAndroid` orchestrator (AC: #13, #14, #15)**
-  - [ ] 4.1: In `src/output/style-dictionary.ts`, export `buildAndroid(collection, outputDir, format): Promise<string[]>`. The `format` parameter (`"xml" | "compose"`) selects which transforms and formats to use.
-  - [ ] 4.2: For XML: `buildPath` is `build/android/values/` (light) and `build/android/values-night/` (dark).
-  - [ ] 4.3: For Compose: `buildPath` is `build/android/`.
-  - [ ] 4.4: Follow the `buildCss` decomposition pattern for multi-theme handling.
+- [x] **Task 4: `buildAndroid` orchestrator (AC: #13, #14, #15)**
+  - [x] 4.1: In `src/output/style-dictionary.ts`, export `buildAndroid(collection, outputDir, format): Promise<string[]>`. The `format` parameter (`"xml" | "compose"`) selects which transforms and formats to use.
+  - [x] 4.2: For XML: `buildPath` is `build/android/values/` (light) and `build/android/values-night/` (dark).
+  - [x] 4.3: For Compose: `buildPath` is `build/android/`.
+  - [x] 4.4: Follow the `buildCss` decomposition pattern for multi-theme handling.
 
-- [ ] **Task 5: Wire into output pipeline (AC: #15, #16)**
-  - [ ] 5.1: In `src/pipeline/output.ts`, after iOS build (if enabled), check for `"android"` in `outputs` and call `buildAndroid` with the `androidFormat` from config.
-  - [ ] 5.2: Extend `OutputResult` to include `androidFiles?: string[]`.
-  - [ ] 5.3: Android build failure logs warning, does not roll back other outputs.
+- [x] **Task 5: Wire into output pipeline (AC: #15, #16)**
+  - [x] 5.1: In `src/pipeline/output.ts`, after iOS build (if enabled), check for `"android"` in `outputs` and call `buildAndroid` with the `androidFormat` from config.
+  - [x] 5.2: Extend `OutputResult` to include `androidFiles?: string[]`.
+  - [x] 5.3: Android build failure logs warning, does not roll back other outputs.
 
-- [ ] **Task 6: Tests (AC: all)**
-  - [ ] 6.1: `src/output/__tests__/style-dictionary-android.test.ts`:
+- [x] **Task 6: Tests (AC: all)**
+  - [x] 6.1: `src/output/__tests__/style-dictionary-android.test.ts`:
     - XML transforms produce underscore-separated resource names.
     - Compose transforms produce PascalCase identifiers.
     - `android/colors-xml` format produces valid XML resources.
@@ -123,14 +123,14 @@ This is the **third and final story of Epic 4** and builds on the multi-platform
     - `android/spacing-compose` format produces valid Kotlin Dp constants.
     - Multi-theme XML outputs to `values/` and `values-night/`.
     - Multi-theme Compose generates light/dark schemes.
-  - [ ] 6.2: Integration test: `runOutputGeneration` with `outputs: ["css", "android"]` produces CSS + Android files.
-  - [ ] 6.3: Config round-trip: `androidFormat` persists correctly.
-  - [ ] 6.4: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
+  - [x] 6.2: Integration test: `runOutputGeneration` with `outputs: ["css", "android"]` produces CSS + Android files.
+  - [x] 6.3: Config round-trip: `androidFormat` persists correctly.
+  - [x] 6.4: `npm run type-check`, `npm test`, `npm run build`, `npm run validate:sprint` — all clean.
 
-- [ ] **Task 7: Close-out**
-  - [ ] 7.1: Update HELP_TEXT in `src/cli.ts` if needed.
-  - [ ] 7.2: Update README.md to document Android output and XML vs Compose options.
-  - [ ] 7.3: Move this story to `review`, then to `done` after code review.
+- [x] **Task 7: Close-out**
+  - [x] 7.1: Update HELP_TEXT in `src/cli.ts` if needed.
+  - [x] 7.2: Update README.md to document Android output and XML vs Compose options.
+  - [x] 7.3: Move this story to `review`, then to `done` after code review.
 
 ## Dev Notes
 
@@ -227,8 +227,33 @@ src/
 
 ### Agent Model Used
 
+Claude (Cursor agent)
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `buildAndroid` with Style Dictionary custom formats: XML via `name/android-xml` (underscore resource names) and `android/*-xml` formats; Compose via `name/android-compose` and `QuietoColors` / `QuietoSpacing` / `QuietoTypography` object wrappers per file (per-category names avoid duplicate object name clashes). Multi-theme Compose merges per-theme `formatPlatform` output into `ThemeColors` / `ThemeSpacing` / `ThemeTypography` and appends Material3 `ColorScheme` bridges. Multi-theme XML runs full light build to `values/`, then dark semantic/component-only build to `values-night/`.
+- Config: `OutputPlatform` + `androidFormat`; `loadConfig` defaults `androidFormat` to `xml` when `android` is in `outputs`. Init prompts for Android format when Android is selected. Pipeline passes `androidFormat` through `runOutputGeneration` and `buildConfig`; add/update/component rebuild Android when enabled. Dry run still skips all Android writes because `init` / other commands exit before `runOutputGeneration`.
+- `validate:sprint` requires story file and sprint-status for `4-3-android-output` to match.
+
 ### File List
+
+- `src/types/config.ts`
+- `src/utils/config.ts`
+- `src/output/config-writer.ts`
+- `src/output/style-dictionary.ts`
+- `src/pipeline/output.ts`
+- `src/pipeline/config.ts`
+- `src/pipeline/add.ts`
+- `src/pipeline/component.ts`
+- `src/commands/init.ts`
+- `src/commands/update.ts`
+- `src/index.ts`
+- `src/cli.ts`
+- `README.md`
+- `src/output/__tests__/style-dictionary-android.test.ts`
+- `src/output/__tests__/config-writer.test.ts`
+- `src/pipeline/__tests__/output-android.test.ts`
+- `docs/planning/sprint-status.yaml`
+- `docs/planning/stories/4-3-android-output.md`

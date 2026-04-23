@@ -58,6 +58,16 @@ const IOS_COLOR_FORMAT = "ios/color-swift";
 const IOS_SPACING_FORMAT = "ios/spacing-swift";
 const IOS_TYPOGRAPHY_FORMAT = "ios/typography-swift";
 
+const ANDROID_XML_NAME = "name/android-xml";
+const ANDROID_COMPOSE_NAME = "name/android-compose";
+const ANDROID_COLORS_XML = "android/colors-xml";
+const ANDROID_DIMENS_XML = "android/dimens-xml";
+const ANDROID_TYPOGRAPHY_DIMENS_XML = "android/typography-dimens-xml";
+const ANDROID_TYPOGRAPHY_STRINGS_XML = "android/typography-strings-xml";
+const ANDROID_COLOR_COMPOSE = "android/color-compose";
+const ANDROID_SPACING_COMPOSE = "android/spacing-compose";
+const ANDROID_TYPOGRAPHY_COMPOSE = "android/typography-compose";
+
 const FIGMA_NAME_TRANSFORM = "name/figma";
 const FIGMA_JSON_FORMAT = "figma/json";
 
@@ -539,6 +549,358 @@ function ensureIosHooksRegistered(): void {
   iosHooksRegistered = true;
 }
 
+// ---------------------------------------------------------------------------
+// Android output (resource XML and Jetpack Compose)
+// ---------------------------------------------------------------------------
+
+function pascalFromSegmentsForCompose(segments: string[]): string {
+  return segments
+    .filter((s) => s.length > 0)
+    .map((s) => {
+      if (/^\d+$/.test(s)) return s;
+      const t = s.replace(/-([a-z0-9])/g, (_: string, c: string) => c.toUpperCase());
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    })
+    .join("");
+}
+
+let androidHooksRegistered = false;
+function ensureAndroidHooksRegistered(): void {
+  if (androidHooksRegistered) return;
+
+  StyleDictionary.registerTransform({
+    name: ANDROID_XML_NAME,
+    type: "name",
+    transform: (token, config) => {
+      const prefix = String(config.prefix ?? PREFIX);
+      let tierSegment: string[] = [];
+      let tokenPath = [...token.path];
+
+      if (isComponentToken(token)) {
+        tierSegment = ["component"];
+        if (
+          tokenPath.length > 0 &&
+          tokenPath[tokenPath.length - 1] === "default"
+        ) {
+          tokenPath = tokenPath.slice(0, -1);
+        }
+      } else if (isSemanticToken(token)) {
+        tierSegment = ["semantic"];
+      }
+
+      return [prefix, ...tierSegment, ...tokenPath]
+        .filter((s): s is string => typeof s === "string" && s.length > 0)
+        .join("-")
+        .replace(/-/g, "_");
+    },
+  });
+
+  StyleDictionary.registerTransform({
+    name: ANDROID_COMPOSE_NAME,
+    type: "name",
+    transform: (token) => {
+      if (isComponentToken(token)) {
+        return pascalFromSegmentsForCompose(
+          ["component", ...token.path].map(String),
+        );
+      }
+      if (isSemanticToken(token)) {
+        return pascalFromSegmentsForCompose(
+          ["semantic", ...token.path].map(String),
+        );
+      }
+      const p = token.path.map(String);
+      if (p[0] === "color" && p.length >= 2) {
+        return pascalFromSegmentsForCompose(p.slice(1));
+      }
+      if (p[0] === "spacing" && p.length >= 2) {
+        return `Space${p[1]}`;
+      }
+      if (p[0] === "typography" && p.length >= 1) {
+        return p.length >= 2
+          ? pascalFromSegmentsForCompose(p.slice(1))
+          : pascalFromSegmentsForCompose(p);
+      }
+      return pascalFromSegmentsForCompose(p);
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_COLORS_XML,
+    format: ({ dictionary }): string => {
+      const lines: string[] = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        "<resources>",
+      ];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown };
+        const v = tok.$value;
+        if (typeof v !== "string" || !v.startsWith("#")) continue;
+        lines.push(`  <color name="${tok.name}">${v.toUpperCase()}</color>`);
+      }
+      lines.push("</resources>\n");
+      return lines.join("\n");
+    },
+  });
+
+  function dimenFromTokenValue(
+    $value: unknown,
+    $type: string,
+  ): string | null {
+    if (typeof $value === "number" && Number.isFinite($value)) {
+      if ($type === "fontWeight" || $type === "number") {
+        return `${$value}sp`;
+      }
+      return `${$value}dp`;
+    }
+    if (typeof $value !== "string") return null;
+    const s = $value.trim();
+    const n = parseFloat(s.replace(/[^0-9.]/g, ""));
+    if (Number.isNaN(n)) return null;
+    if (s.includes("rem")) {
+      return `${Math.round(n * 16)}dp`;
+    }
+    if (s.endsWith("px")) {
+      return `${Math.round(n)}dp`;
+    }
+    if (s.endsWith("sp") || s.endsWith("dp")) {
+      return s; // keep supported Android dimen units as written
+    }
+    if (s.endsWith("em")) {
+      return null;
+    }
+    return `${n}dp`;
+  }
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_DIMENS_XML,
+    format: ({ dictionary }): string => {
+      const lines: string[] = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        "<resources>",
+      ];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown; $type?: string };
+        const dimen = dimenFromTokenValue(tok.$value, tok.$type ?? "");
+        if (dimen === null) continue;
+        lines.push(`  <dimen name="${tok.name}">${dimen}</dimen>`);
+      }
+      lines.push("</resources>\n");
+      return lines.join("\n");
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_TYPOGRAPHY_DIMENS_XML,
+    format: ({ dictionary }): string => {
+      const lines: string[] = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        "<resources>",
+      ];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown; $type?: string };
+        const type = tok.$type ?? "";
+        // Only emit actual dimension tokens as <dimen>; skip fontFamily, fontWeight, and unitless numbers
+        if (type === "fontFamily" || type === "fontWeight" || type === "number") continue;
+        const dimen = dimenFromTokenValue(tok.$value, type);
+        if (dimen === null) continue;
+        // Font-related dimensions should use sp (scalable pixels), not dp
+        const spValue = dimen.replace(/dp$/, "sp");
+        lines.push(`  <dimen name="${tok.name}">${spValue}</dimen>`);
+      }
+      lines.push("</resources>\n");
+      return lines.join("\n");
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_TYPOGRAPHY_STRINGS_XML,
+    format: ({ dictionary }): string => {
+      const lines: string[] = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        "<resources>",
+      ];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown; $type?: string };
+        if (tok.$type !== "fontFamily") continue;
+        const val = tok.$value;
+        const s =
+          typeof val === "string" ? val : Array.isArray(val) ? val[0] : "";
+        if (typeof s !== "string" || s.length === 0) continue;
+        const escaped = s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/"/g, "&quot;")
+          .replace(/\\/g, "\\\\")
+          .replace(/'/g, "\\'");
+        lines.push(`  <string name="${tok.name}">${escaped}</string>`);
+      }
+      lines.push("</resources>\n");
+      return lines.join("\n");
+    },
+  });
+
+  function hexStringToComposeColor(hex: string): string {
+    const h = hex.replace(/^#/, "");
+    if (h.length === 6) return `0xFF${h.toUpperCase()}`;
+    if (h.length === 8) return `0x${h.toUpperCase()}`;
+    return "0xFF000000";
+  }
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_COLOR_COMPOSE,
+    format: ({ dictionary }): string => {
+      const header = `// Do not edit directly; auto-generated.
+package com.quieto.tokens
+
+import androidx.compose.ui.graphics.Color
+`;
+      const lines: string[] = ["", "object QuietoColors {", ""];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown };
+        if (typeof tok.$value !== "string" || !String(tok.$value).startsWith("#")) {
+          continue;
+        }
+        const lit = hexStringToComposeColor(tok.$value);
+        lines.push(`  val ${tok.name} = Color(${lit})`);
+        lines.push("");
+      }
+      lines.push("}");
+      return header + lines.join("\n") + "\n";
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_SPACING_COMPOSE,
+    format: ({ dictionary }): string => {
+      const header = `// Do not edit directly; auto-generated.
+package com.quieto.tokens
+
+import androidx.compose.ui.unit.dp
+`;
+      const lines: string[] = ["", "object QuietoSpacing {", ""];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown; $type?: string };
+        const d = dimenFromTokenValue(tok.$value, tok.$type ?? "");
+        if (d === null) continue;
+        const num = parseFloat(d.replace(/[^0-9.]/g, ""));
+        if (Number.isNaN(num)) continue;
+        const numLit = Number.isInteger(num)
+          ? String(Math.round(num))
+          : String(num);
+        lines.push(`  val ${tok.name} = ${numLit}.dp`);
+        lines.push("");
+      }
+      lines.push("}");
+      return header + lines.join("\n") + "\n";
+    },
+  });
+
+  StyleDictionary.registerFormat({
+    name: ANDROID_TYPOGRAPHY_COMPOSE,
+    format: ({ dictionary }): string => {
+      const header = `// Do not edit directly; auto-generated.
+package com.quieto.tokens
+
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+`;
+      const lines: string[] = [
+        "",
+        "object QuietoTypography {",
+        "",
+      ];
+      for (const t of dictionary.allTokens) {
+        const tok = t as { name: string; $value?: unknown; $type?: string };
+        if (tok.$value === undefined || tok.$value === null) continue;
+        const $type = tok.$type ?? "";
+        if ($type === "typography" && typeof tok.$value === "object") {
+          const o = tok.$value as Record<string, unknown>;
+          const fs = o["fontSize"];
+          const ff = o["fontFamily"];
+          const fw = o["fontWeight"];
+          const fsVal =
+            typeof fs === "number" ? fs : parseFloat(String(fs)) || 16;
+          const w =
+            typeof fw === "string" && fw.length > 0
+              ? `FontWeight.${fw[0]!.toUpperCase()}${fw.slice(1)}`
+              : "FontWeight.Normal";
+          const fam =
+            typeof ff === "string" && ff.length > 0
+              ? "FontFamily.SansSerif" // FontFamily requires Font(...) resource refs; use default
+              : "FontFamily.SansSerif";
+          lines.push(
+            `  val ${tok.name} = TextStyle(`,
+            `    fontSize = ${fsVal}.sp,`,
+            `    fontWeight = ${w},`,
+            `    fontFamily = ${fam},`,
+            `  )`,
+            "",
+          );
+          continue;
+        }
+        if ($type === "fontWeight" || $type === "number") {
+          const n = Number(tok.$value);
+          if (Number.isFinite(n)) {
+            lines.push(
+              `  val ${tok.name} = FontWeight(${Math.round(n)})`,
+              "",
+            );
+          }
+        } else if ($type === "fontFamily") {
+          const str = Array.isArray(tok.$value) ? tok.$value[0] : tok.$value;
+          if (typeof str === "string") {
+            lines.push(
+              `  val ${tok.name} = "${str.replace(/"/g, "")}"`,
+              "",
+            );
+          }
+        }
+      }
+      lines.push("}");
+      return header + lines.join("\n") + "\n";
+    },
+  });
+
+  androidHooksRegistered = true;
+}
+
+const ANDROID_TRANSFORMS_BASE: string[] = [
+  "attribute/cti",
+  ANDROID_XML_NAME,
+  "time/seconds",
+  "html/icon",
+  "size/rem",
+  "color/css",
+  "asset/url",
+  "fontFamily/css",
+  "cubicBezier/css",
+  "strokeStyle/css/shorthand",
+  "border/css/shorthand",
+  "typography/css/shorthand",
+  "transition/css/shorthand",
+  "shadow/css/shorthand",
+];
+
+const ANDROID_COMPOSE_TRANSFORMS: string[] = [
+  "attribute/cti",
+  ANDROID_COMPOSE_NAME,
+  "time/seconds",
+  "html/icon",
+  "size/rem",
+  "color/css",
+  "asset/url",
+  "fontFamily/css",
+  "cubicBezier/css",
+  "strokeStyle/css/shorthand",
+  "border/css/shorthand",
+  "typography/css/shorthand",
+  "transition/css/shorthand",
+  "shadow/css/shorthand",
+];
+
 function isColorCategory(token: TokenLike): boolean {
   return token.path[0] === "color";
 }
@@ -770,4 +1132,372 @@ function buildMultiThemeSwiftUIColors(
     block += `}\n`;
   }
   return block;
+}
+
+function createAndroidXmlStyleDictionary(
+  outputDir: string,
+  themeName: string,
+  buildPath: string,
+  fileFilter?: (t: TokenLike) => boolean,
+): InstanceType<typeof StyleDictionary> {
+  ensureAndroidHooksRegistered();
+  const source = [
+    toPosix(join(outputDir, "tokens", "primitive", "**/*.json")),
+    toPosix(join(outputDir, "tokens", "semantic", themeName, "**/*.json")),
+    toPosix(join(outputDir, "tokens", "component", "**/*.json")),
+  ];
+  const combined = fileFilter
+    ? (t: TokenLike) => {
+        if (!fileFilter(t)) return false;
+        return isColorCategory(t) || isSpacingCategory(t) || isTypographyCategory(t);
+      }
+    : (t: TokenLike) =>
+        isColorCategory(t) || isSpacingCategory(t) || isTypographyCategory(t);
+
+  return new StyleDictionary({
+    source,
+    usesDtcg: true,
+    log: silenceLogs(),
+    platforms: {
+      android: {
+        prefix: PREFIX,
+        transforms: ANDROID_TRANSFORMS_BASE,
+        buildPath: toPosix(buildPath) + "/",
+        files: [
+          {
+            destination: "colors.xml",
+            format: ANDROID_COLORS_XML,
+            filter: (t) => combined(t) && isColorCategory(t),
+          },
+          {
+            destination: "dimens.xml",
+            format: ANDROID_DIMENS_XML,
+            filter: (t) => combined(t) && isSpacingCategory(t),
+          },
+          {
+            destination: "typography_dimens.xml",
+            format: ANDROID_TYPOGRAPHY_DIMENS_XML,
+            filter: (t) => combined(t) && isTypographyCategory(t) && (t as { $type?: string }).$type !== "fontFamily",
+          },
+          {
+            destination: "typography_strings.xml",
+            format: ANDROID_TYPOGRAPHY_STRINGS_XML,
+            filter: (t) => combined(t) && isTypographyCategory(t) && (t as { $type?: string }).$type === "fontFamily",
+          },
+        ],
+      },
+    },
+  });
+}
+
+function createAndroidComposeStyleDictionary(
+  outputDir: string,
+  themeName: string,
+  buildPath: string,
+): InstanceType<typeof StyleDictionary> {
+  ensureAndroidHooksRegistered();
+  const source = [
+    toPosix(join(outputDir, "tokens", "primitive", "**/*.json")),
+    toPosix(join(outputDir, "tokens", "semantic", themeName, "**/*.json")),
+    toPosix(join(outputDir, "tokens", "component", "**/*.json")),
+  ];
+  return new StyleDictionary({
+    source,
+    usesDtcg: true,
+    log: silenceLogs(),
+    platforms: {
+      android: {
+        transforms: ANDROID_COMPOSE_TRANSFORMS,
+        buildPath: toPosix(buildPath) + "/",
+        files: [
+          {
+            destination: "Color.kt",
+            format: ANDROID_COLOR_COMPOSE,
+            filter: (t: TokenLike) => isColorCategory(t),
+          },
+          {
+            destination: "Spacing.kt",
+            format: ANDROID_SPACING_COMPOSE,
+            filter: (t: TokenLike) => isSpacingCategory(t),
+          },
+          {
+            destination: "Typography.kt",
+            format: ANDROID_TYPOGRAPHY_COMPOSE,
+            filter: (t: TokenLike) => isTypographyCategory(t),
+          },
+        ],
+      },
+    },
+  });
+}
+
+function findLightDarkThemes(
+  themes: ReadonlyArray<{ name: string }>,
+): { light: string; dark: string } {
+  const names = themes.map((t) => t.name);
+  const darkN = names.find((n) => n === "dark");
+  const lightN = names.find((n) => n === "light");
+  if (lightN && darkN) {
+    return { light: lightN, dark: darkN };
+  }
+  if (themes.length >= 2) {
+    return { light: names[0]!, dark: names[1]! };
+  }
+  return { light: names[0]!, dark: names[0]! };
+}
+
+function extractValLinesInKotlinObject(
+  fileContent: string,
+  objectName: string,
+): string[] {
+  const esc = objectName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const startRe = new RegExp(`^\\s*object\\s+${esc}\\b\\s*\\{`);
+  const lines = fileContent.split("\n");
+  let i = 0;
+  for (; i < lines.length; i++) {
+    if (startRe.test(lines[i]!)) break;
+  }
+  if (i >= lines.length) return [];
+  i++;
+  let depth = 1;
+  const out: string[] = [];
+  for (; i < lines.length; i++) {
+    const line = lines[i]!;
+    const t = line.trim();
+    if (t.startsWith("val ") && t.includes("=")) {
+      out.push(t);
+    }
+    const open = (line.match(/\{/g) ?? []).length;
+    const close = (line.match(/\}/g) ?? []).length;
+    depth += open - close;
+    if (depth <= 0) {
+      break;
+    }
+  }
+  return out;
+}
+
+type ThemeOut = { color: string; spacing: string; typo: string };
+type MergeKind = "QuietoColors" | "QuietoSpacing" | "QuietoTypography";
+
+function buildMergedThemeObjects(
+  themes: { name: string }[],
+  themeOutputs: Map<string, ThemeOut>,
+  kind: MergeKind,
+  headerImports: string,
+  rootObjectName: string,
+): string {
+  let body = `${headerImports}\n\nobject ${rootObjectName} {\n`;
+  for (const t of themes) {
+    const out = themeOutputs.get(t.name);
+    if (!out) continue;
+    const raw =
+      kind === "QuietoColors"
+        ? out.color
+        : kind === "QuietoSpacing"
+          ? out.spacing
+          : out.typo;
+    const members = extractValLinesInKotlinObject(raw, kind);
+    if (members.length === 0) continue;
+    const enumName = t.name.charAt(0).toUpperCase() + t.name.slice(1);
+    body += `  object ${enumName} {\n`;
+    for (const line of members) {
+      body += `    ${line}\n`;
+    }
+    body += `  }\n`;
+  }
+  body += "}\n";
+  return body;
+}
+
+function firstKotlinColorValName(
+  fileContent: string,
+  objectName: string,
+): string {
+  for (const line of extractValLinesInKotlinObject(fileContent, objectName)) {
+    const m = line.match(/^val (\w+) =/);
+    if (m) return m[1] ?? "";
+  }
+  return "Blue500";
+}
+
+function appendColorSchemeBridges(
+  colorKtBody: string,
+  themes: { name: string }[],
+  themeOutputs: Map<string, ThemeOut>,
+): string {
+  const ld = findLightDarkThemes(themes);
+  const light = themeOutputs.get(ld.light)?.color ?? "";
+  const dark = themeOutputs.get(ld.dark)?.color ?? "";
+  if (!light || !dark || themes.length < 2) {
+    return colorKtBody;
+  }
+  const lName = firstKotlinColorValName(light, "QuietoColors");
+  const dName = firstKotlinColorValName(dark, "QuietoColors");
+  const lE = ld.light.charAt(0).toUpperCase() + ld.light.slice(1);
+  const dE = ld.dark.charAt(0).toUpperCase() + ld.dark.slice(1);
+  const mImports =
+    `import androidx.compose.material3.ColorScheme\n` +
+    `import androidx.compose.material3.darkColorScheme\n` +
+    `import androidx.compose.material3.lightColorScheme\n`;
+  const bridge =
+    `\nval quietoLightColorScheme: ColorScheme = lightColorScheme(\n` +
+    `  primary = ThemeColors.${lE}.${lName},\n` +
+    `)\n` +
+    `val quietoDarkColorScheme: ColorScheme = darkColorScheme(\n` +
+    `  primary = ThemeColors.${dE}.${dName},\n` +
+    `)\n`;
+  if (colorKtBody.includes("androidx.compose.material3.lightColorScheme")) {
+    return colorKtBody + bridge;
+  }
+  if (/^package [^\n]+\n/m.test(colorKtBody)) {
+    return colorKtBody.replace(
+      /^(package [^\n]+)\n/m,
+      `$1\n${mImports}\n`,
+    ) + bridge;
+  }
+  return mImports + "\n" + colorKtBody + bridge;
+}
+
+export async function buildAndroid(
+  collection: ThemeCollection,
+  outputDir: string,
+  format: "xml" | "compose",
+): Promise<string[]> {
+  const base = join(outputDir, "build", "android");
+  const themes = collection.themes;
+  if (format === "xml") {
+    if (themes.length === 1) {
+      const p = join(base, "values");
+      await mkdir(p, { recursive: true });
+      const sd = createAndroidXmlStyleDictionary(
+        outputDir,
+        themes[0]!.name,
+        p,
+      );
+      await sd.buildAllPlatforms();
+    } else {
+      const { light, dark } = findLightDarkThemes(themes);
+      const valuesDir = join(base, "values");
+      const nightDir = join(base, "values-night");
+      await mkdir(valuesDir, { recursive: true });
+      await mkdir(nightDir, { recursive: true });
+      const sdL = createAndroidXmlStyleDictionary(
+        outputDir,
+        light,
+        valuesDir,
+      );
+      await sdL.buildAllPlatforms();
+      const sdN = createAndroidXmlStyleDictionary(
+        outputDir,
+        dark,
+        nightDir,
+        (t) => isSemanticOrComponentToken(t),
+      );
+      await sdN.buildAllPlatforms();
+    }
+    return collectExistingPaths([
+      join(base, "values", "colors.xml"),
+      join(base, "values", "dimens.xml"),
+      join(base, "values", "typography_dimens.xml"),
+      join(base, "values", "typography_strings.xml"),
+      join(base, "values-night", "colors.xml"),
+      join(base, "values-night", "dimens.xml"),
+      join(base, "values-night", "typography_dimens.xml"),
+      join(base, "values-night", "typography_strings.xml"),
+    ]);
+  }
+  if (themes.length === 1) {
+    const sd = createAndroidComposeStyleDictionary(
+      outputDir,
+      themes[0]!.name,
+      base,
+    );
+    await sd.buildAllPlatforms();
+    return collectExistingPaths([
+      join(base, "Color.kt"),
+      join(base, "Spacing.kt"),
+      join(base, "Typography.kt"),
+    ]);
+  }
+  const themeOutputs = new Map<string, ThemeOut>();
+  for (const th of themes) {
+    const sd = createAndroidComposeStyleDictionary(outputDir, th.name, base);
+    const parts = await sd.formatPlatform("android");
+    const mapped: Record<string, string> = Object.create(null);
+    for (const part of parts) {
+      const dest = (part.destination ?? "").split("/").pop() ?? "";
+      mapped[dest] = typeof part.output === "string" ? part.output : "";
+    }
+    themeOutputs.set(th.name, {
+      color: mapped["Color.kt"] ?? "",
+      spacing: mapped["Spacing.kt"] ?? "",
+      typo: mapped["Typography.kt"] ?? "",
+    });
+  }
+  await mkdir(base, { recursive: true });
+  const colorH = `// Do not edit directly; auto-generated.
+package com.quieto.tokens
+import androidx.compose.ui.graphics.Color`;
+  const spH = `// Do not edit directly; auto-generated.
+package com.quieto.tokens
+import androidx.compose.ui.unit.dp`;
+  const tyH = `// Do not edit directly; auto-generated.
+package com.quieto.tokens
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp`;
+  let colorMerged = buildMergedThemeObjects(
+    themes,
+    themeOutputs,
+    "QuietoColors",
+    colorH,
+    "ThemeColors",
+  );
+  colorMerged = appendColorSchemeBridges(
+    colorMerged,
+    themes,
+    themeOutputs,
+  );
+  const spMerged = buildMergedThemeObjects(
+    themes,
+    themeOutputs,
+    "QuietoSpacing",
+    spH,
+    "ThemeSpacing",
+  );
+  const tyMerged = buildMergedThemeObjects(
+    themes,
+    themeOutputs,
+    "QuietoTypography",
+    tyH,
+    "ThemeTypography",
+  );
+  const written: string[] = [];
+  for (const [name, content] of [
+    ["Color.kt", colorMerged],
+    ["Spacing.kt", spMerged],
+    ["Typography.kt", tyMerged],
+  ] as const) {
+    if (content.length > 0 && /val /.test(content)) {
+      const fp = join(base, name);
+      await writeFile(fp, content, "utf-8");
+      written.push(fp);
+    }
+  }
+  return written;
+}
+
+async function collectExistingPaths(paths: string[]): Promise<string[]> {
+  const out: string[] = [];
+  for (const p of paths) {
+    try {
+      await stat(p);
+      out.push(p);
+    } catch {
+      // Style Dictionary may omit a file if filter matched no tokens
+    }
+  }
+  return out;
 }

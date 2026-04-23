@@ -41,6 +41,8 @@ export interface ConfigGenerationInput {
   themeNames?: readonly string[];
   /** Build targets (CSS + optional Figma). When omitted, uses CSS only. */
   outputs?: readonly OutputPlatform[];
+  /** When `outputs` includes `android`, persisted to config. */
+  androidFormat?: "xml" | "compose";
 }
 
 /**
@@ -84,6 +86,7 @@ export async function runConfigGeneration(
     advanced: input.advanced,
     categories: input.categories,
     outputs: input.outputs,
+    androidFormat: input.androidFormat,
   });
 
   let configPath: string;

@@ -100,6 +100,29 @@ describe("buildConfig", () => {
     });
   });
 
+  it("records `androidFormat` when outputs includes `android`", () => {
+    const config = buildConfig({
+      options: makeOptions(),
+      overrides: new Map(),
+      version: "0.1.0",
+      generated: "2026-04-16T12:00:00.000Z",
+      outputs: ["css", "android"],
+      androidFormat: "compose",
+    });
+    expect(config.androidFormat).toBe("compose");
+  });
+
+  it("defaults `androidFormat` to xml when android is selected", () => {
+    const config = buildConfig({
+      options: makeOptions(),
+      overrides: new Map(),
+      version: "0.1.0",
+      generated: "2026-04-16T12:00:00.000Z",
+      outputs: ["css", "android"],
+    });
+    expect(config.androidFormat).toBe("xml");
+  });
+
   it("records the supplied tool version", () => {
     const config = buildConfig({
       options: makeOptions(),

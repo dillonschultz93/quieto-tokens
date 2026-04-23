@@ -15,7 +15,7 @@
  * - Story 3.1 will read this file to drive diff-based re-entrant editing.
  * - Story 4.1 adds `outputs` for multi-platform build targets.
  */
-export const OUTPUT_PLATFORMS = ["css", "figma", "ios"] as const;
+export const OUTPUT_PLATFORMS = ["css", "figma", "ios", "android"] as const;
 export type OutputPlatform = (typeof OUTPUT_PLATFORMS)[number];
 
 export interface QuietoConfig {
@@ -58,6 +58,12 @@ export interface QuietoConfig {
    * configs without this field are treated as `["css"]` in {@link loadConfig}.
    */
   outputs: OutputPlatform[];
+  /**
+   * When {@link outputs} includes `"android"`, the Android asset style:
+   * XML resource files (default) or Jetpack Compose Kotlin. Omitted when
+   * Android is not a build target.
+   */
+  androidFormat?: "xml" | "compose";
   /**
    * Active token categories. Epic 1 configs always generated
    * `["color", "spacing", "typography"]`; Epic 2.2's `add` subcommand will

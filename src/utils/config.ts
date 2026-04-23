@@ -198,6 +198,17 @@ export function validateConfigShape(parsed: unknown): string[] {
     }
   }
 
+  if (root.androidFormat !== undefined) {
+    if (root.androidFormat !== "xml" && root.androidFormat !== "compose") {
+      errors.push("androidFormat");
+    } else if (
+      !Array.isArray(root.outputs) ||
+      !root.outputs.includes("android")
+    ) {
+      errors.push("androidFormat");
+    }
+  }
+
   // Epic 2 optional fields — only validated when present.
   if (root.categories !== undefined) {
     if (!Array.isArray(root.categories)) {
@@ -701,6 +712,13 @@ export function loadConfig(
       : [...DEFAULT_CATEGORIES],
   };
   if (typeof root.$schema === "string") config.$schema = root.$schema;
+  if (root.androidFormat === "xml" || root.androidFormat === "compose") {
+    if (outputs.includes("android")) {
+      config.androidFormat = root.androidFormat;
+    }
+  } else if (outputs.includes("android")) {
+    config.androidFormat = "xml";
+  }
   if (root.advanced !== undefined) {
     // `advanced` passed structural validation above; deep-clone via
     // JSON round-trip so the returned object is independent of the

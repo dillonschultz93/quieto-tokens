@@ -54,12 +54,17 @@ build/
     Color.swift             # Optional — UIColor + SwiftUI Color extensions
     Spacing.swift           # Optional — CGFloat spacing constants
     Typography.swift        # Optional — Font size / weight / family constants
+  android/                  # Optional — XML in values/ or Jetpack Compose Kotlin
+    values/…                #   Resource XML, values-night/ when light + dark
+    #   or Color.kt, Spacing.kt, Typography.kt (+ theme bridges)
 quieto.config.json        # Your answers, so you can re-run to modify
 ```
 
 When `quieto.config.json` includes `"outputs": ["css", "figma"]` (set during `init` or by editing the file), the CLI also writes **`build/tokens.figma.json`**: a nested, DTCG-shaped JSON file with one top-level key per theme (`default`, or `light` and `dark`, etc.). Token paths use `/` as the segment separator (Figma group style). Import that file into [Tokens Studio](https://tokens.studio/) or a Variables workflow; there is no Figma API integration — it is a static build artifact, like the CSS.
 
 When `outputs` includes `"ios"`, the CLI writes Swift source files to **`build/ios/`**: `Color.swift` (UIColor static constants + SwiftUI Color extensions), `Spacing.swift` (CGFloat constants), and `Typography.swift` (font size, weight, and family constants). For multi-theme systems, tokens are organized under `Theme.Light` / `Theme.Dark` enums. These are raw `.swift` files — copy or reference them in your Xcode project.
+
+When `outputs` includes `"android"`, the CLI also writes to **`build/android/`**. The format is selected at `init` and stored in `quieto.config.json` as **`androidFormat`**: `"xml"` (default) emits `values/colors.xml`, `values/dimens.xml`, and typography resource files, with `values-night/` for dark-theme overrides when you have both light and dark; **`"compose"`** emits `Color.kt`, `Spacing.kt`, and `Typography.kt` with Compose-friendly constants (and a Material3 `ColorScheme` bridge in multi-theme runs). This is a static file drop — it does not add Gradle or wire into your app build for you.
 
 ### Design System Changelog
 

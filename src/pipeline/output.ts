@@ -4,7 +4,12 @@ import * as p from "@clack/prompts";
 import type { ThemeCollection } from "../types/tokens.js";
 import { writeTokensToJson } from "../output/json-writer.js";
 import type { WriteScope } from "../output/json-writer.js";
-import { buildCss, buildFigmaJson, buildIos } from "../output/style-dictionary.js";
+import {
+  buildAndroid,
+  buildCss,
+  buildFigmaJson,
+  buildIos,
+} from "../output/style-dictionary.js";
 import { DEFAULT_OUTPUTS, type OutputPlatform } from "../types/config.js";
 
 export interface OutputResult {
@@ -12,6 +17,7 @@ export interface OutputResult {
   cssFiles: string[];
   figmaFiles?: string[];
   iosFiles?: string[];
+  androidFiles?: string[];
 }
 
 export interface RunOutputOptions {
@@ -37,6 +43,11 @@ export interface RunOutputOptions {
    * only CSS is generated (legacy behaviour).
    */
   outputs?: readonly OutputPlatform[];
+  /**
+   * When `outputs` includes `android`, selects XML resources vs Compose. Defaults
+   * to `xml` when omitted.
+   */
+  androidFormat?: "xml" | "compose";
 }
 
 /**
@@ -161,14 +172,35 @@ export async function runOutputGeneration(
     }
   }
 
+  let androidFiles: string[] | undefined;
+  if (outputPlatforms.includes("android")) {
+    p.log.step("Building Android output…");
+    const androidFmt = options.androidFormat ?? "xml";
+    try {
+      androidFiles = await buildAndroid(collection, outputDir, androidFmt);
+      for (const file of androidFiles) {
+        p.log.info(`✓ Generated ${formatPath(file)}`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+      p.log.warn(
+        `Android build failed (CSS was still generated): ${message}`,
+      );
+    }
+  }
+
   const figmaPart = figmaFiles
     ? `, ${figmaFiles.length} Figma JSON file${figmaFiles.length === 1 ? "" : "s"}`
     : "";
   const iosPart = iosFiles
     ? `, ${iosFiles.length} Swift file${iosFiles.length === 1 ? "" : "s"}`
     : "";
+  const androidPart = androidFiles
+    ? `, ${androidFiles.length} Android file${androidFiles.length === 1 ? "" : "s"}`
+    : "";
   p.log.success(
-    `Output complete — ${jsonFiles.length} JSON source files, ${cssFiles.length} CSS file${cssFiles.length === 1 ? "" : "s"}${figmaPart}${iosPart}.`,
+    `Output complete — ${jsonFiles.length} JSON source files, ${cssFiles.length} CSS file${cssFiles.length === 1 ? "" : "s"}${figmaPart}${iosPart}${androidPart}.`,
   );
 
   return {
@@ -176,5 +208,6 @@ export async function runOutputGeneration(
     cssFiles,
     ...(figmaFiles && figmaFiles.length > 0 ? { figmaFiles } : {}),
     ...(iosFiles && iosFiles.length > 0 ? { iosFiles } : {}),
+    ...(androidFiles && androidFiles.length > 0 ? { androidFiles } : {}),
   };
 }

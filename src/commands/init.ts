@@ -306,8 +306,10 @@ export async function initCommand(
     }
 
     let outputPlatforms: OutputPlatform[] = [...DEFAULT_OUTPUTS];
+    let androidFormat: "xml" | "compose" | undefined;
     if (priorContext) {
       outputPlatforms = priorContext.config.outputs ?? [...DEFAULT_OUTPUTS];
+      androidFormat = priorContext.config.androidFormat;
     } else {
       const platformPick = await p.multiselect({
         message: "Which output platforms should be enabled?",
@@ -327,6 +329,11 @@ export async function initCommand(
             label: "iOS Swift constants",
             hint: "Optional — build/ios/*.swift for UIKit / SwiftUI",
           },
+          {
+            value: "android" as const,
+            label: "Android (XML resources or Jetpack Compose)",
+            hint: "Optional — build/android/*",
+          },
         ],
         initialValues: ["css" as const],
         required: true,
@@ -338,6 +345,29 @@ export async function initCommand(
       const picked = new Set(platformPick as OutputPlatform[]);
       picked.add("css");
       outputPlatforms = Array.from(picked) as OutputPlatform[];
+      if (outputPlatforms.includes("android")) {
+        const fmtPick = await p.select({
+          message: "Android output style",
+          options: [
+            {
+              value: "xml" as const,
+              label: "XML resource files",
+              hint: "values/colors.xml, values/dimens.xml, values-night/…",
+            },
+            {
+              value: "compose" as const,
+              label: "Jetpack Compose",
+              hint: "Kotlin Color, Dp, TextStyle in build/android/",
+            },
+          ],
+          initialValue: "xml" as const,
+        });
+        if (p.isCancel(fmtPick)) {
+          p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
+          return;
+        }
+        androidFormat = fmtPick as "xml" | "compose";
+      }
     }
 
     const previewResult = await previewAndConfirm(themeCollection, {
@@ -357,6 +387,7 @@ export async function initCommand(
 
     const outputResult = await runOutputGeneration(previewResult.collection, process.cwd(), {
       outputs: outputPlatforms,
+      androidFormat,
     });
 
     if (!outputResult) {
@@ -371,6 +402,7 @@ export async function initCommand(
       advanced: advancedConfig,
       themeNames: previewResult.collection.themes.map((t) => t.name),
       outputs: outputPlatforms,
+      androidFormat,
     });
 
     if (!configOk) {

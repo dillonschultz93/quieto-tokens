@@ -406,6 +406,7 @@ async function finalizeWrite(
     scope: { categories: scopedCategories },
     skipComponents: true,
     outputs: config.outputs,
+    androidFormat: config.androidFormat,
   });
   if (!outputResult) {
     process.exitCode = 1;
@@ -429,6 +430,7 @@ async function finalizeWrite(
     categoryConfigs,
     components: config.components,
     outputs: config.outputs,
+    androidFormat: config.androidFormat,
   });
   built.output = { ...config.output };
   if (config.$schema) {

@@ -140,6 +140,31 @@ describe("validateConfigShape", () => {
     delete legacy.advanced;
     expect(validateConfigShape(legacy)).toEqual([]);
   });
+
+  it("rejects androidFormat when outputs is absent (no android in defaults)", () => {
+    const bad = { ...sampleConfig() } as unknown as Record<string, unknown>;
+    delete (bad as Partial<QuietoConfig>).outputs;
+    bad.androidFormat = "xml";
+    expect(validateConfigShape(bad).some((e) => e === "androidFormat")).toBe(
+      true,
+    );
+  });
+
+  it("rejects androidFormat when outputs contains only css (no android)", () => {
+    const bad = { ...sampleConfig(), outputs: ["css"], androidFormat: "xml" };
+    expect(validateConfigShape(bad).some((e) => e === "androidFormat")).toBe(
+      true,
+    );
+  });
+
+  it("accepts androidFormat when outputs includes android", () => {
+    const good = {
+      ...sampleConfig(),
+      outputs: ["css", "android"],
+      androidFormat: "xml",
+    };
+    expect(validateConfigShape(good)).toEqual([]);
+  });
 });
 
 describe("configExists + loadConfig", () => {

@@ -84,6 +84,10 @@ export interface BuildConfigInput {
    * `buildConfig` always includes `"css"`.
    */
   outputs?: readonly OutputPlatform[];
+  /**
+   * Android output style. Recorded when {@link outputs} includes `"android"`.
+   */
+  androidFormat?: "xml" | "compose";
 }
 
 /**
@@ -118,6 +122,9 @@ export function buildConfig(input: BuildConfigInput): QuietoConfig {
   }
   if (input.components !== undefined) {
     config.components = input.components;
+  }
+  if (config.outputs.includes("android")) {
+    config.androidFormat = input.androidFormat ?? "xml";
   }
   return config;
 }
