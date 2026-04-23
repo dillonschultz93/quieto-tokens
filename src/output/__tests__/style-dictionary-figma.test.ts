@@ -83,7 +83,12 @@ describe("buildFigmaJson", () => {
     const primary = (colBg["primary"] as { $type: string; $value: string });
     expect(primary.$value).toBe("{color.blue.500}");
     const comp = def["component"] as Record<string, unknown>;
-    expect((comp["button"] as Record<string, unknown>)["primary"]).toBeDefined();
+    const buttonPrimary = (comp["button"] as Record<string, unknown>)[
+      "primary"
+    ] as Record<string, unknown>;
+    expect(buttonPrimary).toBeDefined();
+    // "default" must be a sibling of other states, not collapsed into the parent
+    expect(buttonPrimary["default"]).toBeDefined();
   });
 
   it("multi-theme output has separate top-level keys", async () => {

@@ -94,15 +94,9 @@ function ensureFigmaNameAndFormatRegistered(): void {
     name: FIGMA_NAME_TRANSFORM,
     type: "name",
     transform: (token) => {
-      let tokenPath = [...token.path];
+      const tokenPath = [...token.path];
 
       if (isComponentToken(token)) {
-        if (
-          tokenPath.length > 0 &&
-          tokenPath[tokenPath.length - 1] === "default"
-        ) {
-          tokenPath = tokenPath.slice(0, -1);
-        }
         return ["component", ...tokenPath]
           .filter((s) => s.length > 0)
           .join("/");
@@ -118,7 +112,7 @@ function ensureFigmaNameAndFormatRegistered(): void {
   StyleDictionary.registerFormat({
     name: FIGMA_JSON_FORMAT,
     format: ({ dictionary }): string => {
-      const root: Record<string, unknown> = {};
+      const root = Object.create(null) as Record<string, unknown>;
       for (const t of dictionary.allTokens) {
         const tok = t as {
           name: string;
@@ -164,7 +158,7 @@ function setNestedLeaf(
   }
   let next = target[head!] as Record<string, unknown> | undefined;
   if (next === undefined || typeof next !== "object" || !isPlainObject(next)) {
-    next = {};
+    next = Object.create(null) as Record<string, unknown>;
     target[head!] = next;
   }
   setNestedLeaf(next, rest, leaf);
@@ -409,7 +403,7 @@ export async function buildFigmaJson(
   outputDir: string,
 ): Promise<string[]> {
   const themes = collection.themes;
-  const merged: Record<string, unknown> = {};
+  const merged = Object.create(null) as Record<string, unknown>;
   for (const th of themes) {
     const sd = createFigmaStyleDictionary(outputDir, th.name);
     const parts = await sd.formatPlatform("figma");
