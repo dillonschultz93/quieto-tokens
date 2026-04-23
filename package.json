@@ -28,7 +28,7 @@
     "notion:sync": "node scripts/sync-to-notion.mjs",
     "validate:sprint": "node scripts/validate-sprint-status.mjs",
     "changeset": "changeset",
-    "version-packages": "changeset version",
+    "version-packages": "changeset version && npm install --package-lock-only",
     "release": "npm run build && changeset publish"
   },
   "repository": {
