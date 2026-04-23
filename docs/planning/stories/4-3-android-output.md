@@ -1,6 +1,6 @@
 # Story 4.3: Android Output
 
-Status: review
+Status: done
 
 ## Story
 
