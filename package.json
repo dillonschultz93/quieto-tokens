@@ -27,6 +27,8 @@
     "notion:init": "node scripts/sync-to-notion.mjs --init",
     "notion:sync": "node scripts/sync-to-notion.mjs",
     "validate:sprint": "node scripts/validate-sprint-status.mjs",
+    "skills:pull": "git subtree pull --prefix=.claude/skills/quieto-skills git@github.com:dillonschultz93/quieto-skills.git main --squash",
+    "skills:push": "git subtree push --prefix=.claude/skills/quieto-skills git@github.com:dillonschultz93/quieto-skills.git main",
     "changeset": "changeset",
     "version-packages": "changeset version && npm install --package-lock-only",
     "release": "npm run build && npm login && changeset publish"
