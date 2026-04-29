@@ -8,8 +8,7 @@ _bmad-output/
 .claude/*
 !.claude/skills/
 .claude/skills/*
-!.claude/skills/design-token-*/
-!.claude/skills/README.md
+!.claude/skills/quieto-skills/
 node_modules/
 dist/
 
