@@ -9,6 +9,7 @@ _bmad-output/
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/design-token-*/
+!.claude/skills/README.md
 node_modules/
 dist/
 
