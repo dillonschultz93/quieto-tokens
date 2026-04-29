@@ -5,7 +5,10 @@
 .env
 _bmad/
 _bmad-output/
-.claude/
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/design-token-*/
 node_modules/
 dist/
 

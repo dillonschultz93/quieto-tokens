@@ -1,5 +1,11 @@
 # @quieto/tokens
 
+## 0.3.0
+
+### Minor Changes
+
+- Add 7 Claude Code skills for design token workflows (init, audit, migrate, component, category-add, contrast, update)
+
 ## 0.2.2
 
 ### Patch Changes

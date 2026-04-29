@@ -211,6 +211,28 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 - iOS Swift (UIColor, SwiftUI Color, CGFloat, font constants) _(shipped)_
 - Android XML / Compose _(shipped)_
 
+## Claude Code Skills
+
+This repo ships with [Claude Code](https://claude.ai/code) skills — conversational wrappers around each CLI command that let you drive the tool through natural language. They live in `.claude/skills/design-token-*/` and are available as slash commands when you open the project in Claude Code.
+
+| Skill | Command | What it does |
+|---|---|---|
+| **design-token-init** | `/design-token-init` | Scaffold a new token system interactively |
+| **design-token-audit** | `/design-token-audit` | Health-check: orphans, broken refs, naming, WCAG contrast |
+| **design-token-migrate** | `/design-token-migrate` | Scan stylesheets for hardcoded values and replace with tokens |
+| **design-token-component** | `/design-token-component` | Generate tier-3 component tokens (button, card, etc.) |
+| **design-token-category-add** | `/design-token-category-add` | Add shadow, border, or animation categories |
+| **design-token-contrast** | `/design-token-contrast` | Ad-hoc or system-wide WCAG contrast checking |
+| **design-token-update** | `/design-token-update` | Modify inputs (brand color, spacing, etc.) with diff preview |
+
+### Using the skills
+
+1. Install [Claude Code](https://claude.ai/code) if you haven't already
+2. Open this project in Claude Code (or `cd` into it from the CLI)
+3. Type any slash command above (e.g., `/design-token-init`) to start
+
+The skills cross-reference each other — for example, after running `/design-token-init`, it will suggest `/design-token-audit` to verify the generated system. No extra installation is needed; cloning the repo is enough.
+
 ## Key Features
 
 - **Accessible by default** — All color tokens are WCAG AA compliant, enforced by `@quieto/engine`
