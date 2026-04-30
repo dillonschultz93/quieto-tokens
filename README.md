@@ -213,7 +213,9 @@ This matches Tailwind, Radix, and Material conventions, so Quieto-generated toke
 
 ## Claude Code Skills
 
-This repo ships with [Claude Code](https://claude.ai/code) skills — conversational wrappers around each CLI command that let you drive the tool through natural language. They live in `.claude/skills/design-token-*/` and are available as slash commands when you open the project in Claude Code.
+This repo ships with [Claude Code](https://claude.ai/code) skills — conversational wrappers around each CLI command that let you drive the tool through natural language. They're available as slash commands when you open the project in Claude Code.
+
+The skills are also published as a standalone package: [`@quieto/skills`](https://www.npmjs.com/package/@quieto/skills) ([source](https://github.com/dillonschultz93/quieto-skills)). Use the package to add skills to any project without cloning this repo.
 
 | Skill | Command | What it does |
 |---|---|---|
@@ -231,7 +233,9 @@ This repo ships with [Claude Code](https://claude.ai/code) skills — conversati
 2. Open this project in Claude Code (or `cd` into it from the CLI)
 3. Type any slash command above (e.g., `/design-token-init`) to start
 
-The skills cross-reference each other — for example, after running `/design-token-init`, it will suggest `/design-token-audit` to verify the generated system. No extra installation is needed; cloning the repo is enough.
+To add skills to a different project, install the package or use a git subtree — see the [`@quieto/skills` README](https://github.com/dillonschultz93/quieto-skills) for details.
+
+The skills cross-reference each other — for example, after running `/design-token-init`, it will suggest `/design-token-audit` to verify the generated system.
 
 ## Key Features
 
