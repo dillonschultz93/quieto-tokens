@@ -3,6 +3,14 @@
 .cursorignore
 .vscode/
 .env
+
+# macOS filesystem metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100/
+.Trashes/
 _bmad/
 _bmad-output/
 .claude/*
@@ -20,3 +28,6 @@ quieto.config.json
 
 # Ephemeral code-review diff bundles (local tooling).
 .review-tmp/
+
+# Ignore Obsidian vault
+docs/qds
