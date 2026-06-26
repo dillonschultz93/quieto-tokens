@@ -1,5 +1,8 @@
 import * as p from "@clack/prompts";
+import { stat } from "node:fs/promises";
 import { configExists, loadConfig } from "../utils/config.js";
+import { extractRawValues } from "../analysis/extract.js";
+import { inferSeed } from "../analysis/infer-seed.js";
 import { readToolVersion } from "../output/config-writer.js";
 import { appendChangelog } from "../output/changelog-writer.js";
 import {
@@ -47,12 +50,20 @@ export interface InitCommandOptions {
    * writing JSON, CSS, and config (Story 3.3).
    */
   dryRun?: boolean;
+  /**
+   * Bootstrap the seed by analyzing an existing project's stylesheets instead
+   * of prompting. `true` scans the current directory; a string scans that
+   * directory. The inferred values flow into the normal generation pipeline,
+   * and the user reviews them in the preview step before anything writes.
+   */
+  fromCodebase?: boolean | string;
 }
 
 export async function initCommand(
   initOptions: InitCommandOptions = {},
 ): Promise<void> {
   let { advanced = false, dryRun = false } = initOptions;
+  const { fromCodebase = false } = initOptions;
   p.intro("◆  quieto-tokens — Design tokens, made yours.");
 
   if (dryRun) {
@@ -73,8 +84,72 @@ export async function initCommand(
     // advanced flow so each step can offer "keep current" defaults.
     let baseline: QuickStartOptions | null = null;
     let priorContext: PriorContext | null = null;
+    let inferredAdvanced: AdvancedConfig | undefined;
+    let fromCodebaseUsed = false;
 
-    if (hasConfig) {
+    if (fromCodebase) {
+      const target =
+        typeof fromCodebase === "string" ? fromCodebase : process.cwd();
+
+      try {
+        const s = await stat(target);
+        if (!s.isDirectory()) {
+          p.log.error(`Not a directory: ${target}`);
+          p.outro("");
+          process.exitCode = 1;
+          return;
+        }
+      } catch {
+        p.log.error(`Directory not found: ${target}`);
+        p.outro("");
+        process.exitCode = 1;
+        return;
+      }
+
+      if (hasConfig) {
+        const replace = await p.confirm({
+          message:
+            "A token system already exists here. Replace it by bootstrapping from your codebase?",
+          initialValue: false,
+        });
+        if (p.isCancel(replace) || !replace) {
+          p.cancel(dryRun ? "Dry run cancelled." : "Operation cancelled.");
+          return;
+        }
+      }
+
+      p.log.step(`Analyzing stylesheets in ${target}…`);
+      const histograms = await extractRawValues(target);
+      const inferred = inferSeed(histograms);
+      if (!inferred) {
+        p.log.error(
+          "Couldn't infer a token system from the stylesheets found. Run `quieto-tokens init` for the guided flow (React/TSX support is planned for a later release).",
+        );
+        p.outro("");
+        process.exitCode = 1;
+        return;
+      }
+
+      for (const warning of inferred.rationale.warnings) {
+        p.log.warn(warning);
+      }
+      p.log.step(
+        [
+          `Inferred from ${histograms.filesScanned} stylesheet${histograms.filesScanned === 1 ? "" : "s"}:`,
+          ...inferred.rationale.lines.map((line) => `  ${line}`),
+        ].join("\n"),
+      );
+
+      baseline = inferred.options;
+      inferredAdvanced = inferred.advanced;
+      fromCodebaseUsed = true;
+      // The inferred AdvancedConfig drives generation directly; the
+      // interactive advanced walkthrough is skipped. Users fine-tune in the
+      // preview/override step before anything is written.
+      advanced = false;
+    }
+
+    if (!fromCodebaseUsed && hasConfig) {
       const action = await p.select({
         message:
           "An existing token system was found. What would you like to do?",
@@ -185,7 +260,7 @@ export async function initCommand(
           );
         }
       }
-    } else if (!advanced) {
+    } else if (!fromCodebaseUsed && !advanced) {
       // AC-18: first run on a clean project — ask up front whether the
       // user wants a quick start or the advanced walkthrough. No config
       // file exists and no `--advanced` flag was passed, so we have room
@@ -249,9 +324,11 @@ export async function initCommand(
       }
     }
 
-    const advancedConfig: AdvancedConfig | undefined = advanced
-      ? await runAdvancedFlow(options, adjustedPriorContext)
-      : undefined;
+    const advancedConfig: AdvancedConfig | undefined = fromCodebaseUsed
+      ? inferredAdvanced
+      : advanced
+        ? await runAdvancedFlow(options, adjustedPriorContext)
+        : undefined;
 
     const themeLabel = options.generateThemes ? "light + dark" : "single theme";
     p.log.step(
@@ -410,11 +487,13 @@ export async function initCommand(
       return;
     }
 
-    const initChangelogContext: InitChangelogContext = priorContext
-      ? "modify"
-      : hasConfig
-        ? "regenerate"
-        : "initial";
+    const initChangelogContext: InitChangelogContext = fromCodebaseUsed
+      ? "from-codebase"
+      : priorContext
+        ? "modify"
+        : hasConfig
+          ? "regenerate"
+          : "initial";
     const toolVersion = await readToolVersion();
     const catForLog = new Set(
       previewResult.collection.primitives.map((t) => t.category),

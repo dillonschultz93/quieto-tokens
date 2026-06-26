@@ -69,6 +69,28 @@ When `outputs` includes `"ios"`, the CLI writes Swift source files to **`build/i
 
 When `outputs` includes `"android"`, the CLI also writes to **`build/android/`**. The format is selected at `init` and stored in `quieto.config.json` as **`androidFormat`**: `"xml"` (default) emits `values/colors.xml`, `values/dimens.xml`, and typography resource files, with `values-night/` for dark-theme overrides when you have both light and dark; **`"compose"`** emits `Color.kt`, `Spacing.kt`, and `Typography.kt` with Compose-friendly constants (and a Material3 `ColorScheme` bridge in multi-theme runs). This is a static file drop — it does not add Gradle or wire into your app build for you.
 
+### Bootstrapping from an existing codebase
+
+Already have a project with hardcoded styles but no token system? Instead of answering the quick-start prompts from scratch, point Quieto at your code and let it infer the seed:
+
+```bash
+quieto-tokens init --from-codebase            # scan the current directory
+quieto-tokens init --from-codebase=./src      # scan a specific directory
+```
+
+Quieto walks your **stylesheets** (`.css`, `.scss`, `.sass`, `.less`, `.styl`), tallies the colors, spacing, font families, and weights it finds, and infers the same inputs the questionnaire would have collected:
+
+- **Brand color** — the most-used vivid (non-neutral) color.
+- **Additional hues** — other prominent colors, named by role (`error`, `success`, `warning`, `accent`).
+- **Spacing base** — `4` or `8`, based on whether your spacing values are predominantly multiples of 8.
+- **Type scale** — `compact` / `balanced` / `spacious`, from the average ratio between your font sizes.
+- **Font families & weights** — body/heading/mono stacks and the numeric weights actually used.
+- **Themes** — light + dark when dark-mode styles (`prefers-color-scheme: dark`, `.dark`, `[data-theme="dark"]`) are detected.
+
+This is a **seed-and-generate** flow: the inferred values drive Quieto's normal accessible-ramp pipeline, so you get a clean, idealized system rather than a literal copy of every hardcoded value. Quieto prints an **inference summary** showing what it derived (and warns when it had to guess), then drops you into the usual **preview / override** step so you can adjust anything before a single file is written. From there it writes `tokens/`, `build/`, and `quieto.config.json` exactly like a normal `init` — re-running `quieto-tokens update` or `init` afterward works as usual.
+
+It **proposes** a token system and stops there; to then swap the hardcoded values in your source for the generated tokens, use [`quieto-tokens migrate`](#migrating-hardcoded-values-to-tokens). Extraction assumes roughly one declaration per line (the common formatted-CSS shape); React/TSX and rendered-style extraction are planned for later releases. If a project already has `quieto.config.json`, `--from-codebase` asks before replacing it.
+
 ### Design System Changelog
 
 After every successful write, the CLI also creates or updates **`TOKENS_CHANGELOG.md`** in the same directory as `quieto.config.json` (the project root). The file is ordinary Markdown with a fixed structure: a title line (`# Design System Changelog`), then entries in **newest-first** order, each under a `## [ISO-8601 timestamp]` heading, with `**Tool version:**`, `**Command:**`, `**Categories affected:**`, and a `### Summary` body. The summary captures what changed in human-readable form (token counts, cascade highlights, and, for `update` runs, relevant input changes such as a brand color swap).
