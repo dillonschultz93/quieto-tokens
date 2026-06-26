@@ -10,7 +10,11 @@ import {
 } from "../ui/diff.js";
 import type { ThemeCollection } from "../types/tokens.js";
 
-export type InitChangelogContext = "initial" | "regenerate" | "modify";
+export type InitChangelogContext =
+  | "initial"
+  | "regenerate"
+  | "modify"
+  | "from-codebase";
 
 function countByKind(changes: readonly TokenChange[], kind: TokenChange["kind"]): number {
   return changes.filter((c) => c.kind === kind).length;
@@ -104,6 +108,16 @@ export function buildInitSummary(
   const k = collection.themes.length;
   if (context === "modify") {
     return `Regenerated token system via init modify-flow. Created ${nPrim} primitives, ${nSem} semantic tokens.${figmaChangelogLine(output)}`;
+  }
+  if (context === "from-codebase") {
+    return [
+      "Token system bootstrapped from an existing codebase (`init --from-codebase`).",
+      "",
+      `- Inferred a seed from project stylesheets and generated ${nPrim} primitives, ${nSem} semantic tokens across ${k} theme${k === 1 ? "" : "s"}.`,
+      figmaChangelogLine(output),
+    ]
+      .filter((line) => line.length > 0)
+      .join("\n");
   }
   if (context === "regenerate") {
     return [

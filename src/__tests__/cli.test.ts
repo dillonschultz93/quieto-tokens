@@ -60,6 +60,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs([])).toEqual({
       advanced: false,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -68,6 +69,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--advanced"])).toEqual({
       advanced: true,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -76,11 +78,13 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--dry-run"])).toEqual({
       advanced: false,
       dryRun: true,
+      fromCodebase: false,
       unknown: [],
     });
     expect(parseInitArgs(["--dry-run=false"])).toEqual({
       advanced: false,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -89,11 +93,13 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--advanced", "--dry-run"])).toEqual({
       advanced: true,
       dryRun: true,
+      fromCodebase: false,
       unknown: [],
     });
     expect(parseInitArgs(["--dry-run", "--advanced=false"])).toEqual({
       advanced: false,
       dryRun: true,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -102,6 +108,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--fancy", "--advanced", "positional"])).toEqual({
       advanced: true,
       dryRun: false,
+      fromCodebase: false,
       unknown: ["--fancy", "positional"],
     });
   });
@@ -110,6 +117,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--dry-runs"])).toEqual({
       advanced: false,
       dryRun: false,
+      fromCodebase: false,
       unknown: ["--dry-runs"],
     });
   });
@@ -118,6 +126,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--advanced", "--advanced"])).toEqual({
       advanced: true,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -126,6 +135,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--advanced=true"])).toEqual({
       advanced: true,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -134,6 +144,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--advanced=false"])).toEqual({
       advanced: false,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -142,6 +153,7 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["--advanced=true", "--advanced=false"])).toEqual({
       advanced: false,
       dryRun: false,
+      fromCodebase: false,
       unknown: [],
     });
   });
@@ -150,7 +162,44 @@ describe("parseInitArgs", () => {
     expect(parseInitArgs(["-a"])).toEqual({
       advanced: false,
       dryRun: false,
+      fromCodebase: false,
       unknown: ["-a"],
+    });
+  });
+
+  it("sets fromCodebase=true for the bare --from-codebase flag", () => {
+    expect(parseInitArgs(["--from-codebase"])).toEqual({
+      advanced: false,
+      dryRun: false,
+      fromCodebase: true,
+      unknown: [],
+    });
+  });
+
+  it("captures the path form --from-codebase=<path>", () => {
+    expect(parseInitArgs(["--from-codebase=./src"])).toEqual({
+      advanced: false,
+      dryRun: false,
+      fromCodebase: "./src",
+      unknown: [],
+    });
+  });
+
+  it("treats an empty --from-codebase= value as the bare flag (cwd)", () => {
+    expect(parseInitArgs(["--from-codebase="])).toEqual({
+      advanced: false,
+      dryRun: false,
+      fromCodebase: true,
+      unknown: [],
+    });
+  });
+
+  it("combines --from-codebase with --dry-run", () => {
+    expect(parseInitArgs(["--from-codebase", "--dry-run"])).toEqual({
+      advanced: false,
+      dryRun: true,
+      fromCodebase: true,
+      unknown: [],
     });
   });
 });
@@ -536,25 +585,25 @@ describe("runCli — routing (AC #4)", () => {
     it("dispatches to initCommand with advanced=false on bare `init`", async () => {
       const code = await runCli(["init"]);
       expect(code).toBe(0);
-      expect(initCommand).toHaveBeenCalledWith({ advanced: false, dryRun: false });
+      expect(initCommand).toHaveBeenCalledWith({ advanced: false, dryRun: false, fromCodebase: false });
     });
 
     it("dispatches to initCommand with advanced=true on `init --advanced`", async () => {
       const code = await runCli(["init", "--advanced"]);
       expect(code).toBe(0);
-      expect(initCommand).toHaveBeenCalledWith({ advanced: true, dryRun: false });
+      expect(initCommand).toHaveBeenCalledWith({ advanced: true, dryRun: false, fromCodebase: false });
     });
 
     it("passes dryRun: true for `init --dry-run`", async () => {
       const code = await runCli(["init", "--dry-run"]);
       expect(code).toBe(0);
-      expect(initCommand).toHaveBeenCalledWith({ advanced: false, dryRun: true });
+      expect(initCommand).toHaveBeenCalledWith({ advanced: false, dryRun: true, fromCodebase: false });
     });
 
     it("passes advanced and dryRun for `init --advanced --dry-run`", async () => {
       const code = await runCli(["init", "--advanced", "--dry-run"]);
       expect(code).toBe(0);
-      expect(initCommand).toHaveBeenCalledWith({ advanced: true, dryRun: true });
+      expect(initCommand).toHaveBeenCalledWith({ advanced: true, dryRun: true, fromCodebase: false });
     });
 
     it("passes dryRun only for `add --dry-run` (menu flow)", async () => {
@@ -566,7 +615,17 @@ describe("runCli — routing (AC #4)", () => {
     it("passes `init --dry-run` with dryRun: false from `--dry-run=false`", async () => {
       const code = await runCli(["init", "--dry-run=false"]);
       expect(code).toBe(0);
-      expect(initCommand).toHaveBeenCalledWith({ advanced: false, dryRun: false });
+      expect(initCommand).toHaveBeenCalledWith({ advanced: false, dryRun: false, fromCodebase: false });
+    });
+
+    it("passes fromCodebase for `init --from-codebase=./src`", async () => {
+      const code = await runCli(["init", "--from-codebase=./src"]);
+      expect(code).toBe(0);
+      expect(initCommand).toHaveBeenCalledWith({
+        advanced: false,
+        dryRun: false,
+        fromCodebase: "./src",
+      });
     });
 
     it("returns 1 and reports unknown flags on `init` (`init --bogus`)", async () => {

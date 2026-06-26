@@ -37,6 +37,11 @@ const HELP_TEXT = `
     --advanced        (init) Enter advanced mode: customize individual tokens
                       per category instead of taking the quick-start defaults.
                       Also accepts --advanced=true / --advanced=false.
+    --from-codebase   (init) Bootstrap the token system by analyzing an
+                      existing project's stylesheets (CSS/SCSS/Sass/Less/Styl)
+                      instead of prompting. Scans the current directory, or
+                      --from-codebase=<path> to scan elsewhere. Proposes a
+                      system you review in the preview before anything writes.
     --dry-run         Run the full pipeline without writing any files.
                       Must be passed after the command word.
                       Also accepts --dry-run=true / --dry-run=false.
@@ -75,14 +80,21 @@ const HELP_TEXT = `
  * with positional args. Fail closed — users will see the error immediately.
  *
  * `--dry-run` variants: `--dry-run`, `--dry-run=true`, `--dry-run=false`.
+ *
+ * `--from-codebase` bootstraps the token system by analyzing an existing
+ * project's stylesheets instead of prompting. Bare form scans the current
+ * directory; `--from-codebase=<path>` scans the given directory. The result
+ * is `false` (off), `true` (scan cwd), or a path string.
  */
 export function parseInitArgs(args: readonly string[]): {
   advanced: boolean;
   dryRun: boolean;
+  fromCodebase: boolean | string;
   unknown: string[];
 } {
   let advanced = false;
   let dryRun = false;
+  let fromCodebase: boolean | string = false;
   const unknown: string[] = [];
   for (const arg of args) {
     if (arg === "--advanced") {
@@ -95,11 +107,16 @@ export function parseInitArgs(args: readonly string[]): {
       dryRun = true;
     } else if (arg === "--dry-run=false") {
       dryRun = false;
+    } else if (arg === "--from-codebase") {
+      fromCodebase = true;
+    } else if (arg.startsWith("--from-codebase=")) {
+      const path = arg.slice("--from-codebase=".length);
+      fromCodebase = path.length > 0 ? path : true;
     } else {
       unknown.push(arg);
     }
   }
-  return { advanced, dryRun, unknown };
+  return { advanced, dryRun, fromCodebase, unknown };
 }
 
 /**
@@ -371,7 +388,9 @@ export async function runCli(args: readonly string[]): Promise<number> {
 
   switch (command) {
     case "init": {
-      const { advanced, dryRun, unknown } = parseInitArgs(args.slice(1));
+      const { advanced, dryRun, fromCodebase, unknown } = parseInitArgs(
+        args.slice(1),
+      );
       if (unknown.length > 0) {
         p.intro("◆  quieto-tokens");
         p.log.error(`Unknown option(s) for init: ${unknown.join(", ")}`);
@@ -379,7 +398,7 @@ export async function runCli(args: readonly string[]): Promise<number> {
         p.outro("Fix the options and re-run.");
         return 1;
       }
-      await initCommand({ advanced, dryRun });
+      await initCommand({ advanced, dryRun, fromCodebase });
       const initExit = process.exitCode;
       process.exitCode = undefined;
       return typeof initExit === "number" ? initExit : 0;
