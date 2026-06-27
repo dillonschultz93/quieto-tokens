@@ -16,7 +16,19 @@
 
 ## Installation
 
-### Standalone
+### npx (recommended)
+
+```bash
+npx @quieto/skills install
+```
+
+This installs all skills into `.claude/skills/` in your current directory. You can also specify a target directory:
+
+```bash
+npx @quieto/skills install /path/to/your/project
+```
+
+### Manual
 
 Copy the skill directories into your project's `.claude/skills/` directory:
 
@@ -24,27 +36,11 @@ Copy the skill directories into your project's `.claude/skills/` directory:
 cp -r design-token-* /path/to/your/project/.claude/skills/
 ```
 
-### As a git subtree (recommended)
-
-This keeps the skills in sync with this repo:
+### As a git subtree
 
 ```bash
-git subtree add --prefix=.claude/skills \
+git subtree add --prefix=.claude/skills/quieto-skills \
   git@github.com:dillonschultz93/quieto-skills.git main --squash
-```
-
-To pull updates later:
-
-```bash
-git subtree pull --prefix=.claude/skills \
-  git@github.com:dillonschultz93/quieto-skills.git main --squash
-```
-
-To push local edits back upstream:
-
-```bash
-git subtree push --prefix=.claude/skills \
-  git@github.com:dillonschultz93/quieto-skills.git main
 ```
 
 ## Prerequisites
