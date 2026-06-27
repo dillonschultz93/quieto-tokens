@@ -1,6 +1,6 @@
 ---
 name: design-token-init
-description: 'Scaffold a new design token system interactively. Guides the user through brand color, spacing base, type scale, and dark mode choices, then runs `quieto-tokens init` to generate a complete DTCG token system with multi-platform outputs (CSS, Figma, iOS, Android). Use when the user wants to create or bootstrap a new token system.'
+description: 'Scaffold a new design token system interactively, or bootstrap one from an existing codebase with `--from-codebase`. Guides the user through brand color, spacing base, type scale, and dark mode choices, then runs `quieto-tokens init` to generate a complete DTCG token system with multi-platform outputs (CSS, Figma, iOS, Android). Use when the user wants to create or bootstrap a new token system.'
 ---
 
 # Design Token Init
@@ -32,6 +32,8 @@ Ask the user what they need. The key inputs are:
 
 If the user already stated preferences (e.g. "set up tokens with brand color #E11D48"), extract what you can and confirm the rest with sensible defaults.
 
+**Bootstrapping from an existing codebase:** If the user already has stylesheets and wants to seed the system from them rather than answering prompts, use `--from-codebase`. It analyzes existing CSS/SCSS/Sass/Less/Styl, proposes a token system, and shows a preview before anything is written. Scans the current directory by default, or pass `--from-codebase=<path>` to scan elsewhere.
+
 ### 2. Run the CLI
 
 Execute the init command:
@@ -44,6 +46,16 @@ Or with advanced mode:
 
 ```bash
 npx quieto-tokens init --advanced
+```
+
+Or bootstrap from existing stylesheets instead of prompting:
+
+```bash
+npx quieto-tokens init --from-codebase
+```
+
+```bash
+npx quieto-tokens init --from-codebase=src/styles
 ```
 
 Use `--dry-run` first if the user wants to preview without writing files:

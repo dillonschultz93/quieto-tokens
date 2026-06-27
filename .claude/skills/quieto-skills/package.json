@@ -1,0 +1,46 @@
+{
+  "name": "@quieto/skills",
+  "version": "1.1.0",
+  "description": "Claude Code skills for the Quieto Tokens design token CLI",
+  "bin": {
+    "quieto-skills": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "design-token-audit/",
+    "design-token-category-add/",
+    "design-token-component/",
+    "design-token-contrast/",
+    "design-token-init/",
+    "design-token-migrate/",
+    "design-token-update/"
+  ],
+  "keywords": [
+    "claude-code",
+    "skills",
+    "design-tokens",
+    "quieto"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dillonschultz93/quieto-skills"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only",
+    "release": "changeset publish",
+    "sync:pull": "cd /Users/dillon/dev-env/projects/quieto-tokens && git subtree pull --prefix=.claude/skills/quieto-skills git@github.com:dillonschultz93/quieto-skills.git main --squash",
+    "sync:push": "cd /Users/dillon/dev-env/projects/quieto-tokens && git subtree push --prefix=.claude/skills/quieto-skills git@github.com:dillonschultz93/quieto-skills.git main"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@changesets/changelog-git": "^0.2.1",
+    "@changesets/cli": "^2.31.0"
+  }
+}
