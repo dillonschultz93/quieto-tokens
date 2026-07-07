@@ -30,6 +30,14 @@ jobs:
 
       - run: npm test
 
+      # changeset publish creates an annotated tag, which fails silently
+      # (swallowed exit code) without a committer identity on the runner.
+      - name: Configure git identity for tagging
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Publish to npm
         if: github.ref == 'refs/heads/main'
         run: npx changeset publish
