@@ -34,6 +34,8 @@ If the user already stated preferences (e.g. "set up tokens with brand color #E1
 
 **Bootstrapping from an existing codebase:** If the user already has stylesheets and wants to seed the system from them rather than answering prompts, use `--from-codebase`. It analyzes existing CSS/SCSS/Sass/Less/Styl, proposes a token system, and shows a preview before anything is written. Scans the current directory by default, or pass `--from-codebase=<path>` to scan elsewhere.
 
+This works on already-tokenized codebases too: `var(--x)` references are resolved through custom-property definitions and counted as usage, so a token referenced many times outweighs single-use literals in the inference, and a dark `:root`/`html`/`body` background turns on light + dark theme generation even without `prefers-color-scheme` styles. If the CLI warns `Existing token system detected`, explain that init rebuilds a system from scratch — if the user actually wants to modify an existing Quieto system, point them to `/design-token-update` or `/design-token-category-add` instead.
+
 ### 2. Run the CLI
 
 Execute the init command:
