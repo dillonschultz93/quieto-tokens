@@ -128,6 +128,30 @@ export function stripQuietoVarCalls(valueSegment: string): string {
   return valueSegment.replace(/var\(\s*--quieto-[^)]+\)/g, "");
 }
 
+/**
+ * Matches `var(--name` references from any token system; capture group 1 is
+ * the custom-property name. Deliberately open-ended about the fallback so it
+ * also hits `var(--x, …)`.
+ */
+export const VAR_REFERENCE_PATTERN = /var\(\s*(--[a-zA-Z0-9_-]+)/g;
+
+/**
+ * Matches a full `var(--name)` / `var(--name, fallback)` call with a
+ * paren-free fallback; capture group 1 is the name. Used for substituting
+ * references with their resolved values (nested calls resolve best-effort,
+ * innermost first).
+ */
+export const VAR_CALL_PATTERN = /var\(\s*(--[a-zA-Z0-9_-]+)\s*(?:,[^()]*)?\)/g;
+
+/**
+ * Remove every `var()` call (any token system, one level of nesting) so
+ * literal matching can never mistake a custom-property reference or its
+ * fallback for a raw value.
+ */
+export function stripVarCalls(valueSegment: string): string {
+  return valueSegment.replace(/var\([^()]*(?:\([^()]*\)[^()]*)*\)/g, "");
+}
+
 export function findColumnInOriginal(
   originalLine: string,
   raw: string,
