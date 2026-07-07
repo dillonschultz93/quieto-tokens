@@ -6,6 +6,9 @@ import {
   HEX_PATTERN,
   normalizeHex,
   splitDeclaration,
+  stripVarCalls,
+  VAR_CALL_PATTERN,
+  VAR_REFERENCE_PATTERN,
 } from "./css-values.js";
 
 /**
@@ -30,6 +33,13 @@ export interface FontFamilyOccurrence {
   isMono: boolean;
 }
 
+export interface CustomPropertyDefinition {
+  /** Comment-stripped value segment as written (may reference other vars). */
+  value: string;
+  /** True when defined on `:root`, `html`, or `body`. */
+  onRootSelector: boolean;
+}
+
 export interface RawValueHistograms {
   /** Keyed by normalized `#rrggbb` hex. */
   colors: Map<string, ValueOccurrence>;
@@ -41,6 +51,15 @@ export interface RawValueHistograms {
   fontWeights: Map<number, number>;
   /** True if any dark-theme signal was detected. */
   darkModeSignals: boolean;
+  /** Non-quieto custom properties (`--name`) and their definitions. */
+  customProperties: Map<string, CustomPropertyDefinition>;
+  /** Total non-quieto `var(--x)` references seen on regular declarations. */
+  varUsageCount: number;
+  /**
+   * Background colors declared on `:root`/`html`/`body` (var()s resolved),
+   * keyed by normalized hex. Signals whether the app is natively dark.
+   */
+  rootBackgrounds: Map<string, number>;
   filesScanned: number;
   totalColorUsages: number;
   totalDimensionUsages: number;
@@ -77,24 +96,47 @@ function cleanFontFamilyStack(valueSegment: string): string {
   return valueSegment
     .replace(/!important.*$/i, "")
     .replace(/;.*$/, "")
+    .replace(/^[\s,]+|[\s,]+$/g, "")
     .trim();
 }
 
 function bumpOccurrence(
   map: Map<string, ValueOccurrence> | Map<number, ValueOccurrence>,
   key: string | number,
-  property: string,
+  properties: Iterable<string>,
+  count = 1,
 ): void {
   // The two map shapes share an identical value type; the cast keeps the
   // call sites tidy without widening the public interface.
   const m = map as Map<string | number, ValueOccurrence>;
   const existing = m.get(key);
   if (existing) {
-    existing.count += 1;
-    existing.properties.add(property);
+    existing.count += count;
+    for (const p of properties) existing.properties.add(p);
   } else {
-    m.set(key, { count: 1, properties: new Set([property]) });
+    m.set(key, { count, properties: new Set(properties) });
   }
+}
+
+/** True for selectors that style the page root (`:root`, `html`, `body`). */
+function isRootSelector(selector: string): boolean {
+  return selector
+    .split(",")
+    .some((s) => [":root", "html", "body"].includes(s.trim()));
+}
+
+function cleanCustomPropertyValue(valueSegment: string): string {
+  return valueSegment
+    .replace(/!important.*$/i, "")
+    .replace(/;.*$/, "")
+    .trim();
+}
+
+/** Per-var-name tally of where `var(--name)` was used. */
+interface VarUsage {
+  count: number;
+  properties: Set<string>;
+  onHeadingSelector: boolean;
 }
 
 /**
@@ -111,6 +153,10 @@ export async function extractRawValues(
   const dimensions = new Map<number, ValueOccurrence>();
   const fontFamilies = new Map<string, FontFamilyOccurrence>();
   const fontWeights = new Map<number, number>();
+  const customProperties = new Map<string, CustomPropertyDefinition>();
+  const varUsages = new Map<string, VarUsage>();
+  const rootBackgroundSegments: string[] = [];
+  let varUsageCount = 0;
   let darkModeSignals = false;
   let totalColorUsages = 0;
   let totalDimensionUsages = 0;
@@ -142,25 +188,74 @@ export async function extractRawValues(
       if (!decl) continue;
       const { property, valueSegment } = decl;
 
+      const isCustomProperty = property.startsWith("--");
+      if (isCustomProperty) {
+        // A definition like `--accent-gold: #c9a857`. Remember it so var()
+        // usages can resolve to it; its literal value still gets tallied
+        // below (once) so defined-but-unreferenced values aren't lost.
+        const value = cleanCustomPropertyValue(valueSegment);
+        if (value.length > 0) {
+          const onRoot = isRootSelector(currentSelector);
+          const existing = customProperties.get(property);
+          // Prefer the base-theme (`:root`) definition over theme overrides.
+          if (!existing || (!existing.onRootSelector && onRoot)) {
+            customProperties.set(property, { value, onRootSelector: onRoot });
+          }
+        }
+      } else {
+        // References like `color: var(--accent-gold)` are votes for the
+        // referenced token; tally them for the post-walk resolution pass.
+        // (References inside definitions are aliases, not usage — skipped.)
+        for (const m of valueSegment.matchAll(VAR_REFERENCE_PATTERN)) {
+          const name = m[1]!;
+          varUsageCount += 1;
+          const onHeading =
+            property === "font-family" && HEADING_SELECTOR.test(currentSelector);
+          const existing = varUsages.get(name);
+          if (existing) {
+            existing.count += 1;
+            existing.properties.add(property);
+            existing.onHeadingSelector ||= onHeading;
+          } else {
+            varUsages.set(name, {
+              count: 1,
+              properties: new Set([property]),
+              onHeadingSelector: onHeading,
+            });
+          }
+        }
+
+        if (
+          (property === "background" || property === "background-color") &&
+          isRootSelector(currentSelector)
+        ) {
+          rootBackgroundSegments.push(valueSegment);
+        }
+      }
+
+      // Literal matching runs on the var()-stripped segment so a reference
+      // (or its fallback) is never mistaken for a raw value.
+      const literalSegment = stripVarCalls(valueSegment);
+
       // Colors
-      for (const m of valueSegment.matchAll(HEX_PATTERN)) {
+      for (const m of literalSegment.matchAll(HEX_PATTERN)) {
         const norm = normalizeHex(m[0]!);
         if (!norm) continue;
         totalColorUsages += 1;
-        bumpOccurrence(colors, norm.hex, property);
+        bumpOccurrence(colors, norm.hex, [property]);
       }
 
       // Dimensions
-      for (const m of valueSegment.matchAll(DIMENSION_PATTERN)) {
+      for (const m of literalSegment.matchAll(DIMENSION_PATTERN)) {
         const px = dimensionToPx(m[0]!);
         if (px === null) continue;
         totalDimensionUsages += 1;
-        bumpOccurrence(dimensions, px, property);
+        bumpOccurrence(dimensions, px, [property]);
       }
 
       // Font family
       if (property === "font-family") {
-        const stack = cleanFontFamilyStack(valueSegment);
+        const stack = cleanFontFamilyStack(literalSegment);
         if (stack.length > 0) {
           const existing = fontFamilies.get(stack);
           const onHeading = HEADING_SELECTOR.test(currentSelector);
@@ -179,11 +274,90 @@ export async function extractRawValues(
 
       // Font weight
       if (property === "font-weight") {
-        const weight = parseFontWeight(valueSegment);
+        const weight = parseFontWeight(literalSegment);
         if (weight !== null) {
           fontWeights.set(weight, (fontWeights.get(weight) ?? 0) + 1);
         }
       }
+    }
+  }
+
+  // ── Resolution pass ────────────────────────────────────────────────────
+  // Follow definition chains (`--brand: var(--gold)`) up to a small depth
+  // and turn each var() usage into count-weighted votes for the resolved
+  // value. Unresolvable references are ignored entirely.
+  const resolveCustomProperty = (
+    name: string,
+    seen: Set<string> = new Set(),
+  ): string | null => {
+    const def = customProperties.get(name);
+    if (!def || seen.has(name) || seen.size > 8) return null;
+    seen.add(name);
+    let failed = false;
+    const value = def.value
+      .replace(VAR_CALL_PATTERN, (_, ref: string) => {
+        const resolved = resolveCustomProperty(ref, seen);
+        if (resolved === null) failed = true;
+        return resolved ?? "";
+      })
+      .trim();
+    seen.delete(name);
+    return failed || value.length === 0 ? null : value;
+  };
+
+  for (const [name, usage] of varUsages) {
+    const resolved = resolveCustomProperty(name);
+    if (resolved === null) continue;
+
+    for (const m of resolved.matchAll(HEX_PATTERN)) {
+      const norm = normalizeHex(m[0]!);
+      if (!norm) continue;
+      totalColorUsages += usage.count;
+      bumpOccurrence(colors, norm.hex, usage.properties, usage.count);
+    }
+
+    for (const m of resolved.matchAll(DIMENSION_PATTERN)) {
+      const px = dimensionToPx(m[0]!);
+      if (px === null) continue;
+      totalDimensionUsages += usage.count;
+      bumpOccurrence(dimensions, px, usage.properties, usage.count);
+    }
+
+    if (usage.properties.has("font-family")) {
+      const stack = cleanFontFamilyStack(resolved);
+      if (stack.length > 0) {
+        const existing = fontFamilies.get(stack);
+        if (existing) {
+          existing.count += usage.count;
+          existing.onHeadingSelector ||= usage.onHeadingSelector;
+        } else {
+          fontFamilies.set(stack, {
+            count: usage.count,
+            onHeadingSelector: usage.onHeadingSelector,
+            isMono: isMonoStack(stack),
+          });
+        }
+      }
+    }
+
+    if (usage.properties.has("font-weight")) {
+      const weight = parseFontWeight(resolved);
+      if (weight !== null) {
+        fontWeights.set(weight, (fontWeights.get(weight) ?? 0) + usage.count);
+      }
+    }
+  }
+
+  const rootBackgrounds = new Map<string, number>();
+  for (const segment of rootBackgroundSegments) {
+    const substituted = segment.replace(
+      VAR_CALL_PATTERN,
+      (_, ref: string) => resolveCustomProperty(ref) ?? "",
+    );
+    const first = substituted.match(HEX_PATTERN)?.[0];
+    const norm = first ? normalizeHex(first) : null;
+    if (norm) {
+      rootBackgrounds.set(norm.hex, (rootBackgrounds.get(norm.hex) ?? 0) + 1);
     }
   }
 
@@ -193,6 +367,9 @@ export async function extractRawValues(
     fontFamilies,
     fontWeights,
     darkModeSignals,
+    customProperties,
+    varUsageCount,
+    rootBackgrounds,
     filesScanned: files.length,
     totalColorUsages,
     totalDimensionUsages,

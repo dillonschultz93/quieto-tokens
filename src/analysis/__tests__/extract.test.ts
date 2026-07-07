@@ -100,6 +100,103 @@ describe("extractRawValues", () => {
     expect(h.darkModeSignals).toBe(true);
   });
 
+  it("counts var() usages as votes for the referenced custom property's value", async () => {
+    dir = mkdtempSync(join(tmpdir(), "quieto-extract-"));
+    writeFileSync(
+      join(dir, "tokens.css"),
+      [
+        ":root {",
+        "  --accent-gold: #c9a857;",
+        "  --danger: #ef4444;",
+        "  --space-2: 8px;",
+        "}",
+        ".a { color: var(--accent-gold); }",
+        ".b { border-color: var(--accent-gold); }",
+        ".c { background: var(--accent-gold); }",
+        ".d { color: var(--danger); }",
+        ".e { padding: var(--space-2); }",
+        "",
+      ].join("\n"),
+    );
+    const h = await extractRawValues(dir);
+
+    // 1 definition vote + 3 usage votes vs. 1 definition + 1 usage.
+    expect(h.colors.get("#c9a857")?.count).toBe(4);
+    expect(h.colors.get("#ef4444")?.count).toBe(2);
+    expect(h.colors.get("#c9a857")?.properties.has("color")).toBe(true);
+    expect(h.dimensions.get(8)?.properties.has("padding")).toBe(true);
+
+    expect(h.customProperties.get("--accent-gold")?.value).toBe("#c9a857");
+    expect(h.customProperties.get("--accent-gold")?.onRootSelector).toBe(true);
+    expect(h.varUsageCount).toBe(5);
+  });
+
+  it("resolves chained definitions and ignores unresolvable references", async () => {
+    dir = mkdtempSync(join(tmpdir(), "quieto-extract-"));
+    writeFileSync(
+      join(dir, "a.css"),
+      [
+        ":root {",
+        "  --gold: #c9a857;",
+        "  --brand: var(--gold);",
+        "}",
+        ".a { color: var(--brand); }",
+        ".b { color: var(--undefined-token); }",
+        "",
+      ].join("\n"),
+    );
+    const h = await extractRawValues(dir);
+    // Definition (1) + chained usage (1); the unresolvable ref adds nothing.
+    expect(h.colors.get("#c9a857")?.count).toBe(2);
+    expect(h.colors.size).toBe(1);
+  });
+
+  it("never treats a var() reference as a font-family name", async () => {
+    dir = mkdtempSync(join(tmpdir(), "quieto-extract-"));
+    writeFileSync(
+      join(dir, "a.css"),
+      [
+        ":root {",
+        "  --font-heading: 'Playfair Display', serif;",
+        "}",
+        "h1 {",
+        "  font-family: var(--font-heading);",
+        "}",
+        ".missing {",
+        "  font-family: var(--font-nowhere);",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    const h = await extractRawValues(dir);
+
+    const names = [...h.fontFamilies.keys()];
+    expect(names.some((n) => n.includes("var("))).toBe(false);
+    const heading = h.fontFamilies.get("'Playfair Display', serif");
+    expect(heading?.count).toBe(1);
+    expect(heading?.onHeadingSelector).toBe(true);
+  });
+
+  it("captures root background colors, resolving var() references", async () => {
+    dir = mkdtempSync(join(tmpdir(), "quieto-extract-"));
+    writeFileSync(
+      join(dir, "a.css"),
+      [
+        ":root {",
+        "  --bg-primary: #0a0a1a;",
+        "}",
+        "body {",
+        "  background: var(--bg-primary);",
+        "}",
+        ".card { background: #1f2937; }", // not a root selector → excluded
+        "",
+      ].join("\n"),
+    );
+    const h = await extractRawValues(dir);
+    expect(h.rootBackgrounds.get("#0a0a1a")).toBe(1);
+    expect(h.rootBackgrounds.has("#1f2937")).toBe(false);
+  });
+
   it("returns empty histograms for a directory with no stylesheets", async () => {
     dir = mkdtempSync(join(tmpdir(), "quieto-extract-"));
     writeFileSync(join(dir, "readme.md"), "# nothing here");

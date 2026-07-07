@@ -127,6 +127,69 @@ describe("initCommand — --from-codebase", () => {
     expect(stepCalls.some((s) => s.includes("Inferred from"))).toBe(true);
   });
 
+  it("handles an already-tokenized dark codebase: usage votes, no var() fonts, dark theme, warning", async () => {
+    // Mirrors the field report: every value defined once as a custom property
+    // and referenced via var(), a single-use danger red, a dark background,
+    // and a var()-based heading font.
+    writeFileSync(
+      join(dir, "theme.css"),
+      [
+        ":root {",
+        "  --accent-gold: #c9a857;",
+        "  --danger: #ef4444;",
+        "  --bg-primary: #0a0a1a;",
+        "  --font-heading: 'Playfair Display', serif;",
+        "  --space-1: 4px;",
+        "  --space-2: 8px;",
+        "}",
+        "body {",
+        "  background: var(--bg-primary);",
+        "}",
+        "h1 {",
+        "  font-family: var(--font-heading);",
+        "}",
+        ".btn {",
+        "  background: var(--accent-gold);",
+        "  padding: var(--space-2);",
+        "}",
+        ".link { color: var(--accent-gold); }",
+        ".badge { border-color: var(--accent-gold); }",
+        ".tag { color: var(--accent-gold); }",
+        ".chip {",
+        "  background: var(--accent-gold);",
+        "  gap: var(--space-1);",
+        "}",
+        ".alert { color: var(--danger); }",
+        "",
+      ].join("\n"),
+    );
+
+    await initCommand({ fromCodebase: dir, dryRun: true });
+
+    // The heavily-referenced gold wins over the single-use danger red.
+    expect(runColorGeneration).toHaveBeenCalledWith(
+      "#C9A857",
+      expect.anything(),
+    );
+
+    // Spacing votes flow through var() usages on padding/gap: 4px and 8px
+    // used equally → 4px base.
+    expect(runSpacingGeneration).toHaveBeenCalledWith(4, undefined);
+
+    // The dark page background flips on light + dark generation.
+    const stepCalls = vi.mocked(p.log.step).mock.calls.map((c) => String(c[0]));
+    const summary = stepCalls.find((s) => s.includes("Inferred from")) ?? "";
+    expect(summary).toContain("light + dark");
+
+    // A var() reference never becomes a font-family name.
+    expect(summary).not.toContain("var(");
+
+    // The existing token system is called out.
+    expect(p.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Existing token system detected"),
+    );
+  });
+
   it("errors gracefully when the target directory does not exist", async () => {
     await initCommand({ fromCodebase: join(dir, "nope"), dryRun: true });
     expect(p.log.error).toHaveBeenCalledWith(

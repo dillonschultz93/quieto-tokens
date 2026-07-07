@@ -251,6 +251,64 @@ function inferTypography(
   return Object.keys(typography).length > 0 ? typography : undefined;
 }
 
+/** oklch lightness below this on the page background reads as a dark UI. */
+const DARK_BACKGROUND_LIGHTNESS = 0.5;
+
+/**
+ * Whether to generate a light + dark pair. Beyond the explicit dark-mode
+ * signals (`prefers-color-scheme` etc.), a natively dark app — dark page
+ * background, no theme toggle — should also get both themes rather than the
+ * default light-only output.
+ */
+function inferGenerateThemes(
+  histograms: RawValueHistograms,
+  rationale: InferenceRationale,
+): boolean {
+  if (histograms.darkModeSignals) {
+    rationale.lines.push("Themes: light + dark (dark-mode styles detected).");
+    return true;
+  }
+
+  // Dominant page background: prefer explicit :root/html/body declarations,
+  // fall back to the most-used color seen on background properties.
+  let background: string | undefined;
+  let bestCount = 0;
+  for (const [hex, count] of histograms.rootBackgrounds) {
+    if (count > bestCount) {
+      background = hex;
+      bestCount = count;
+    }
+  }
+  if (!background) {
+    for (const [hex, occ] of histograms.colors) {
+      const onBackground = [...occ.properties].some(
+        (p) => p === "background" || p === "background-color",
+      );
+      if (onBackground && occ.count > bestCount) {
+        background = hex;
+        bestCount = occ.count;
+      }
+    }
+  }
+
+  if (background) {
+    const parsed = parseColor(background);
+    if (parsed.ok && parsed.value.oklch.l < DARK_BACKGROUND_LIGHTNESS) {
+      rationale.lines.push(
+        `Themes: light + dark (dark background ${normalizeHex(background)} detected).`,
+      );
+      return true;
+    }
+  }
+
+  rationale.lines.push("Themes: single (no dark-mode styles detected).");
+  return false;
+}
+
+/** Thresholds for "this codebase already has a token system" detection. */
+const TOKENIZED_MIN_CUSTOM_PROPERTIES = 5;
+const TOKENIZED_MIN_VAR_USAGES = 10;
+
 /**
  * Infer a full token-system seed from the histograms. Returns `null` when the
  * stylesheets contain essentially nothing design-relevant, so the caller can
@@ -268,15 +326,20 @@ export function inferSeed(
 
   const rationale: InferenceRationale = { lines: [], warnings: [] };
 
+  if (
+    histograms.customProperties.size >= TOKENIZED_MIN_CUSTOM_PROPERTIES &&
+    histograms.varUsageCount >= TOKENIZED_MIN_VAR_USAGES
+  ) {
+    rationale.warnings.push(
+      `Existing token system detected (${histograms.customProperties.size} custom properties, ${histograms.varUsageCount} var() references). ` +
+        "This builds a fresh Quieto system from those values rather than augmenting them — review the preview carefully before writing files.",
+    );
+  }
+
   const { brandColor, additionalHues } = inferBrandAndHues(histograms, rationale);
   const spacingBase = inferSpacingBase(histograms, rationale);
   const typeScale = inferTypeScale(histograms, rationale);
-  const generateThemes = histograms.darkModeSignals;
-  rationale.lines.push(
-    generateThemes
-      ? "Themes: light + dark (dark-mode styles detected)."
-      : "Themes: single (no dark-mode styles detected).",
-  );
+  const generateThemes = inferGenerateThemes(histograms, rationale);
 
   const advanced: AdvancedConfig = {};
   if (additionalHues.length > 0) advanced.color = { additionalHues };
